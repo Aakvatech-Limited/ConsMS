@@ -248,3 +248,7 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 after_migrate = "construction_ms.setup.after_migrate"
+
+override_doctype_dashboards = {
+	"Material Request": "construction_ms.setup.get_material_request_dashboard"
+}
