@@ -11,3 +11,4 @@ class GEContract(Document):
 			frappe.msgprint("Warning: A contingency exceeding 15% is unusually high for standard construction contracts and may require special budget approval. Please verify.", title="High Contingency Threshold", indicator="orange")
 		
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
+		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)

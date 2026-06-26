@@ -16,4 +16,7 @@ frappe.ui.form.on("GE Contract", {
 function calculate_contingency(frm) {
 	let contingency = flt(frm.doc.contract_amount) * (flt(frm.doc.contingency_percentage) / 100.0);
 	frm.set_value("contingency_amount", contingency);
+	
+	let total = flt(frm.doc.contract_amount) + contingency;
+	frm.set_value("total_contract_amount", total);
 }

@@ -14,6 +14,7 @@
   "contract_amount",
   "contingency_percentage",
   "contingency_amount",
+  "total_contract_amount",
   "amended_from",
   "boq"
  ],
@@ -62,6 +63,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "total_contract_amount",
+   "fieldtype": "Currency",
+   "label": "Total Contract Value",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -85,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 22:44:15.058889",
+ "modified": "2026-06-26 22:48:31.392826",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Contract",
