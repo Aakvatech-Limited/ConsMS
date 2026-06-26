@@ -13,7 +13,8 @@
   "cb_93eaf144",
   "amended_from",
   "boq_items",
-  "items"
+  "items",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -57,13 +58,18 @@
    "fieldtype": "Table",
    "label": "BOQ Items",
    "options": "GE BOQ Item"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 21:02:29.172639",
+ "modified": "2026-06-26 21:03:34.508684",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Bill of Quantities",
