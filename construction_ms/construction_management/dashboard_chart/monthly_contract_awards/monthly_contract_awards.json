@@ -6,14 +6,14 @@
  "module": "Construction Management",
  "name": "Monthly Contract Awards",
  "chart_name": "Monthly Contract Awards",
- "chart_type": "Bar",
+ "chart_type": "Count",
  "document_type": "GE Contract",
  "group_by_type": "Count",
  "is_public": 1,
  "time_interval": "Monthly",
  "timeseries": 1,
  "based_on": "creation",
- "type": "Group By",
+ "type": "Bar",
  "use_report_chart": 0,
- "modified": "2026-06-26 20:05:08.607961"
+ "modified": "2026-06-26 20:07:44.564868"
 }

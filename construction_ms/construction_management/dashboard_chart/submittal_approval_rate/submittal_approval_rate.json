@@ -6,14 +6,15 @@
  "module": "Construction Management",
  "name": "Submittal Approval Rate",
  "chart_name": "Submittal Approval Rate",
- "chart_type": "Donut",
+ "chart_type": "Group By",
  "document_type": "GE Site Submittal",
  "group_by_type": "Count",
  "group_by_based_on": "status",
  "is_public": 1,
  "time_interval": "Yearly",
  "timeseries": 0,
- "type": "Group By",
+ "type": "Donut",
  "use_report_chart": 0,
- "modified": "2026-06-26 20:05:08.607961"
+ "modified": "2026-06-26 20:07:44.564642",
+ "based_on": "creation"
 }
