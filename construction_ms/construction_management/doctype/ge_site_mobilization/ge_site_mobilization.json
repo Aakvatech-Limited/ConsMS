@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GE-MOB-{YYYY}-{####}",
+ "creation": "2026-06-26 17:47:18.267850",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "mobilization_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "default": "Not Started",
+   "fieldname": "mobilization_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Started\nIn Progress\nCompleted"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-26 17:47:18.267850",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "GE Site Mobilization",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

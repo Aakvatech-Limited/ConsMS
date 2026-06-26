@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GE-CONTR-{YYYY}-{####}",
+ "creation": "2026-06-26 17:47:18.105019",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "project",
+  "contract_amount",
+  "contingency_amount",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender",
+   "options": "GE Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "contract_amount",
+   "fieldtype": "Currency",
+   "label": "Contract Amount"
+  },
+  {
+   "fieldname": "contingency_amount",
+   "fieldtype": "Currency",
+   "label": "Contingency Amount"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "GE Contract",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-26 17:47:18.105019",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "GE Contract",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

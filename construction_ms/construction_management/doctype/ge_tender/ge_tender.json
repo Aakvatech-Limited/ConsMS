@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GE-TNDR-{YYYY}-{####}",
+ "creation": "2026-06-26 17:47:18.023878",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_name",
+  "project",
+  "boq",
+  "status",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "Linked BOQ",
+   "options": "GE Bill of Quantities"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nUnder Evaluation\nAwarded\nRejected"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "GE Tender",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-26 17:47:18.023878",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "GE Tender",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
