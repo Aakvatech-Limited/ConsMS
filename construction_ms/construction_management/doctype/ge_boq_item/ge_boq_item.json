@@ -26,6 +26,10 @@
    "label": "Description"
   },
   {
+   "fieldname": "cb_e767826c",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "quantity",
    "fieldtype": "Float",
    "label": "Quantity"

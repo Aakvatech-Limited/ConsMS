@@ -14,12 +14,21 @@
  ],
  "fields": [
   {
+   "fieldname": "submittal_details",
+   "fieldtype": "Section Break",
+   "label": "Submittal Details"
+  },
+  {
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "fieldname": "cb_c1c13640",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "submittal_type",

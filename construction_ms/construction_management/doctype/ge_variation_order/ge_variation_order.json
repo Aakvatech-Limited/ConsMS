@@ -15,6 +15,11 @@
  ],
  "fields": [
   {
+   "fieldname": "variation_details",
+   "fieldtype": "Section Break",
+   "label": "Variation Details"
+  },
+  {
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -29,9 +34,18 @@
    "options": "GE Contract"
   },
   {
+   "fieldname": "cb_9f1d4557",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "requested_amount",
    "fieldtype": "Currency",
    "label": "Requested Amount"
+  },
+  {
+   "fieldname": "justification",
+   "fieldtype": "Section Break",
+   "label": "Justification"
   },
   {
    "fieldname": "reason",

@@ -15,6 +15,11 @@
  ],
  "fields": [
   {
+   "fieldname": "contract_reference",
+   "fieldtype": "Section Break",
+   "label": "Contract Reference"
+  },
+  {
    "fieldname": "tender",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -27,6 +32,10 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fieldname": "cb_885ac733",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "contract_amount",

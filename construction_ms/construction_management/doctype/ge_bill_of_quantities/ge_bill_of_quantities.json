@@ -14,6 +14,11 @@
  ],
  "fields": [
   {
+   "fieldname": "basic_details",
+   "fieldtype": "Section Break",
+   "label": "Basic Details"
+  },
+  {
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -28,26 +33,27 @@
    "label": "Date"
   },
   {
+   "fieldname": "cb_93eaf144",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
    "options": "GE Bill of Quantities",
    "read_only": 1
+  },
+  {
+   "fieldname": "boq_items",
+   "fieldtype": "Section Break",
+   "label": "BOQ Items"
   },
   {
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "BOQ Items",
    "options": "GE BOQ Item"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "GE Bill of Quantities",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,

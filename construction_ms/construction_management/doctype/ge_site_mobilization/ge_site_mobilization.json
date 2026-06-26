@@ -12,12 +12,21 @@
  ],
  "fields": [
   {
+   "fieldname": "mobilization_info",
+   "fieldtype": "Section Break",
+   "label": "Mobilization Info"
+  },
+  {
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "fieldname": "cb_ae86aff8",
+   "fieldtype": "Column Break"
   },
   {
    "default": "Not Started",

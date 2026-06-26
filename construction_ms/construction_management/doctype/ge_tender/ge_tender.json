@@ -15,6 +15,11 @@
  ],
  "fields": [
   {
+   "fieldname": "tender_details",
+   "fieldtype": "Section Break",
+   "label": "Tender Details"
+  },
+  {
    "fieldname": "tender_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -26,6 +31,10 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fieldname": "cb_6b40a0ab",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "boq",
