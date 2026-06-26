@@ -13,3 +13,18 @@ frappe.ui.form.on("GE Bill of Quantities", {
 		}
 	},
 });
+
+frappe.ui.form.on("GE BOQ Item", {
+	quantity: function(frm, cdt, cdn) {
+		calculate_amount(frm, cdt, cdn);
+	},
+	unit_rate: function(frm, cdt, cdn) {
+		calculate_amount(frm, cdt, cdn);
+	}
+});
+
+function calculate_amount(frm, cdt, cdn) {
+	let row = frappe.get_doc(cdt, cdn);
+	let amt = flt(row.quantity) * flt(row.unit_rate);
+	frappe.model.set_value(cdt, cdn, "amount", amt);
+}

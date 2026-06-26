@@ -5,8 +5,12 @@ import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
+from frappe.utils import flt
+
 class GEBillofQuantities(Document):
-	pass
+	def validate(self):
+		for item in self.get("items"):
+			item.amount = flt(item.quantity) * flt(item.unit_rate)
 
 @frappe.whitelist()
 def make_material_request(source_name, target_doc=None):
