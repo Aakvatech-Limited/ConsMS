@@ -9,8 +9,11 @@ from frappe.utils import flt
 
 class GEBillofQuantities(Document):
 	def validate(self):
+		total = 0
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)
+			total += item.amount
+		self.total_amount = total
 
 @frappe.whitelist()
 def make_material_request(source_name, target_doc=None):

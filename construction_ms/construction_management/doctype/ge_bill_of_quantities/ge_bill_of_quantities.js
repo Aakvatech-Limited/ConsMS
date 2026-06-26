@@ -27,6 +27,12 @@ frappe.ui.form.on("GE BOQ Item", {
 	},
 	unit_rate: function(frm, cdt, cdn) {
 		calculate_amount(frm, cdt, cdn);
+	},
+	amount: function(frm, cdt, cdn) {
+		calculate_total(frm);
+	},
+	items_remove: function(frm) {
+		calculate_total(frm);
 	}
 });
 
@@ -34,4 +40,14 @@ function calculate_amount(frm, cdt, cdn) {
 	let row = frappe.get_doc(cdt, cdn);
 	let amt = flt(row.quantity) * flt(row.unit_rate);
 	frappe.model.set_value(cdt, cdn, "amount", amt);
+}
+
+function calculate_total(frm) {
+	let total = 0;
+	if (frm.doc.items) {
+		frm.doc.items.forEach(item => {
+			total += flt(item.amount);
+		});
+	}
+	frm.set_value("total_amount", total);
 }
