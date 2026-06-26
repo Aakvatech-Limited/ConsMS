@@ -10,8 +10,7 @@
   "project",
   "date",
   "amended_from",
-  "items",
-  "amended_from"
+  "items"
  ],
  "fields": [
   {
@@ -48,22 +47,36 @@
    "label": "Amended From",
    "no_copy": 1,
    "options": "GE Bill of Quantities",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 17:47:17.929301",
+ "modified": "2026-06-26 15:29:06.020185",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Bill of Quantities",
  "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",

@@ -1,0 +1,159 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hdr1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Pre-Construction</b></span>\",\"col\":12}},{\"id\":\"s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bill of Quantities\",\"col\":3}},{\"id\":\"s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Tenders\",\"col\":3}},{\"id\":\"s3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Contracts\",\"col\":3}},{\"id\":\"hdr2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Execution</b></span>\",\"col\":12}},{\"id\":\"s4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Submittals\",\"col\":3}},{\"id\":\"s5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Mobilization\",\"col\":3}},{\"id\":\"s6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Variation Orders\",\"col\":3}},{\"id\":\"s7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Measurement Logs\",\"col\":3}}]",
+ "creation": "2026-06-26 15:29:06.862031",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "building",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Construction MS",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Pre-Construction",
+   "link_count": 0,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bill of Quantities",
+   "link_count": 0,
+   "link_to": "GE Bill of Quantities",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenders",
+   "link_count": 0,
+   "link_to": "GE Tender",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Contracts",
+   "link_count": 0,
+   "link_to": "GE Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Execution",
+   "link_count": 0,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Site Submittals",
+   "link_count": 0,
+   "link_to": "GE Site Submittal",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Mobilization",
+   "link_count": 0,
+   "link_to": "GE Site Mobilization",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Variation Orders",
+   "link_count": 0,
+   "link_to": "GE Variation Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Measurement Logs",
+   "link_count": 0,
+   "link_to": "GE Site Measurement Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-06-26 15:29:06.862031",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "Construction MS",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "doc_view": "",
+   "label": "Bill of Quantities",
+   "link_to": "GE Bill of Quantities",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Tenders",
+   "link_to": "GE Tender",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Contracts",
+   "link_to": "GE Contract",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Site Submittals",
+   "link_to": "GE Site Submittal",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Mobilization",
+   "link_to": "GE Site Mobilization",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Variation Orders",
+   "link_to": "GE Variation Order",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Measurement Logs",
+   "link_to": "GE Site Measurement Log",
+   "type": "DocType"
+  }
+ ],
+ "title": "Construction MS"
+}
