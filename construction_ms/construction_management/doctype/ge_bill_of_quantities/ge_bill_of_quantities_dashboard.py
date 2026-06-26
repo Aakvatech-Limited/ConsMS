@@ -2,7 +2,7 @@ from frappe import _
 
 def get_data():
 	return {
-		"fieldname": "ge_boq",
+		"fieldname": "boq",
 		"internal_links": {
 			"Material Request": ["items", "ge_boq"]
 		},
@@ -13,7 +13,7 @@ def get_data():
 			},
 			{
 				"label": _("Construction"),
-				"items": ["GE Tender", "GE Contract"]
+				"items": ["GE Tender"]
 			}
 		]
 	}
