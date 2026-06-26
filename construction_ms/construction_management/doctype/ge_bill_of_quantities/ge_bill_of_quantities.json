@@ -18,8 +18,8 @@
  "fields": [
   {
    "fieldname": "basic_details",
-   "fieldtype": "Section Break",
-   "label": "Basic Details"
+   "fieldtype": "Tab Break",
+   "label": "Details"
   },
   {
    "fieldname": "project",
@@ -63,7 +63,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 15:29:06.020185",
+ "modified": "2026-06-26 21:02:29.172639",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Bill of Quantities",
