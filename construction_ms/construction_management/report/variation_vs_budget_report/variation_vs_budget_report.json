@@ -1,0 +1,22 @@
+{
+ "creation": "2026-06-26 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Construction Management",
+ "name": "Variation vs Budget Report",
+ "add_total_row": 0,
+ "columns": [],
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "letter_head": "",
+ "query": "SELECT project as \"Project:Link/Project:150\", name as \"Contract:Link/GE Contract:150\", contract_amount as \"Contract Amount:Currency:150\", contingency_amount as \"Contingency:Currency:150\", (SELECT SUM(requested_amount) FROM `tabGE Variation Order` WHERE contract=`tabGE Contract`.name AND docstatus=1) as \"Total Variations:Currency:150\" FROM `tabGE Contract` WHERE docstatus=1",
+ "ref_doctype": "GE Contract",
+ "report_name": "Variation vs Budget Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
+}
