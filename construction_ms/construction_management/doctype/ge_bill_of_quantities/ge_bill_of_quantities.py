@@ -14,6 +14,7 @@ def make_material_request(source_name, target_doc=None):
 		target.material_request_type = "Purchase"
 		
 	def update_item(source, target, source_parent):
+		target.ge_boq = source_parent.name
 		target.ge_boq_item = source.name
 		# Only request the remaining amount
 		rem_qty = float(source.quantity or 0) - float(source.requested_qty or 0)
