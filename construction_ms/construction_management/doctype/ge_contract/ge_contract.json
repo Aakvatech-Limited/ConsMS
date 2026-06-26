@@ -12,6 +12,7 @@
   "project",
   "cb_885ac733",
   "contract_amount",
+  "contingency_percentage",
   "contingency_amount",
   "amended_from",
   "boq"
@@ -48,9 +49,17 @@
    "fetch_from": "boq.total_amount"
   },
   {
+   "fieldname": "contingency_percentage",
+   "fieldtype": "Percent",
+   "label": "Contingency (%)",
+   "default": "5",
+   "description": "Standard industry practice is 5-10%"
+  },
+  {
    "fieldname": "contingency_amount",
    "fieldtype": "Currency",
-   "label": "Contingency Amount"
+   "label": "Contingency Amount",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -76,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 22:32:55.803662",
+ "modified": "2026-06-26 22:44:15.058889",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Contract",
