@@ -13,7 +13,7 @@ def get_data():
 			},
 			{
 				"label": _("Construction"),
-				"items": ["GE Tender"]
+				"items": ["GE Tender", "GE Contract"]
 			}
 		]
 	}

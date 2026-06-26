@@ -13,7 +13,8 @@
   "cb_885ac733",
   "contract_amount",
   "contingency_amount",
-  "amended_from"
+  "amended_from",
+  "boq"
  ],
  "fields": [
   {
@@ -58,13 +59,22 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "Linked BOQ",
+   "options": "GE Bill of Quantities",
+   "read_only": 1,
+   "hidden": 1,
+   "fetch_from": "tender.boq"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 15:29:06.264629",
+ "modified": "2026-06-26 21:24:28.277172",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Contract",
