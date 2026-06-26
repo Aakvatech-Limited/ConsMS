@@ -7,7 +7,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "submittal_details",
   "project",
+  "cb_c1c13640",
   "submittal_type",
   "status",
   "amended_from"

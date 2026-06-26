@@ -7,9 +7,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "basic_details",
   "project",
   "date",
+  "cb_93eaf144",
   "amended_from",
+  "boq_items",
   "items"
  ],
  "fields": [

@@ -7,8 +7,10 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "contract_reference",
   "tender",
   "project",
+  "cb_885ac733",
   "contract_amount",
   "contingency_amount",
   "amended_from"

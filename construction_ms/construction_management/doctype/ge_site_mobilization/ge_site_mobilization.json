@@ -7,7 +7,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "mobilization_info",
   "project",
+  "cb_ae86aff8",
   "mobilization_status"
  ],
  "fields": [

@@ -7,10 +7,13 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "log_details",
   "project",
   "date",
-  "work_description",
+  "cb_0edfe2f3",
   "measured_quantity",
+  "description",
+  "work_description",
   "amended_from"
  ],
  "fields": [

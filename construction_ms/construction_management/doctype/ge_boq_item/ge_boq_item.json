@@ -8,6 +8,7 @@
  "field_order": [
   "item_code",
   "description",
+  "cb_e767826c",
   "quantity",
   "uom",
   "unit_rate",

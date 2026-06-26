@@ -7,9 +7,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "variation_details",
   "project",
   "contract",
+  "cb_9f1d4557",
   "requested_amount",
+  "justification",
   "reason",
   "amended_from"
  ],
