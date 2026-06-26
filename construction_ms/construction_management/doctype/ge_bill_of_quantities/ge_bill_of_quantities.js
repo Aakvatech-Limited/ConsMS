@@ -10,6 +10,13 @@ frappe.ui.form.on("GE Bill of Quantities", {
 					frm: frm
 				});
 			}, __("Create"));
+
+			frm.add_custom_button(__("GE Tender"), function() {
+				frappe.model.open_mapped_doc({
+					method: "construction_ms.construction_management.doctype.ge_bill_of_quantities.ge_bill_of_quantities.make_ge_tender",
+					frm: frm
+				});
+			}, __("Create"));
 		}
 	},
 });

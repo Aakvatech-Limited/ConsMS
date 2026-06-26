@@ -44,3 +44,20 @@ def make_material_request(source_name, target_doc=None):
 	}, target_doc, set_missing_values)
 	
 	return doc
+
+@frappe.whitelist()
+def make_ge_tender(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		target.tender_name = f"Tender for {source.project}"
+
+	doc = get_mapped_doc("GE Bill of Quantities", source_name, {
+		"GE Bill of Quantities": {
+			"doctype": "GE Tender",
+			"field_map": {
+				"project": "project",
+				"name": "boq"
+			}
+		}
+	}, target_doc, set_missing_values)
+	
+	return doc
