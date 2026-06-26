@@ -11,5 +11,6 @@
  "label": "Total Awarded Contracts",
  "show_percentage_stats": 1,
  "stats_time_interval": "Monthly",
- "color": "#16a085"
+ "color": "#16a085",
+ "modified": "2026-06-26 20:05:08.607961"
 }

@@ -10,5 +10,6 @@
  "is_public": 1,
  "label": "Pending Submittals",
  "filters_json": "[[\"GE Site Submittal\",\"status\",\"=\",\"Pending\",false]]",
- "color": "#e74c3c"
+ "color": "#e74c3c",
+ "modified": "2026-06-26 20:05:08.607961"
 }
