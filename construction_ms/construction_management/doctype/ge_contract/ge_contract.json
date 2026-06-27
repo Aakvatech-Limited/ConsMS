@@ -131,6 +131,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "tender, project, total_contract_amount",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
