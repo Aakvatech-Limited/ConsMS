@@ -8,13 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "log_details",
+  "contract",
   "project",
+  "boq",
   "date",
-  "cb_0edfe2f3",
-  "measured_quantity",
-  "description",
-  "work_description",
-  "amended_from"
+  "cb_1",
+  "location_grid",
+  "sb_meas",
+  "measurements"
  ],
  "fields": [
   {
@@ -23,54 +24,64 @@
    "label": "Log Details"
   },
   {
+   "fetch_from": "contract.project",
    "fieldname": "project",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Project",
    "options": "Project",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date"
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
   },
   {
-   "fieldname": "cb_0edfe2f3",
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Contract",
+   "options": "GE Contract",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_1",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "measured_quantity",
-   "fieldtype": "Float",
-   "label": "Measured Quantity"
+   "fieldname": "location_grid",
+   "fieldtype": "Data",
+   "label": "Location / Grid Ref",
+   "reqd": 1
   },
   {
-   "fieldname": "description",
+   "fieldname": "sb_meas",
    "fieldtype": "Section Break",
-   "label": "Description"
+   "label": "Measurements"
   },
   {
-   "fieldname": "work_description",
-   "fieldtype": "Small Text",
-   "label": "Work Description"
+   "fieldname": "measurements",
+   "fieldtype": "Table",
+   "label": "Measurement Book",
+   "options": "GE Measurement Item"
   },
   {
-   "fieldname": "amended_from",
+   "fetch_from": "contract.boq",
+   "fieldname": "boq",
    "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "GE Site Measurement Log",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "hidden": 1,
+   "label": "BOQ",
+   "options": "GE Bill of Quantities"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-26 15:29:06.730723",
+ "modified": "2026-06-27 10:43:57.614274",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Site Measurement Log",
@@ -78,6 +89,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -87,10 +100,8 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
