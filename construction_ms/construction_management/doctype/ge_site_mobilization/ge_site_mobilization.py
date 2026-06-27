@@ -7,6 +7,10 @@ from frappe.model.document import Document
 class GESiteMobilization(Document):
 	def validate(self):
 		self.update_mobilization_status()
+
+	def before_submit(self):
+		if self.mobilization_status != "Completed":
+			frappe.throw("Mobilization can only be submitted when all tasks are 'Completed'.")
 		
 	def update_mobilization_status(self):
 		if not self.mobilization_checklist:
