@@ -7,6 +7,7 @@ frappe.ui.form.on("GE Site Measurement Log", {
 		frm.set_query("boq_item", "measurements", function(doc, cdt, cdn) {
 			if (doc.boq) {
 				return {
+					query: "construction_ms.construction_management.doctype.ge_site_measurement_log.ge_site_measurement_log.get_boq_items_query",
 					filters: {
 						"parent": doc.boq
 					}

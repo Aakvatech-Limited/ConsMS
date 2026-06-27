@@ -30,3 +30,23 @@ def get_boq_item_details(item_name):
 		ignore=True
 	)
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
+	boq_name = filters.get("parent")
+	if not boq_name:
+		return []
+		
+	search_txt = f"%{txt}%"
+	
+	query = """
+		SELECT 
+			name, item_code, description, quantity, uom
+		FROM `tabGE BOQ Item`
+		WHERE parent = %s
+		AND (name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)
+		LIMIT %s, %s
+	"""
+	
+	return frappe.db.sql(query, (boq_name, search_txt, search_txt, search_txt, start, page_len))
+
