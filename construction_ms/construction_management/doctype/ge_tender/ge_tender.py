@@ -11,7 +11,17 @@ class GETender(Document):
 
 
 @frappe.whitelist()
+def check_existing_contract(tender_name):
+	# Safe backend check that doesn't trigger frontend permission errors
+	return frappe.db.get_value("GE Contract", {"tender": tender_name, "docstatus": ["!=", 2]}, "name")
+
+@frappe.whitelist()
 def make_ge_contract(source_name, target_doc=None):
+    # Security Rule: 1 Tender = 1 Contract
+    existing_contract = frappe.db.exists("GE Contract", {"tender": source_name, "docstatus": ["!=", 2]})
+    if existing_contract:
+        frappe.throw(f"A Contract ({existing_contract}) already exists for this Tender. You cannot create multiple active contracts for a single tender.")
+
     doc = get_mapped_doc(
         "GE Tender",
         source_name,
