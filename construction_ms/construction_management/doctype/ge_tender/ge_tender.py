@@ -24,4 +24,9 @@ def make_ge_contract(source_name, target_doc=None):
         target_doc,
     )
 
+    if not doc.get("submittals"):
+        document_types = frappe.get_all("GE Document Type", fields=["name"])
+        for doc_type in document_types:
+            doc.append("submittals", {"submittal_type": doc_type.name, "status": "Pending"})
+
     return doc
