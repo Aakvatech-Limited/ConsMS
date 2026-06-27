@@ -16,6 +16,33 @@ frappe.ui.form.on("GE Site Measurement Log", {
 				return {};
 			}
 		});
+	},
+	refresh: function(frm) {
+		if (frm.doc.boq && frm.doc.docstatus === 0) {
+			frm.add_custom_button(__("Fetch BOQ Items"), function() {
+				frappe.call({
+					method: "construction_ms.construction_management.doctype.ge_site_measurement_log.ge_site_measurement_log.fetch_boq_items",
+					args: {
+						boq_name: frm.doc.boq
+					},
+					callback: function(r) {
+						if (r.message && r.message.length > 0) {
+							frm.clear_table("measurements");
+							r.message.forEach(function(item) {
+								var row = frm.add_child("measurements");
+								row.boq_item = item.name;
+								row.item_description = item.description;
+								row.uom = item.uom;
+							});
+							frm.refresh_field("measurements");
+							frappe.show_alert({message: __("Fetched " + r.message.length + " BOQ Items"), indicator: 'green'});
+						} else {
+							frappe.msgprint(__("No items found in the attached BOQ."));
+						}
+					}
+				});
+			}, __("Actions"));
+		}
 	}
 });
 
@@ -39,6 +66,21 @@ var calculate_total_quantity = function(frm, cdt, cdn) {
 };
 
 frappe.ui.form.on("GE Measurement Item", {
+	boq_item: function(frm, cdt, cdn) {
+		var row = frappe.get_doc(cdt, cdn);
+		if (row.boq_item) {
+			frappe.call({
+				method: "construction_ms.construction_management.doctype.ge_site_measurement_log.ge_site_measurement_log.get_boq_item_details",
+				args: { item_name: row.boq_item },
+				callback: function(r) {
+					if (r.message) {
+						frappe.model.set_value(cdt, cdn, "item_description", r.message.description);
+						frappe.model.set_value(cdt, cdn, "uom", r.message.uom);
+					}
+				}
+			});
+		}
+	},
 	multiplier: calculate_total_quantity,
 	length: calculate_total_quantity,
 	width: calculate_total_quantity,

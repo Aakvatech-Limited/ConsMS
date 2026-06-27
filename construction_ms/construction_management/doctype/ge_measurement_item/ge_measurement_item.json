@@ -29,18 +29,18 @@
   },
   {
    "columns": 2,
-   "fetch_from": "boq_item.item_description",
    "fieldname": "item_description",
    "fieldtype": "Small Text",
    "in_list_view": 1,
-   "label": "Description"
+   "label": "Description",
+   "read_only": 1
   },
   {
-   "fetch_from": "boq_item.uom",
    "fieldname": "uom",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "UOM"
+   "label": "UOM",
+   "read_only": 1
   },
   {
    "fieldname": "drawing_reference",
