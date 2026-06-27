@@ -5,7 +5,7 @@
    "label": "Monthly Contract Awards"
   }
  ],
- "content": "[{\"id\": \"ch2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Contract Awards\", \"col\": 12}}, {\"id\": \"hdr1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Pre-Construction</b></span>\", \"col\": 12}}, {\"id\": \"s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Bill of Quantities\", \"col\": 3}}, {\"id\": \"s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Tenders\", \"col\": 3}}, {\"id\": \"s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"id\": \"hdr2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Execution</b></span>\", \"col\": 12}}, {\"id\": \"s5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization\", \"col\": 3}}, {\"id\": \"s6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Variation Orders\", \"col\": 3}}, {\"id\": \"s7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Measurement Logs\", \"col\": 3}}, {\"id\": \"hdr3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Configuration</b></span>\", \"col\": 12}}, {\"id\": \"s8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Document Types\", \"col\": 3}}, {\"id\": \"s9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization Templates\", \"col\": 3}}]",
+ "content": "[{\"id\": \"nc_new_1\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Active Tenders\", \"col\": 6}}, {\"id\": \"nc_new_2\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Total Variation Value\", \"col\": 6}}, {\"id\": \"ch2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Contract Awards\", \"col\": 12}}, {\"id\": \"hdr1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Pre-Construction</b></span>\", \"col\": 12}}, {\"id\": \"s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Bill of Quantities\", \"col\": 3}}, {\"id\": \"s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Tenders\", \"col\": 3}}, {\"id\": \"s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"id\": \"hdr2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Execution</b></span>\", \"col\": 12}}, {\"id\": \"s5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization\", \"col\": 3}}, {\"id\": \"s6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Variation Orders\", \"col\": 3}}, {\"id\": \"s7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Measurement Logs\", \"col\": 3}}, {\"id\": \"hdr3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Configuration</b></span>\", \"col\": 12}}, {\"id\": \"s8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Document Types\", \"col\": 3}}, {\"id\": \"s9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization Templates\", \"col\": 3}}]",
  "creation": "2026-06-26 15:29:06.862031",
  "custom_blocks": [],
  "docstatus": 0,
@@ -129,7 +129,16 @@
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "Total Tenders",
+   "name": "Active Tenders"
+  },
+  {
+   "label": "Total Contract Value",
+   "name": "Total Variation Value"
+  }
+ ],
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [],

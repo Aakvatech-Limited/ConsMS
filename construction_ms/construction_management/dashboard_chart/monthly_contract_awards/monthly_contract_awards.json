@@ -15,5 +15,6 @@
  "based_on": "creation",
  "type": "Bar",
  "use_report_chart": 0,
- "modified": "2026-06-26 20:07:44.564868"
+ "modified": "2026-06-26 20:07:44.564868",
+ "timespan": "Last Year"
 }

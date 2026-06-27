@@ -5,11 +5,11 @@
  "is_standard": 1,
  "module": "Construction Management",
  "name": "Total Variation Value",
- "document_type": "GE Variation Order",
+ "document_type": "GE Contract",
  "function": "Sum",
- "aggregate_function_based_on": "requested_amount",
+ "aggregate_function_based_on": "contract_amount",
  "is_public": 1,
- "label": "Total Variation Value",
+ "label": "Total Contract Value",
  "color": "#f39c12",
  "modified": "2026-06-26 20:05:08.607961"
 }

@@ -8,8 +8,8 @@
  "document_type": "GE Tender",
  "function": "Count",
  "is_public": 1,
- "label": "Active Tenders",
- "filters_json": "[[\"GE Tender\",\"status\",\"=\",\"Under Evaluation\",false]]",
+ "label": "Total Tenders",
+ "filters_json": "[]",
  "color": "#2980b9",
  "modified": "2026-06-26 20:05:08.607961"
 }
