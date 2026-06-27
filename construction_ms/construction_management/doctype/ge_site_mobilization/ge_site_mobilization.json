@@ -9,8 +9,11 @@
  "field_order": [
   "mobilization_info",
   "project",
+  "contract",
   "cb_ae86aff8",
-  "mobilization_status"
+  "mobilization_status",
+  "mobilization_template",
+  "mobilization_checklist"
  ],
  "fields": [
   {
@@ -27,6 +30,13 @@
    "reqd": 1
   },
   {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "label": "Contract",
+   "options": "GE Contract",
+   "in_list_view": 1
+  },
+  {
    "fieldname": "cb_ae86aff8",
    "fieldtype": "Column Break"
   },
@@ -36,12 +46,25 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Not Started\nIn Progress\nCompleted"
+  },
+  {
+   "fieldname": "mobilization_template",
+   "fieldtype": "Link",
+   "label": "Mobilization Template",
+   "options": "GE Mobilization Template",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mobilization_checklist",
+   "fieldtype": "Table",
+   "label": "Mobilization Checklist",
+   "options": "GE Site Mobilization Item"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-26 15:29:06.502109",
+ "modified": "2026-06-27 08:28:47.474249",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "GE Site Mobilization",

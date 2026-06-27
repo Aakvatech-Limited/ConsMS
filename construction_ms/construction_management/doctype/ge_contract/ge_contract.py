@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
+from frappe.model.mapper import get_mapped_doc
 
 class GEContract(Document):
 	def validate(self):
@@ -12,3 +13,17 @@ class GEContract(Document):
 		
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
+
+@frappe.whitelist()
+def make_site_mobilization(source_name, target_doc=None):
+	doc = get_mapped_doc("GE Contract", source_name, {
+		"GE Contract": {
+			"doctype": "GE Site Mobilization",
+			"field_map": {
+				"project": "project",
+				"name": "contract"
+			}
+		}
+	}, target_doc)
+
+	return doc
