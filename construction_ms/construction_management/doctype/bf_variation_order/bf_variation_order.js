@@ -18,7 +18,8 @@ frappe.ui.form.on("BF Variation Item", {
 					args: {
 						item_code: row.item_code,
 						company: frappe.defaults.get_user_default("Company") || frappe.boot.default_company,
-						qty: row.quantity || 1
+						qty: row.quantity || 1,
+						doctype: "Sales Order"
 					}
 				},
 				callback: function(r) {
