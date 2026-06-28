@@ -26,7 +26,6 @@
    "fetch_from": "item_code.description",
    "fieldname": "description",
    "fieldtype": "Text",
-   "in_list_view": 1,
    "label": "Description"
   },
   {

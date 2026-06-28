@@ -18,6 +18,11 @@ class BFProgressClaim(Document):
 			
 			total_work_executed += item.cumulative_value
 
+		total_variations = 0.0
+		for var in self.get("variations", []):
+			total_variations += flt(var.this_period_amount)
+
+		self.approved_variations = total_variations
 		self.total_work_executed = total_work_executed
 		self.gross_valuation = flt(self.total_work_executed) + flt(self.approved_variations) + flt(self.materials_on_site)
 		
@@ -90,9 +95,20 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 	# Fetch Approved Variations
 	variations = frappe.get_all("BF Variation Order", 
 		filters={"contract": contract, "docstatus": 1}, 
-		fields=["requested_amount"]
+		fields=["name", "reason", "requested_amount"]
 	)
-	total_variations = sum([flt(v.requested_amount) for v in variations])
+	
+	doc.set("variations", [])
+	total_variations = 0.0
+	for v in variations:
+		doc.append("variations", {
+			"variation_order": v.name,
+			"variation_reason": v.reason,
+			"approved_amount": flt(v.requested_amount),
+			"this_period_amount": flt(v.requested_amount)
+		})
+		total_variations += flt(v.requested_amount)
+		
 	doc.approved_variations = total_variations
 
 	# Clear existing items

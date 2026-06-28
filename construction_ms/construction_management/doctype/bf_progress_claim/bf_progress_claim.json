@@ -19,6 +19,8 @@
   "period_to",
   "claim_items_sb",
   "claim_items",
+  "variations_section",
+  "variations",
   "summary_sb",
   "total_work_executed",
   "approved_variations",
@@ -150,10 +152,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "contract.retention_percentage",
    "fieldname": "retention_percentage",
    "fieldtype": "Percent",
-   "label": "Retention (%)",
-   "fetch_from": "contract.retention_percentage"
+   "label": "Retention (%)"
   },
   {
    "fieldname": "retention_deduction",
@@ -211,18 +213,59 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "variations_section",
+   "fieldtype": "Section Break",
+   "label": "Claimed Variations"
+  },
+  {
+   "fieldname": "variations",
+   "fieldtype": "Table",
+   "label": "Variations",
+   "options": "BF Progress Claim Variation"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-28 10:57:07.168870",
+ "modified": "2026-06-28 11:50:54.464964",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim",
  "owner": "Administrator",
  "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
   {
    "amend": 1,
    "cancel": 1,

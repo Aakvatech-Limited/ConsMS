@@ -50,7 +50,13 @@ frappe.ui.form.on("BF Progress Claim", {
 	
 	calculate_totals_frontend: function(frm) {
 		var total_work = frm.doc.total_work_executed || 0.0;
-		var gross = total_work + flt(frm.doc.materials_on_site);
+		var total_var = 0.0;
+		$.each(frm.doc.variations || [], function(i, d) {
+			total_var += flt(d.this_period_amount);
+		});
+		frm.set_value("approved_variations", total_var);
+
+		var gross = total_work + flt(frm.doc.materials_on_site) + total_var;
 		frm.set_value("gross_valuation", gross);
 		
 		var retention = (flt(frm.doc.retention_percentage) / 100.0) * gross;
@@ -64,5 +70,14 @@ frappe.ui.form.on("BF Progress Claim", {
 		frm.set_value("vat_amount", vat);
 		
 		frm.set_value("total_amount_certified", net + vat);
+	}
+});
+
+frappe.ui.form.on("BF Progress Claim Variation", {
+	this_period_amount: function(frm, cdt, cdn) {
+		frm.trigger("calculate_totals_frontend");
+	},
+	variations_remove: function(frm) {
+		frm.trigger("calculate_totals_frontend");
 	}
 });
