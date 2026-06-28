@@ -175,7 +175,7 @@
   },
   {
    "fieldname": "sb_totals",
-   "fieldtype": "Section Break"
+   "fieldtype": "Column Break"
   },
   {
    "bold": 1,
