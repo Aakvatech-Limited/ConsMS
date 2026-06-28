@@ -118,6 +118,7 @@ def make_sales_invoice(source_name, target_doc=None):
 	
 	def set_missing_values(source, target):
 		target.project = source.project
+		target.company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
 		
 		customer = frappe.db.get_value("Project", source.project, "customer")
 		if customer:
@@ -139,5 +140,7 @@ def make_sales_invoice(source_name, target_doc=None):
 		{"BF Progress Claim": {"doctype": "Sales Invoice"}},
 		target_doc, set_missing_values
 	)
+	
+	doclist.set_missing_values()
 	
 	return doclist
