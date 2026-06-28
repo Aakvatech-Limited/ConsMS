@@ -133,10 +133,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "5",
    "fieldname": "retention_percentage",
    "fieldtype": "Percent",
-   "label": "Retention (%)"
+   "label": "Retention (%)",
+   "fetch_from": "contract.retention_percentage"
   },
   {
    "fieldname": "retention_deduction",

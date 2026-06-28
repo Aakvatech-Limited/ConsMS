@@ -24,23 +24,6 @@
    "fieldtype": "Link",
    "label": "Default Progress Claim Item",
    "options": "Item"
-  },
-  {
-   "fieldname": "sb_defaults",
-   "fieldtype": "Section Break",
-   "label": "Financial Defaults"
-  },
-  {
-   "default": "5",
-   "fieldname": "default_retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Default Retention (%)"
-  },
-  {
-   "default": "18",
-   "fieldname": "default_vat_percentage",
-   "fieldtype": "Percent",
-   "label": "Default VAT (%)"
   }
  ],
  "grid_page_length": 50,

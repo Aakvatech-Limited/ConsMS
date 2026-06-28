@@ -59,6 +59,13 @@
    "label": "Contingency (%)"
   },
   {
+   "default": "5",
+   "description": "Amount withheld until the end of the defects liability period",
+   "fieldname": "retention_percentage",
+   "fieldtype": "Percent",
+   "label": "Retention (%)"
+  },
+  {
    "fieldname": "contingency_amount",
    "fieldtype": "Currency",
    "label": "Contingency Amount",
