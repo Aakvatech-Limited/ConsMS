@@ -118,6 +118,8 @@ def make_sales_invoice(source_name, target_doc=None):
 	
 	def set_missing_values(source, target):
 		target.project = source.project
+		target.bf_contract = source.contract
+		target.bf_progress_claim = source.name
 		target.company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
 			
 		default_item = frappe.db.get_single_value("BF Construction Settings", "default_progress_claim_item")

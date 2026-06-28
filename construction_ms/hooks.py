@@ -145,6 +145,8 @@ app_license = "mit"
 # 	}
 # }
 
+after_migrate = "construction_ms.custom_fields.create_custom_fields"
+
 # Scheduled Tasks
 # ---------------
 
