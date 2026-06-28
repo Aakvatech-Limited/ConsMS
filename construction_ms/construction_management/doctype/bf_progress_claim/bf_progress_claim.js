@@ -2,6 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Progress Claim", {
+	setup: function(frm) {
+		frm.set_query("variation_order", "variations", function() {
+			return {
+				filters: {
+					"contract": frm.doc.contract,
+					"docstatus": 1
+				}
+			};
+		});
+	},
 	refresh: function(frm) {
 		if (frm.doc.docstatus === 0 && frm.doc.contract) {
 			frm.add_custom_button(__("Fetch Measurements"), function() {

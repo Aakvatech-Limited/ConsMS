@@ -111,6 +111,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "contract,project",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
