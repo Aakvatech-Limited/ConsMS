@@ -12,11 +12,11 @@
   "contract",
   "cb_9f1d4557",
   "requested_amount",
+  "items_sb",
+  "items",
   "justification",
   "reason",
-  "amended_from",
-  "items_sb",
-  "items"
+  "amended_from"
  ],
  "fields": [
   {
