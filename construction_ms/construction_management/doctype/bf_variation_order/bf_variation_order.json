@@ -14,7 +14,9 @@
   "requested_amount",
   "justification",
   "reason",
-  "amended_from"
+  "amended_from",
+  "items_sb",
+  "items"
  ],
  "fields": [
   {
@@ -41,9 +43,11 @@
    "fieldtype": "Column Break"
   },
   {
+   "bold": 1,
    "fieldname": "requested_amount",
    "fieldtype": "Currency",
-   "label": "Requested Amount"
+   "label": "Requested Amount",
+   "read_only": 1
   },
   {
    "fieldname": "justification",
@@ -64,13 +68,25 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "items_sb",
+   "fieldtype": "Section Break",
+   "label": "Variation Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "BF Variation Item",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-28 10:56:59.101713",
+ "modified": "2026-06-28 11:57:50.876276",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Variation Order",

@@ -19,7 +19,7 @@ class BFProgressClaim(Document):
 			total_work_executed += item.cumulative_value
 
 		self.total_work_executed = total_work_executed
-		self.gross_valuation = flt(self.total_work_executed) + flt(self.materials_on_site)
+		self.gross_valuation = flt(self.total_work_executed) + flt(self.approved_variations) + flt(self.materials_on_site)
 		
 		self.retention_deduction = (flt(self.retention_percentage) / 100.0) * self.gross_valuation
 		
@@ -86,6 +86,14 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 		# Since Gross Valuation is cumulative (based on cumulative_qty), we only need the MAX(Gross Valuation) of previous IPCs.
 		if past_claim_docs:
 			prev_certified = max([flt(p.gross_valuation) for p in past_claim_docs])
+
+	# Fetch Approved Variations
+	variations = frappe.get_all("BF Variation Order", 
+		filters={"contract": contract, "docstatus": 1}, 
+		fields=["requested_amount"]
+	)
+	total_variations = sum([flt(v.requested_amount) for v in variations])
+	doc.approved_variations = total_variations
 
 	# Clear existing items
 	doc.set("claim_items", [])

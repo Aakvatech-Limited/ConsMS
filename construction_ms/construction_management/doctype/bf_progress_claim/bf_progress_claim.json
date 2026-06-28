@@ -21,6 +21,7 @@
   "claim_items",
   "summary_sb",
   "total_work_executed",
+  "approved_variations",
   "materials_on_site",
   "gross_valuation",
   "cb_deductions",
@@ -127,15 +128,21 @@
    "read_only": 1
   },
   {
+   "fieldname": "approved_variations",
+   "fieldtype": "Currency",
+   "label": "2. Add: Approved Variations (VO)",
+   "read_only": 1
+  },
+  {
    "fieldname": "materials_on_site",
    "fieldtype": "Currency",
-   "label": "2. Materials on Site (Optional)"
+   "label": "3. Materials on Site (Optional)"
   },
   {
    "bold": 1,
    "fieldname": "gross_valuation",
    "fieldtype": "Currency",
-   "label": "3. Gross Valuation (1 + 2)",
+   "label": "4. Gross Valuation (1 + 2 + 3)",
    "read_only": 1
   },
   {
@@ -151,18 +158,18 @@
   {
    "fieldname": "retention_deduction",
    "fieldtype": "Currency",
-   "label": "4. Less: Retention Fund",
+   "label": "5. Less: Retention Fund",
    "read_only": 1
   },
   {
    "fieldname": "advance_payment_recovery",
    "fieldtype": "Currency",
-   "label": "5. Less: Advance Payment Recovery"
+   "label": "6. Less: Advance Payment Recovery"
   },
   {
    "fieldname": "previous_certified_amount",
    "fieldtype": "Currency",
-   "label": "6. Less: Previous Certified Amount"
+   "label": "7. Less: Previous Certified Amount"
   },
   {
    "fieldname": "sb_totals",
