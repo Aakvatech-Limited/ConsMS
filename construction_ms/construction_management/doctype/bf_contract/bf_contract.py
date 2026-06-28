@@ -27,3 +27,31 @@ def make_site_mobilization(source_name, target_doc=None):
 	}, target_doc)
 
 	return doc
+
+@frappe.whitelist()
+def make_variation_order(source_name, target_doc=None):
+	doc = get_mapped_doc("BF Contract", source_name, {
+		"BF Contract": {
+			"doctype": "BF Variation Order",
+			"field_map": {
+				"project": "project",
+				"name": "contract"
+			}
+		}
+	}, target_doc)
+	return doc
+
+@frappe.whitelist()
+def make_progress_claim(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		target.claim_title = f"IPC for Contract {source.name}"
+
+	doc = get_mapped_doc("BF Contract", source_name, {
+		"BF Contract": {
+			"doctype": "BF Progress Claim",
+			"field_map": {
+				"name": "contract"
+			}
+		}
+	}, target_doc, set_missing_values)
+	return doc
