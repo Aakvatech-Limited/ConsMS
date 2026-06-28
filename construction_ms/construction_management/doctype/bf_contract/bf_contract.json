@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "details_tab",
   "contract_reference",
   "tender",
   "project",
@@ -14,14 +15,27 @@
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
+  "retention_percentage",
   "contingency_amount",
   "total_contract_amount",
   "amended_from",
   "boq",
   "submittals_section",
-  "submittals"
+  "submittals",
+  "connections_tab"
  ],
  "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  },
   {
    "fieldname": "contract_reference",
    "fieldtype": "Section Break",
