@@ -41,6 +41,13 @@
    "options": "Project"
   },
   {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Client (Customer)",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
    "fieldname": "cb_885ac733",
    "fieldtype": "Column Break"
   },
