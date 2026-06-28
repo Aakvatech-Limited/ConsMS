@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "details_tab",
   "header_sb",
   "contract",
   "project",
@@ -36,9 +37,21 @@
   "vat_percentage",
   "vat_amount",
   "total_amount_certified",
-  "amended_from"
+  "amended_from",
+  "connections_tab"
  ],
  "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  },
   {
    "fieldname": "header_sb",
    "fieldtype": "Section Break",
