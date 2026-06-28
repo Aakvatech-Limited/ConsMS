@@ -10,8 +10,8 @@
  "disable_prepared_report": 0,
  "disabled": 0,
  "letter_head": "",
- "query": "SELECT project as \"Project:Link/Project:150\", name as \"Contract:Link/GE Contract:150\", contract_amount as \"Contract Amount:Currency:150\", contingency_amount as \"Contingency:Currency:150\", (SELECT SUM(requested_amount) FROM `tabGE Variation Order` WHERE contract=`tabGE Contract`.name AND docstatus=1) as \"Total Variations:Currency:150\" FROM `tabGE Contract` WHERE docstatus=1",
- "ref_doctype": "GE Contract",
+ "query": "SELECT project as \"Project:Link/Project:150\", name as \"Contract:Link/BF Contract:150\", contract_amount as \"Contract Amount:Currency:150\", contingency_amount as \"Contingency:Currency:150\", (SELECT SUM(requested_amount) FROM `tabBF Variation Order` WHERE contract=`tabBF Contract`.name AND docstatus=1) as \"Total Variations:Currency:150\" FROM `tabBF Contract` WHERE docstatus=1",
+ "ref_doctype": "BF Contract",
  "report_name": "Variation vs Budget Report",
  "report_type": "Query Report",
  "roles": [

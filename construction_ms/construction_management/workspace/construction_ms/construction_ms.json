@@ -31,7 +31,7 @@
    "is_query_report": 0,
    "label": "Bill of Quantities",
    "link_count": 0,
-   "link_to": "GE Bill of Quantities",
+   "link_to": "BF Bill of Quantities",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -41,7 +41,7 @@
    "is_query_report": 0,
    "label": "Tenders",
    "link_count": 0,
-   "link_to": "GE Tender",
+   "link_to": "BF Tender",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -51,7 +51,7 @@
    "is_query_report": 0,
    "label": "Contracts",
    "link_count": 0,
-   "link_to": "GE Contract",
+   "link_to": "BF Contract",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -70,7 +70,7 @@
    "is_query_report": 0,
    "label": "Mobilization",
    "link_count": 0,
-   "link_to": "GE Site Mobilization",
+   "link_to": "BF Site Mobilization",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -80,7 +80,7 @@
    "is_query_report": 0,
    "label": "Variation Orders",
    "link_count": 0,
-   "link_to": "GE Variation Order",
+   "link_to": "BF Variation Order",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -90,7 +90,7 @@
    "is_query_report": 0,
    "label": "Measurement Logs",
    "link_count": 0,
-   "link_to": "GE Site Measurement Log",
+   "link_to": "BF Site Measurement Log",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -109,7 +109,7 @@
    "is_query_report": 0,
    "label": "Document Types",
    "link_count": 0,
-   "link_to": "GE Document Type",
+   "link_to": "BF Document Type",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -119,7 +119,7 @@
    "is_query_report": 0,
    "label": "Mobilization Templates",
    "link_count": 0,
-   "link_to": "GE Mobilization Template",
+   "link_to": "BF Mobilization Template",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -148,49 +148,49 @@
   {
    "doc_view": "",
    "label": "Bill of Quantities",
-   "link_to": "GE Bill of Quantities",
+   "link_to": "BF Bill of Quantities",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Tenders",
-   "link_to": "GE Tender",
+   "link_to": "BF Tender",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Contracts",
-   "link_to": "GE Contract",
+   "link_to": "BF Contract",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Mobilization",
-   "link_to": "GE Site Mobilization",
+   "link_to": "BF Site Mobilization",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Variation Orders",
-   "link_to": "GE Variation Order",
+   "link_to": "BF Variation Order",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Measurement Logs",
-   "link_to": "GE Site Measurement Log",
+   "link_to": "BF Site Measurement Log",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Document Types",
-   "link_to": "GE Document Type",
+   "link_to": "BF Document Type",
    "type": "DocType"
   },
   {
    "doc_view": "",
    "label": "Mobilization Templates",
-   "link_to": "GE Mobilization Template",
+   "link_to": "BF Mobilization Template",
    "type": "DocType"
   }
  ],

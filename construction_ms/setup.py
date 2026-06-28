@@ -6,17 +6,17 @@ def after_migrate():
 
     child_fields = [
         {
-            "fieldname": "ge_boq",
-            "label": "GE Bill of Quantities",
+            "fieldname": "bf_boq",
+            "label": "BF Bill of Quantities",
             "fieldtype": "Link",
-            "options": "GE Bill of Quantities",
+            "options": "BF Bill of Quantities",
             "insert_after": "item_code",
             "read_only": 1,
             "hidden": 1,
         },
         {
-            "fieldname": "ge_boq_item",
-            "label": "GE BOQ Item Reference",
+            "fieldname": "bf_boq_item",
+            "label": "BF BOQ Item Reference",
             "fieldtype": "Data",
             "insert_after": "item_code",
             "read_only": 1,
@@ -30,10 +30,10 @@ def get_material_request_dashboard(data):
     if "internal_links" not in data:
         data["internal_links"] = {}
         
-    data["internal_links"]["GE Bill of Quantities"] = ["items", "ge_boq"]
+    data["internal_links"]["BF Bill of Quantities"] = ["items", "bf_boq"]
     
     data["transactions"].append({
         "label": "Construction",
-        "items": ["GE Bill of Quantities"]
+        "items": ["BF Bill of Quantities"]
     })
     return data
