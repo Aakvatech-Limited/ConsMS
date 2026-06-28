@@ -24,6 +24,15 @@ frappe.ui.form.on("GE Progress Claim", {
 				});
 			}, __("Actions"));
 		}
+		
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("Sales Invoice"), function() {
+				frappe.model.open_mapped_doc({
+					method: "construction_ms.construction_management.doctype.ge_progress_claim.ge_progress_claim.make_sales_invoice",
+					frm: frm
+				});
+			}, __("Create"));
+		}
 	},
 	
 	materials_on_site: function(frm) {

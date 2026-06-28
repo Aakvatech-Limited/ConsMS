@@ -111,3 +111,33 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 	doc.save()
 	
 	return {"status": "success", "count": len(doc.claim_items)}
+
+@frappe.whitelist()
+def make_sales_invoice(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+	
+	def set_missing_values(source, target):
+		target.project = source.project
+		
+		customer = frappe.db.get_value("Project", source.project, "customer")
+		if customer:
+			target.customer = customer
+			
+		default_item = frappe.db.get_single_value("GE Construction Settings", "default_progress_claim_item")
+			
+		target.append("items", {
+			"item_code": default_item,
+			"item_name": source.claim_title,
+			"description": f"Progress Claim for Contract {source.contract}: {source.claim_title}",
+			"qty": 1,
+			"rate": source.net_amount_due,
+			"amount": source.net_amount_due
+		})
+
+	doclist = get_mapped_doc(
+		"GE Progress Claim", source_name,
+		{"GE Progress Claim": {"doctype": "Sales Invoice"}},
+		target_doc, set_missing_values
+	)
+	
+	return doclist
