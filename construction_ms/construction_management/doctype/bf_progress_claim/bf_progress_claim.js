@@ -62,7 +62,8 @@ frappe.ui.form.on("BF Progress Claim", {
 		var total_work = frm.doc.total_work_executed || 0.0;
 		var total_var = 0.0;
 		$.each(frm.doc.variations || [], function(i, d) {
-			total_var += flt(d.this_period_amount);
+			d.cumulative_amount = flt(d.previously_certified) + flt(d.this_period_amount);
+			total_var += flt(d.cumulative_amount);
 		});
 		frm.set_value("approved_variations", total_var);
 
@@ -85,6 +86,13 @@ frappe.ui.form.on("BF Progress Claim", {
 
 frappe.ui.form.on("BF Progress Claim Variation", {
 	this_period_amount: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		row.cumulative_amount = flt(row.previously_certified) + flt(row.this_period_amount);
+		
+		if (flt(row.cumulative_amount) > flt(row.approved_amount)) {
+			frappe.msgprint(__("Cumulative Claimed amount cannot exceed the Approved Amount."));
+			frappe.model.set_value(cdt, cdn, "this_period_amount", flt(row.approved_amount) - flt(row.previously_certified));
+		}
 		frm.trigger("calculate_totals_frontend");
 	},
 	variations_remove: function(frm) {

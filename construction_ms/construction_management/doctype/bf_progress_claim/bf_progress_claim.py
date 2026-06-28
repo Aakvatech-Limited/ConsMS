@@ -7,6 +7,11 @@ from frappe.utils import flt
 
 class BFProgressClaim(Document):
 	def validate(self):
+		for var in self.get("variations", []):
+			var.cumulative_amount = flt(var.previously_certified) + flt(var.this_period_amount)
+			if flt(var.cumulative_amount) > flt(var.approved_amount):
+				frappe.throw(f"Row {var.idx}: Cumulative Claimed Amount ({var.cumulative_amount}) cannot exceed the Approved Amount ({var.approved_amount}) for Variation {var.variation_order}.")
+		
 		self.calculate_totals()
 
 	def calculate_totals(self):
@@ -20,7 +25,8 @@ class BFProgressClaim(Document):
 
 		total_variations = 0.0
 		for var in self.get("variations", []):
-			total_variations += flt(var.this_period_amount)
+			var.cumulative_amount = flt(var.previously_certified) + flt(var.this_period_amount)
+			total_variations += flt(var.cumulative_amount)
 
 		self.approved_variations = total_variations
 		self.total_work_executed = total_work_executed
@@ -92,6 +98,16 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 		if past_claim_docs:
 			prev_certified = max([flt(p.gross_valuation) for p in past_claim_docs])
 
+	# Fetch Past Variation Claims
+	prev_var_claims = {}
+	if past_claims:
+		past_var_items = frappe.get_all("BF Progress Claim Variation", 
+			filters={"parent": ["in", past_claims]}, 
+			fields=["variation_order", "this_period_amount"]
+		)
+		for pvi in past_var_items:
+			prev_var_claims[pvi.variation_order] = prev_var_claims.get(pvi.variation_order, 0.0) + flt(pvi.this_period_amount)
+
 	# Fetch Approved Variations
 	variations = frappe.get_all("BF Variation Order", 
 		filters={"contract": contract, "docstatus": 1}, 
@@ -101,13 +117,19 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 	doc.set("variations", [])
 	total_variations = 0.0
 	for v in variations:
+		prev_claimed = prev_var_claims.get(v.name, 0.0)
+		remaining = flt(v.requested_amount) - prev_claimed
+		if remaining < 0: remaining = 0.0
+		
 		doc.append("variations", {
 			"variation_order": v.name,
 			"variation_reason": v.reason,
 			"approved_amount": flt(v.requested_amount),
-			"this_period_amount": flt(v.requested_amount)
+			"previously_certified": prev_claimed,
+			"this_period_amount": remaining,
+			"cumulative_amount": prev_claimed + remaining
 		})
-		total_variations += flt(v.requested_amount)
+		total_variations += prev_claimed + remaining
 		
 	doc.approved_variations = total_variations
 

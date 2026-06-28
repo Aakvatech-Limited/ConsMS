@@ -10,7 +10,9 @@
   "variation_reason",
   "col_break",
   "approved_amount",
-  "this_period_amount"
+  "previously_certified",
+  "this_period_amount",
+  "cumulative_amount"
  ],
  "fields": [
   {
@@ -38,7 +40,14 @@
    "fieldname": "approved_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Approved Amount"
+   "label": "Approved Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "previously_certified",
+   "fieldtype": "Currency",
+   "label": "Previously Certified",
+   "read_only": 1
   },
   {
    "columns": 2,
@@ -47,6 +56,12 @@
    "in_list_view": 1,
    "label": "Claimed This Period",
    "reqd": 1
+  },
+  {
+   "fieldname": "cumulative_amount",
+   "fieldtype": "Currency",
+   "label": "Cumulative Amount",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
