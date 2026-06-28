@@ -64,3 +64,10 @@ def make_bf_tender(source_name, target_doc=None):
 	}, target_doc, set_missing_values)
 	
 	return doc
+
+@frappe.whitelist()
+def check_existing_tender(boq_name):
+	existing_tender = frappe.db.get_value("BF Tender", {"boq": boq_name}, "name")
+	if existing_tender:
+		return existing_tender
+	return None
