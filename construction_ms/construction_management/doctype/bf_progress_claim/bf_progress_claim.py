@@ -7,6 +7,23 @@ from frappe.utils import flt
 
 class BFProgressClaim(Document):
 	def validate(self):
+		if self.period_from and self.period_to:
+			if self.period_from > self.period_to:
+				frappe.throw("Period From cannot be after Period To.")
+			
+			overlapping = frappe.db.sql("""
+				SELECT name FROM `tabBF Progress Claim`
+				WHERE contract = %s AND docstatus < 2 AND name != %s
+				AND (
+					(period_from <= %s AND period_to >= %s) OR
+					(period_from <= %s AND period_to >= %s) OR
+					(period_from >= %s AND period_to <= %s)
+				)
+			""", (self.contract, self.name or "New", self.period_from, self.period_from, self.period_to, self.period_to, self.period_from, self.period_to))
+			
+			if overlapping:
+				frappe.throw(f"There is already a Progress Claim ({overlapping[0][0]}) covering this time period for this Contract.")
+
 		for var in self.get("variations", []):
 			var.cumulative_amount = flt(var.previously_certified) + flt(var.this_period_amount)
 			if flt(var.cumulative_amount) > flt(var.approved_amount):

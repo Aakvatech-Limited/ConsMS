@@ -15,7 +15,7 @@
   "boq",
   "claim_title",
   "cb_dates",
-  "date",
+  "posting_date",
   "period_from",
   "period_to",
   "claim_items_sb",
@@ -104,20 +104,22 @@
   },
   {
    "default": "Today",
-   "fieldname": "date",
+   "fieldname": "posting_date",
    "fieldtype": "Date",
-   "label": "Date of Claim",
+   "label": "Posting Date",
    "reqd": 1
   },
   {
    "fieldname": "period_from",
    "fieldtype": "Date",
-   "label": "Period From"
+   "label": "Period From",
+   "reqd": 1
   },
   {
    "fieldname": "period_to",
    "fieldtype": "Date",
-   "label": "Period To"
+   "label": "Period To",
+   "reqd": 1
   },
   {
    "fieldname": "claim_items_sb",
