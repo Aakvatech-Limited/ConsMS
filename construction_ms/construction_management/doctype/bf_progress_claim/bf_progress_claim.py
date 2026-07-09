@@ -107,13 +107,10 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 		for pi in past_items:
 			prev_qtys[pi.boq_item] = prev_qtys.get(pi.boq_item, 0.0) + flt(pi.this_period_qty)
 			
-		# Get the total Gross Valuation of all past claims to subtract as Previous Certified Amount
-		past_claim_docs = frappe.get_all("BF Progress Claim", filters={"name": ["in", past_claims]}, fields=["gross_valuation"])
-		# Note: Standard practice is to subtract the Gross Valuation of previous IPCs from current Gross Valuation.
-		# Wait, actually usually the most recent IPC's Gross Valuation is subtracted. But summing them is wrong if Gross is cumulative.
-		# Since Gross Valuation is cumulative (based on cumulative_qty), we only need the MAX(Gross Valuation) of previous IPCs.
+		# The Previous Certified Amount is the SUM of all previously certified NET amounts (Amount Due To Date)
+		past_claim_docs = frappe.get_all("BF Progress Claim", filters={"name": ["in", past_claims]}, fields=["net_amount_due"])
 		if past_claim_docs:
-			prev_certified = max([flt(p.gross_valuation) for p in past_claim_docs])
+			prev_certified = sum([flt(p.net_amount_due) for p in past_claim_docs])
 
 	# Fetch Past Variation Claims
 	prev_var_claims = {}
@@ -199,6 +196,37 @@ def make_sales_invoice(source_name, target_doc=None):
 	doclist = get_mapped_doc(
 		"BF Progress Claim", source_name,
 		{"BF Progress Claim": {"doctype": "Sales Invoice"}},
+		target_doc, set_missing_values
+	)
+	
+	doclist.set_missing_values()
+	
+	return doclist
+
+@frappe.whitelist()
+def make_purchase_invoice(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+	
+	def set_missing_values(source, target):
+		target.project = source.project
+		target.bf_contract = source.contract
+		target.bf_progress_claim = source.name
+		target.company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
+			
+		default_item = frappe.db.get_single_value("BF Construction Settings", "default_progress_claim_item")
+			
+		target.append("items", {
+			"item_code": default_item,
+			"item_name": source.claim_title,
+			"description": f"Subcontractor Claim for Contract {source.contract}: {source.claim_title}",
+			"qty": 1,
+			"rate": source.net_amount_due,
+			"amount": source.net_amount_due
+		})
+
+	doclist = get_mapped_doc(
+		"BF Progress Claim", source_name,
+		{"BF Progress Claim": {"doctype": "Purchase Invoice"}},
 		target_doc, set_missing_values
 	)
 	

@@ -8,10 +8,13 @@
  "engine": "InnoDB",
  "field_order": [
   "details_tab",
+  "contract_type",
   "contract_reference",
   "tender",
   "project",
   "customer",
+  "supplier",
+  "main_contract",
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
@@ -56,11 +59,35 @@
    "options": "Project"
   },
   {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "label": "Contract Type",
+   "options": "Main Contract\nSubcontract",
+   "default": "Main Contract",
+   "reqd": 1
+  },
+  {
+   "fieldname": "main_contract",
+   "fieldtype": "Link",
+   "label": "Parent Main Contract",
+   "options": "BF Contract",
+   "depends_on": "eval:doc.contract_type=='Subcontract';"
+  },
+  {
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Client (Customer)",
    "options": "Customer",
-   "reqd": 1
+   "depends_on": "eval:doc.contract_type=='Main Contract';",
+   "mandatory_depends_on": "eval:doc.contract_type=='Main Contract';"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Subcontractor (Supplier)",
+   "options": "Supplier",
+   "depends_on": "eval:doc.contract_type=='Subcontract';",
+   "mandatory_depends_on": "eval:doc.contract_type=='Subcontract';"
   },
   {
    "fieldname": "cb_885ac733",
