@@ -38,8 +38,7 @@ def make_material_request(source_name, target_doc=None):
 			"doctype": "Material Request Item",
 			"field_map": {
 				"item_code": "item_code",
-				"description": "description",
-				"uom": "uom"
+				"description": "description"
 			},
 			"condition": lambda doc: float(doc.quantity or 0) > float(doc.requested_qty or 0),
 			"postprocess": update_item
