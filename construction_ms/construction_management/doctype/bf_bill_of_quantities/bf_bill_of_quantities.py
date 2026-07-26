@@ -31,7 +31,8 @@ def make_material_request(source_name, target_doc=None):
 		"BF Bill of Quantities": {
 			"doctype": "Material Request",
 			"field_map": {
-				"project": "project"
+				"project": "project",
+				"name": "bf_boq"
 			}
 		},
 		"BF BOQ Item": {

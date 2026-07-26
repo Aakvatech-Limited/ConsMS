@@ -4,6 +4,16 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 def after_migrate():
 
+    parent_boq_field = [
+        {
+            "fieldname": "bf_boq",
+            "label": "BF Bill of Quantities",
+            "fieldtype": "Link",
+            "options": "BF Bill of Quantities",
+            "insert_after": "project",
+        }
+    ]
+
     boq_item_link_fields = [
         {
             "fieldname": "bf_boq",
@@ -22,6 +32,10 @@ def after_migrate():
     ]
 
     create_custom_fields({
+        "Material Request": parent_boq_field,
+        "Purchase Order": parent_boq_field,
+        "Purchase Receipt": parent_boq_field,
+        "Purchase Invoice": parent_boq_field,
         "Material Request Item": boq_item_link_fields,
         "Purchase Order Item": boq_item_link_fields,
         "Purchase Receipt Item": boq_item_link_fields,
