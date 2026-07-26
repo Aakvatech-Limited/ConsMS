@@ -19,13 +19,9 @@ class BFBillofQuantities(Document):
 def make_material_request(source_name, target_doc=None):
 	def set_missing_values(source, target):
 		target.material_request_type = "Purchase"
-		
-	def update_item(source, target, source_parent):
-		target.bf_boq = source_parent.name
-		target.bf_boq_item = source.name
-		# Only request the remaining amount
-		rem_qty = float(source.quantity or 0) - float(source.requested_qty or 0)
-		target.qty = rem_qty
+		target.project = source.project
+		target.bf_boq = source.name
+		target.items = []
 
 	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
 		"BF Bill of Quantities": {
@@ -34,15 +30,6 @@ def make_material_request(source_name, target_doc=None):
 				"project": "project",
 				"name": "bf_boq"
 			}
-		},
-		"BF BOQ Item": {
-			"doctype": "Material Request Item",
-			"field_map": {
-				"item_code": "item_code",
-				"description": "description"
-			},
-			"condition": lambda doc: float(doc.quantity or 0) > float(doc.requested_qty or 0),
-			"postprocess": update_item
 		}
 	}, target_doc, set_missing_values)
 	
