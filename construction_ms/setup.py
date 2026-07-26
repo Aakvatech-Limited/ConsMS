@@ -3,20 +3,6 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
 def after_migrate():
-    # Fix pre-existing custom fields where fieldtype was Data
-    existing_custom_fields = frappe.db.get_all(
-        "Custom Field",
-        filters={"fieldname": "bf_boq_item", "fieldtype": "Data"},
-        pluck="name"
-    )
-    for cf_name in existing_custom_fields:
-        frappe.db.set_value("Custom Field", cf_name, {
-            "fieldtype": "Link",
-            "options": "BF BOQ Item",
-            "label": "BOQ Line Item",
-            "read_only": 0,
-            "hidden": 0
-        })
 
     boq_item_link_fields = [
         {
