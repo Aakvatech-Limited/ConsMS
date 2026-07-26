@@ -70,3 +70,40 @@ def check_existing_tender(boq_name):
 	if existing_tender:
 		return existing_tender
 	return None
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
+	filters = filters or {}
+	boq_name = filters.get("parent")
+	
+	conditions = []
+	params = []
+
+	if boq_name:
+		conditions.append("parent = %s")
+		params.append(boq_name)
+
+	if txt:
+		search_txt = f"%{txt}%"
+		conditions.append("(name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)")
+		params.extend([search_txt, search_txt, search_txt])
+
+	where_stmt = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+	query = f"""
+		SELECT 
+			name,
+			CONCAT(
+				IF(IFNULL(item_code, '') != '', CONCAT('[', item_code, '] '), ''),
+				IFNULL(description, ''), 
+				IF(IFNULL(uom, '') != '', CONCAT(' | UOM: ', uom), ''),
+				IF(IFNULL(quantity, 0) > 0, CONCAT(' | Qty: ', quantity), '')
+			) AS title
+		FROM `tabBF BOQ Item`
+		{where_stmt}
+		ORDER BY idx ASC
+		LIMIT %s, %s
+	"""
+	params.extend([start, page_len])
+	return frappe.db.sql(query, params)
