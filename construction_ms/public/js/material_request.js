@@ -15,3 +15,10 @@ frappe.ui.form.on("Material Request", {
 		});
 	}
 });
+
+frappe.ui.form.on("Material Request Item", {
+	bf_boq_item(frm, cdt, cdn) {
+		let row = frappe.get_doc(cdt, cdn);
+		frappe.model.set_value(cdt, cdn, "bf_boq_item_id", row.bf_boq_item || "");
+	}
+});

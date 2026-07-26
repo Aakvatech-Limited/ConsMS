@@ -81,9 +81,11 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	conditions = []
 	params = []
 
-	if boq_name:
-		conditions.append("parent = %s")
-		params.append(boq_name)
+	if not boq_name:
+		return []
+
+	conditions = ["parent = %s"]
+	params = [boq_name]
 
 	if txt:
 		search_txt = f"%{txt}%"

@@ -29,6 +29,13 @@ def after_migrate():
             "options": "BF BOQ Item",
             "insert_after": "bf_boq",
         },
+        {
+            "fieldname": "bf_boq_item_id",
+            "label": "BOQ Item ID",
+            "fieldtype": "Data",
+            "insert_after": "bf_boq_item",
+            "read_only": 1,
+        },
     ]
 
     create_custom_fields({
