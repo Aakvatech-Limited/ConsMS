@@ -23,6 +23,11 @@ def make_material_request(source_name, target_doc=None):
 	def update_item(source, target, source_parent):
 		target.bf_boq = source_parent.name
 		target.bf_boq_item = source.name
+		# If BOQ item does not have an item_code, fallback to default construction item
+		if not target.item_code:
+			default_item = frappe.db.get_single_value("BF Construction Settings", "default_progress_claim_item")
+			if default_item:
+				target.item_code = default_item
 		# Only request the remaining amount
 		rem_qty = float(source.quantity or 0) - float(source.requested_qty or 0)
 		target.qty = rem_qty
