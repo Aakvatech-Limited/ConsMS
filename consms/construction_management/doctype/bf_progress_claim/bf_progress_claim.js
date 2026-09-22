@@ -16,7 +16,7 @@ frappe.ui.form.on("BF Progress Claim", {
 		if (frm.doc.docstatus === 0 && frm.doc.contract) {
 			frm.add_custom_button(__("Fetch Measurements"), function() {
 				frappe.call({
-					method: "construction_ms.construction_management.doctype.bf_progress_claim.bf_progress_claim.fetch_measurements",
+					method: "consms.construction_management.doctype.bf_progress_claim.bf_progress_claim.fetch_measurements",
 					args: {
 						claim_name: frm.doc.name,
 						contract: frm.doc.contract,
@@ -39,14 +39,14 @@ frappe.ui.form.on("BF Progress Claim", {
 			if (frm.doc.claim_type === "Client Claim") {
 				frm.add_custom_button(__("Sales Invoice"), function() {
 					frappe.model.open_mapped_doc({
-						method: "construction_ms.construction_management.doctype.bf_progress_claim.bf_progress_claim.make_sales_invoice",
+						method: "consms.construction_management.doctype.bf_progress_claim.bf_progress_claim.make_sales_invoice",
 						frm: frm
 					});
 				}, __("Create"));
 			} else {
 				frm.add_custom_button(__("Purchase Invoice"), function() {
 					frappe.model.open_mapped_doc({
-						method: "construction_ms.construction_management.doctype.bf_progress_claim.bf_progress_claim.make_purchase_invoice",
+						method: "consms.construction_management.doctype.bf_progress_claim.bf_progress_claim.make_purchase_invoice",
 						frm: frm
 					});
 				}, __("Create"));

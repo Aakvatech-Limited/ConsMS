@@ -8,21 +8,21 @@ frappe.ui.form.on("BF Contract", {
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__("Variation Order"), function() {
 				frappe.model.open_mapped_doc({
-					method: "construction_ms.construction_management.doctype.bf_contract.bf_contract.make_variation_order",
+					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_variation_order",
 					frm: frm
 				});
 			}, __("Create"));
 
 			frm.add_custom_button(__("Progress Claim (IPC)"), function() {
 				frappe.model.open_mapped_doc({
-					method: "construction_ms.construction_management.doctype.bf_contract.bf_contract.make_progress_claim",
+					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_progress_claim",
 					frm: frm
 				});
 			}, __("Create"));
 
 			frm.add_custom_button(__("Site Mobilization"), function() {
 				frappe.model.open_mapped_doc({
-					method: "construction_ms.construction_management.doctype.bf_contract.bf_contract.make_site_mobilization",
+					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_mobilization",
 					frm: frm
 				});
 			}, __("Create"));

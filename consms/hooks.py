@@ -1,9 +1,9 @@
-app_name = "construction_ms"
+app_name = "consms"
 app_title = "Construction Management"
-app_publisher = "Sydney Kibanga"
-app_description = " "
-app_email = "skibanga@aakvatech.com"
-app_license = "mit"
+app_publisher = "Aakvatech"
+app_description = "Construction Management Solution"
+app_email = "info@aakvatech.com"
+app_license = "GPL"
 
 # Apps
 # ------------------
@@ -13,11 +13,11 @@ app_license = "mit"
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
-# 		"name": "construction_ms",
-# 		"logo": "/assets/construction_ms/logo.png",
+# 		"name": "consms",
+# 		"logo": "/assets/consms/logo.png",
 # 		"title": "Construction Management",
-# 		"route": "/construction_ms",
-# 		"has_permission": "construction_ms.api.permission.has_app_permission"
+# 		"route": "/consms",
+# 		"has_permission": "consms.api.permission.has_app_permission"
 # 	}
 # ]
 
@@ -25,15 +25,15 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/construction_ms/css/construction_ms.css"
-# app_include_js = "/assets/construction_ms/js/construction_ms.js"
+# app_include_css = "/assets/consms/css/consms.css"
+# app_include_js = "/assets/consms/js/consms.js"
 
 # include js, css files in header of web template
-# web_include_css = "/assets/construction_ms/css/construction_ms.css"
-# web_include_js = "/assets/construction_ms/js/construction_ms.js"
+# web_include_css = "/assets/consms/css/consms.css"
+# web_include_js = "/assets/consms/js/consms.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "construction_ms/public/scss/website"
+# website_theme_scss = "consms/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -53,7 +53,7 @@ doctype_js = {
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "construction_ms/public/icons.svg"
+# app_include_icons = "consms/public/icons.svg"
 
 # Home Pages
 # ----------
@@ -77,43 +77,43 @@ doctype_js = {
 
 # add methods and filters to jinja environment
 # jinja = {
-# 	"methods": "construction_ms.utils.jinja_methods",
-# 	"filters": "construction_ms.utils.jinja_filters"
+# 	"methods": "consms.utils.jinja_methods",
+# 	"filters": "consms.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "construction_ms.install.before_install"
-# after_install = "construction_ms.install.after_install"
+# before_install = "consms.install.before_install"
+# after_install = "consms.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "construction_ms.uninstall.before_uninstall"
-# after_uninstall = "construction_ms.uninstall.after_uninstall"
+# before_uninstall = "consms.uninstall.before_uninstall"
+# after_uninstall = "consms.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
 # Name of the app being installed is passed as an argument
 
-# before_app_install = "construction_ms.utils.before_app_install"
-# after_app_install = "construction_ms.utils.after_app_install"
+# before_app_install = "consms.utils.before_app_install"
+# after_app_install = "consms.utils.after_app_install"
 
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps
 # Name of the app being uninstalled is passed as an argument
 
-# before_app_uninstall = "construction_ms.utils.before_app_uninstall"
-# after_app_uninstall = "construction_ms.utils.after_app_uninstall"
+# before_app_uninstall = "consms.utils.before_app_uninstall"
+# after_app_uninstall = "consms.utils.after_app_uninstall"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "construction_ms.notifications.get_notification_config"
+# notification_config = "consms.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -147,46 +147,46 @@ doctype_js = {
 # 	}
 # }
 
-after_migrate = "construction_ms.custom_fields.create_custom_fields"
+after_migrate = "consms.custom_fields.create_custom_fields"
 
 # Scheduled Tasks
 # ---------------
 
 # scheduler_events = {
 # 	"all": [
-# 		"construction_ms.tasks.all"
+# 		"consms.tasks.all"
 # 	],
 # 	"daily": [
-# 		"construction_ms.tasks.daily"
+# 		"consms.tasks.daily"
 # 	],
 # 	"hourly": [
-# 		"construction_ms.tasks.hourly"
+# 		"consms.tasks.hourly"
 # 	],
 # 	"weekly": [
-# 		"construction_ms.tasks.weekly"
+# 		"consms.tasks.weekly"
 # 	],
 # 	"monthly": [
-# 		"construction_ms.tasks.monthly"
+# 		"consms.tasks.monthly"
 # 	],
 # }
 
 # Testing
 # -------
 
-# before_tests = "construction_ms.install.before_tests"
+# before_tests = "consms.install.before_tests"
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "construction_ms.event.get_events"
+# 	"frappe.desk.doctype.event.event.get_events": "consms.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-# 	"Task": "construction_ms.task.get_dashboard_data"
+# 	"Task": "consms.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -200,13 +200,13 @@ after_migrate = "construction_ms.custom_fields.create_custom_fields"
 
 # Request Events
 # ----------------
-# before_request = ["construction_ms.utils.before_request"]
-# after_request = ["construction_ms.utils.after_request"]
+# before_request = ["consms.utils.before_request"]
+# after_request = ["consms.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["construction_ms.utils.before_job"]
-# after_job = ["construction_ms.utils.after_job"]
+# before_job = ["consms.utils.before_job"]
+# after_job = ["consms.utils.after_job"]
 
 # User Data Protection
 # --------------------
@@ -236,7 +236,7 @@ after_migrate = "construction_ms.custom_fields.create_custom_fields"
 # --------------------------------
 
 # auth_hooks = [
-# 	"construction_ms.auth.validate"
+# 	"consms.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.
@@ -251,8 +251,8 @@ after_migrate = "construction_ms.custom_fields.create_custom_fields"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-after_migrate = "construction_ms.setup.after_migrate"
+after_migrate = "consms.setup.after_migrate"
 
 override_doctype_dashboards = {
-	"Material Request": "construction_ms.setup.get_material_request_dashboard"
+	"Material Request": "consms.setup.get_material_request_dashboard"
 }

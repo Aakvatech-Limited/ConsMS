@@ -7,7 +7,7 @@ frappe.ui.form.on("BF Site Measurement Log", {
 		frm.set_query("boq_item", "measurements", function(doc, cdt, cdn) {
 			if (doc.boq) {
 				return {
-					query: "construction_ms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.get_boq_items_query",
+					query: "consms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.get_boq_items_query",
 					filters: {
 						"parent": doc.boq
 					}
@@ -22,7 +22,7 @@ frappe.ui.form.on("BF Site Measurement Log", {
 		if (frm.doc.boq && frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("Fetch BOQ Items"), function() {
 				frappe.call({
-					method: "construction_ms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.fetch_boq_items",
+					method: "consms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.fetch_boq_items",
 					args: {
 						boq_name: frm.doc.boq
 					},
@@ -71,7 +71,7 @@ frappe.ui.form.on("BF Measurement Item", {
 		var row = frappe.get_doc(cdt, cdn);
 		if (row.boq_item) {
 			frappe.call({
-				method: "construction_ms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.get_boq_item_details",
+				method: "consms.construction_management.doctype.bf_site_measurement_log.bf_site_measurement_log.get_boq_item_details",
 				args: { item_name: row.boq_item },
 				callback: function(r) {
 					if (r.message) {

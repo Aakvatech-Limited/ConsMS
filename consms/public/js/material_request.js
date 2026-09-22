@@ -7,7 +7,7 @@ frappe.ui.form.on("Material Request", {
 			let row = frappe.get_doc(cdt, cdn);
 			let boq = row.bf_boq || doc.bf_boq;
 			return {
-				query: "construction_ms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_boq_items_query",
+				query: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_boq_items_query",
 				filters: {
 					parent: boq
 				}
