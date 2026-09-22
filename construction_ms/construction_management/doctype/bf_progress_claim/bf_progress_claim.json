@@ -1,0 +1,334 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:BF-IPC-{YYYY}-{####}",
+ "creation": "2026-06-27 11:04:21.557491",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "details_tab",
+  "header_sb",
+  "claim_type",
+  "contract",
+  "project",
+  "main_contract",
+  "customer",
+  "supplier",
+  "boq",
+  "claim_title",
+  "cb_dates",
+  "posting_date",
+  "period_from",
+  "period_to",
+  "claim_items_sb",
+  "claim_items",
+  "variations_section",
+  "variations",
+  "summary_sb",
+  "total_work_executed",
+  "approved_variations",
+  "materials_on_site",
+  "gross_valuation",
+  "cb_deductions",
+  "retention_percentage",
+  "retention_deduction",
+  "advance_payment_recovery",
+  "previous_certified_amount",
+  "sb_totals",
+  "net_amount_due",
+  "vat_percentage",
+  "vat_amount",
+  "total_amount_certified",
+  "amended_from",
+  "connections_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  },
+  {
+   "fieldname": "header_sb",
+   "fieldtype": "Section Break",
+   "label": "Claim Details"
+  },
+  {
+   "fieldname": "claim_type",
+   "fieldtype": "Select",
+   "label": "Claim Type",
+   "options": "Client Claim\nSubcontractor Claim",
+   "default": "Client Claim",
+   "reqd": 1
+  },
+  {
+   "fieldname": "main_contract",
+   "fieldtype": "Link",
+   "label": "Parent Main Contract",
+   "options": "BF Contract",
+   "depends_on": "eval:doc.claim_type=='Subcontractor Claim';",
+   "fetch_from": "contract.main_contract"
+  },
+  {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Contract",
+   "options": "BF Contract",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "contract.project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "contract.customer",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Client (Customer)",
+   "options": "Customer",
+   "read_only": 1,
+   "depends_on": "eval:doc.claim_type=='Client Claim';"
+  },
+  {
+   "fetch_from": "contract.supplier",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Subcontractor (Supplier)",
+   "options": "Supplier",
+   "read_only": 1,
+   "depends_on": "eval:doc.claim_type=='Subcontractor Claim';"
+  },
+  {
+   "fetch_from": "contract.boq",
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "BOQ",
+   "options": "BF Bill of Quantities",
+   "read_only": 1
+  },
+  {
+   "fieldname": "claim_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Claim Title (e.g. IPC 01)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_from",
+   "fieldtype": "Date",
+   "label": "Period From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_to",
+   "fieldtype": "Date",
+   "label": "Period To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "claim_items_sb",
+   "fieldtype": "Section Break",
+   "label": "Valuation of Work Done"
+  },
+  {
+   "fieldname": "claim_items",
+   "fieldtype": "Table",
+   "label": "Claim Items",
+   "options": "BF Progress Claim Item"
+  },
+  {
+   "fieldname": "summary_sb",
+   "fieldtype": "Section Break",
+   "label": "Financial Summary (FIDIC / PPRA Standard)"
+  },
+  {
+   "bold": 1,
+   "fieldname": "total_work_executed",
+   "fieldtype": "Currency",
+   "label": "1. Total Value of Work Executed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_variations",
+   "fieldtype": "Currency",
+   "label": "2. Add: Approved Variations (VO)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "materials_on_site",
+   "fieldtype": "Currency",
+   "label": "3. Materials on Site (Optional)"
+  },
+  {
+   "bold": 1,
+   "fieldname": "gross_valuation",
+   "fieldtype": "Currency",
+   "label": "4. Gross Valuation (1 + 2 + 3)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_deductions",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "contract.retention_percentage",
+   "fieldname": "retention_percentage",
+   "fieldtype": "Percent",
+   "label": "Retention (%)"
+  },
+  {
+   "fieldname": "retention_deduction",
+   "fieldtype": "Currency",
+   "label": "5. Less: Retention Fund",
+   "read_only": 1
+  },
+  {
+   "fieldname": "advance_payment_recovery",
+   "fieldtype": "Currency",
+   "label": "6. Less: Advance Payment Recovery"
+  },
+  {
+   "fieldname": "previous_certified_amount",
+   "fieldtype": "Currency",
+   "label": "7. Less: Previous Certified Amount"
+  },
+  {
+   "fieldname": "sb_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "net_amount_due",
+   "fieldtype": "Currency",
+   "label": "Net Amount Due This Certificate",
+   "read_only": 1
+  },
+  {
+   "default": "18",
+   "fieldname": "vat_percentage",
+   "fieldtype": "Percent",
+   "label": "VAT (%)"
+  },
+  {
+   "fieldname": "vat_amount",
+   "fieldtype": "Currency",
+   "label": "VAT Amount",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "total_amount_certified",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Amount Certified (Incl. VAT)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "BF Progress Claim",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "variations_section",
+   "fieldtype": "Section Break",
+   "label": "Claimed Variations"
+  },
+  {
+   "fieldname": "variations",
+   "fieldtype": "Table",
+   "label": "Variations",
+   "options": "BF Progress Claim Variation"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-28 11:50:54.464964",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Progress Claim",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
