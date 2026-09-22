@@ -1,6 +1,6 @@
-## Construction Management
+### Construction Management
 
-Construction Management Solution
+ 
 
 ### Installation
 
@@ -8,7 +8,7 @@ You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch master
+bench get-app $URL_OF_THIS_REPO --branch develop
 bench install-app consms
 ```
 
@@ -30,4 +30,4 @@ Pre-commit is configured to use the following tools for checking and formatting 
 
 ### License
 
-GPL
+mit

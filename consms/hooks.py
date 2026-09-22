@@ -1,9 +1,9 @@
 app_name = "consms"
 app_title = "Construction Management"
-app_publisher = "Aakvatech"
-app_description = "Construction Management Solution"
-app_email = "info@aakvatech.com"
-app_license = "GPL"
+app_publisher = "Sydney Kibanga"
+app_description = " "
+app_email = "skibanga@aakvatech.com"
+app_license = "mit"
 
 # Apps
 # ------------------
