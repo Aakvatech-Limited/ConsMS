@@ -1,0 +1,99 @@
+# Copyright (c) 2026, Sydney Kibanga and contributors
+# For license information, please see license.txt
+
+import frappe
+from frappe.model.document import Document
+from frappe.model.mapper import get_mapped_doc
+
+from frappe.utils import flt
+
+class BFBillofQuantities(Document):
+	def validate(self):
+		total = 0
+		for item in self.get("items"):
+			item.amount = flt(item.quantity) * flt(item.unit_rate)
+			total += item.amount
+		self.total_amount = total
+
+@frappe.whitelist()
+def make_material_request(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		target.material_request_type = "Purchase"
+		target.project = source.project
+		target.bf_boq = source.name
+		target.items = []
+
+	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
+		"BF Bill of Quantities": {
+			"doctype": "Material Request",
+			"field_map": {
+				"project": "project",
+				"name": "bf_boq"
+			}
+		}
+	}, target_doc, set_missing_values)
+	
+	return doc
+
+@frappe.whitelist()
+def make_bf_tender(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		target.tender_name = f"Tender for {source.project}"
+
+	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
+		"BF Bill of Quantities": {
+			"doctype": "BF Tender",
+			"field_map": {
+				"project": "project",
+				"name": "boq"
+			}
+		}
+	}, target_doc, set_missing_values)
+	
+	return doc
+
+@frappe.whitelist()
+def check_existing_tender(boq_name):
+	existing_tender = frappe.db.get_value("BF Tender", {"boq": boq_name}, "name")
+	if existing_tender:
+		return existing_tender
+	return None
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
+	filters = filters or {}
+	boq_name = filters.get("parent")
+	
+	conditions = []
+	params = []
+
+	if not boq_name:
+		return []
+
+	conditions = ["parent = %s"]
+	params = [boq_name]
+
+	if txt:
+		search_txt = f"%{txt}%"
+		conditions.append("(name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)")
+		params.extend([search_txt, search_txt, search_txt])
+
+	where_stmt = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+	query = f"""
+		SELECT 
+			name,
+			CONCAT(
+				IF(IFNULL(item_code, '') != '', CONCAT('[', item_code, '] '), ''),
+				IFNULL(description, ''), 
+				IF(IFNULL(uom, '') != '', CONCAT(' | UOM: ', uom), ''),
+				IF(IFNULL(quantity, 0) > 0, CONCAT(' | Qty: ', quantity), '')
+			) AS title
+		FROM `tabBF BOQ Item`
+		{where_stmt}
+		ORDER BY idx ASC
+		LIMIT %s, %s
+	"""
+	params.extend([start, page_len])
+	return frappe.db.sql(query, params)
