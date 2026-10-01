@@ -1,9 +1,9 @@
 [project]
-name = "construction_ms"
+name = "consms"
 authors = [
-    { name = "Sydney Kibanga", email = "skibanga@aakvatech.com"}
+    { name = "Aakvatech", email = "info@aakvatech.com" }
 ]
-description = " "
+description = "Construction Management Solution for ERPNext and Frappe"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
