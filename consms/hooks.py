@@ -147,7 +147,10 @@ doctype_js = {
 # 	}
 # }
 
-after_migrate = "consms.custom_fields.create_custom_fields"
+after_migrate = [
+	"consms.custom_fields.create_custom_fields",
+	"consms.setup.after_migrate",
+]
 
 # Scheduled Tasks
 # ---------------
@@ -251,7 +254,6 @@ after_migrate = "consms.custom_fields.create_custom_fields"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-after_migrate = "consms.setup.after_migrate"
 
 override_doctype_dashboards = {
 	"Material Request": "consms.setup.get_material_request_dashboard"
