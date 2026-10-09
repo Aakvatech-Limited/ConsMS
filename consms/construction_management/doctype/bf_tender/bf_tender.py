@@ -2,15 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-
-
-STATUS_TRANSITIONS = {
-	"Submitted": ("Under Evaluation", "Rejected"),
-	"Under Evaluation": ("Awarded", "Rejected"),
-}
 
 
 class BFTender(Document):
@@ -18,23 +11,7 @@ class BFTender(Document):
 		self.status = "Draft"
 
 	def on_submit(self):
-		self.db_set("status", "Submitted")
-
-
-@frappe.whitelist()
-def set_status(tender_name, status):
-	tender = frappe.get_doc("BF Tender", tender_name)
-	tender.check_permission("submit")
-
-	if tender.docstatus != 1:
-		frappe.throw(_("Submit the Tender before changing its status."))
-
-	if status not in STATUS_TRANSITIONS.get(tender.status, ()):
-		frappe.throw(_("Cannot change Tender status from {0} to {1}.").format(tender.status, status))
-
-	tender.db_set("status", status)
-	tender.add_comment("Info", _("Status changed to {0}").format(status))
-	return status
+		self.db_set("status", "Awarded")
 
 
 @frappe.whitelist()
