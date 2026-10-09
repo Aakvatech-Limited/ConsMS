@@ -1,0 +1,19 @@
+{
+ "color": "#2563eb",
+ "creation": "2026-10-09 21:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "BF Site Measurement Log",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"BF Site Measurement Log\", \"docstatus\", \"=\", 1, false], [\"BF Site Measurement Log\", \"date\", \"Timespan\", \"this month\", false]]",
+ "function": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Measurements This Month",
+ "modified": "2026-10-09 21:00:00.000000",
+ "module": "Construction Management",
+ "name": "Measurements This Month",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Monthly",
+ "type": "Document Type"
+}

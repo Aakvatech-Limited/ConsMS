@@ -1,0 +1,18 @@
+{
+ "color": "#2563eb",
+ "creation": "2026-10-09 21:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Work Certified % of Contracts",
+ "method": "consms.construction_management.dashboard.billed_percent",
+ "modified": "2026-10-09 21:30:00.000000",
+ "module": "Construction Management",
+ "name": "Billed Percent",
+ "show_full_number": 1,
+ "show_percentage_stats": 0,
+ "type": "Custom"
+}

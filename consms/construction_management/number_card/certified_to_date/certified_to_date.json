@@ -1,0 +1,17 @@
+{
+ "color": "#16a34a",
+ "creation": "2026-10-09 21:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Certified to Date (Excl. VAT)",
+ "method": "consms.construction_management.dashboard.certified_to_date",
+ "modified": "2026-10-09 21:00:00.000000",
+ "module": "Construction Management",
+ "name": "Certified to Date",
+ "show_percentage_stats": 0,
+ "type": "Custom"
+}
