@@ -1,8 +1,25 @@
 // Copyright (c) 2026, Sydney Kibanga and contributors
 // For license information, please see license.txt
 
+const STATUS_ACTIONS = {
+	Submitted: [
+		[__("Under Evaluation"), "Under Evaluation"],
+		[__("Reject"), "Rejected"],
+	],
+	"Under Evaluation": [
+		[__("Award"), "Awarded"],
+		[__("Reject"), "Rejected"],
+	],
+};
+
 frappe.ui.form.on("BF Tender", {
 	refresh(frm) {
+		if (frm.doc.docstatus === 1) {
+			(STATUS_ACTIONS[frm.doc.status] || []).forEach(([label, status]) => {
+				frm.add_custom_button(label, () => frm.events.set_status(frm, status), __("Status"));
+			});
+		}
+
 		if (frm.doc.docstatus === 1 && frm.doc.status === "Awarded") {
 			frm.add_custom_button(__("BF Contract"), function() {
 				frappe.call({
@@ -22,5 +39,16 @@ frappe.ui.form.on("BF Tender", {
 				});
 			}, __("Create"));
 		}
+	},
+
+	set_status(frm, status) {
+		frappe.confirm(__("Change Tender status to {0}?", [__(status)]), () => {
+			frappe.call({
+				method: "consms.construction_management.doctype.bf_tender.bf_tender.set_status",
+				args: { tender_name: frm.doc.name, status: status },
+				freeze: true,
+				callback: () => frm.reload_doc(),
+			});
+		});
 	},
 });
