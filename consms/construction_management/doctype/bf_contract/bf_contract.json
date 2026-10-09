@@ -167,6 +167,7 @@
    "label": "Required Submittals"
   },
   {
+   "allow_on_submit": 1,
    "description": "Documents the contractor must hand in before or during the work, such as insurance, performance security and work programme.",
    "fieldname": "submittals",
    "fieldtype": "Table",
@@ -178,7 +179,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 16:30:00.000000",
+ "modified": "2026-10-09 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",
