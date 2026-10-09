@@ -13,7 +13,7 @@ frappe.ui.form.on("BF Progress Claim", {
 		});
 	},
 	refresh: function(frm) {
-		if (frm.doc.docstatus === 0 && frm.doc.contract) {
+		if (!frm.is_new() && frm.doc.docstatus === 0 && frm.doc.contract) {
 			frm.add_custom_button(__("Fetch Measurements"), function() {
 				frappe.call({
 					method: "consms.construction_management.doctype.bf_progress_claim.bf_progress_claim.fetch_measurements",
