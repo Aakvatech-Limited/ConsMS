@@ -47,6 +47,7 @@
   },
   {
    "columns": 2,
+   "description": "Price per unit, from the BOQ.",
    "fieldname": "unit_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -58,6 +59,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Quantity already claimed in earlier claims.",
    "fieldname": "previous_qty",
    "fieldtype": "Float",
    "label": "Previous Qty",
@@ -65,12 +67,14 @@
   },
   {
    "bold": 1,
+   "description": "Quantity done in this claim period.",
    "fieldname": "this_period_qty",
    "fieldtype": "Float",
    "label": "This Period Qty",
    "read_only": 1
   },
   {
+   "description": "Total claimed so far: Previous + This Period.",
    "fieldname": "cumulative_qty",
    "fieldtype": "Float",
    "label": "Cumulative Qty",
@@ -81,6 +85,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Amount already claimed: Previous Qty × Unit Rate.",
    "fieldname": "previous_value",
    "fieldtype": "Currency",
    "label": "Previous Value",
@@ -89,6 +94,7 @@
   {
    "bold": 1,
    "columns": 2,
+   "description": "Amount claimed now: This Period Qty × Unit Rate.",
    "fieldname": "this_period_value",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -96,6 +102,7 @@
    "read_only": 1
   },
   {
+   "description": "Total amount so far: Previous + This Period.",
    "fieldname": "cumulative_value",
    "fieldtype": "Currency",
    "label": "Cumulative Value",
@@ -106,7 +113,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-28 10:56:57.719521",
+ "modified": "2026-10-09 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim Item",

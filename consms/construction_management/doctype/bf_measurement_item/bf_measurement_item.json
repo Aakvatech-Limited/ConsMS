@@ -53,21 +53,25 @@
   },
   {
    "default": "1",
+   "description": "How many identical pieces were done. Example: 4 identical manholes → 4. Use 1 for a single piece.",
    "fieldname": "multiplier",
    "fieldtype": "Float",
    "label": "No."
   },
   {
+   "description": "Length measured on site. Fill it for work measured in m, m² or m³; leave empty otherwise.",
    "fieldname": "length",
    "fieldtype": "Float",
    "label": "Length (L)"
   },
   {
+   "description": "Width measured on site. Fill it for work measured in m² or m³ (area or volume); leave empty otherwise.",
    "fieldname": "width",
    "fieldtype": "Float",
    "label": "Width (W)"
   },
   {
+   "description": "Height or depth measured on site. Fill it for work measured in m³ (volume), e.g. depth of a trench; leave empty otherwise.",
    "fieldname": "height",
    "fieldtype": "Float",
    "label": "Height/Depth (H)"
@@ -85,7 +89,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-28 10:56:57.568880",
+ "modified": "2026-10-09 19:10:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Measurement Item",
