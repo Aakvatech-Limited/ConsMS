@@ -139,13 +139,13 @@ doctype_js = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Material Request": {
+		"validate": "consms.material_request.warn_if_over_boq",
+		"on_submit": "consms.material_request.update_boq_requested_qty",
+		"on_cancel": "consms.material_request.update_boq_requested_qty",
+	}
+}
 
 after_migrate = [
 	"consms.custom_fields.create_custom_fields",

@@ -22,6 +22,25 @@ frappe.ui.form.on("BF Bill of Quantities", {
 				});
 			}, __("Create"));
 
+			frappe.call({
+				method: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_awarded_tender",
+				args: { boq_name: frm.doc.name },
+				callback: function(r) {
+					if (!r.message) return;
+					frm.add_custom_button(__("BF Contract"), function() {
+						if (r.message.contract) {
+							frappe.show_alert({message: __("Contract already exists. Redirecting..."), indicator: 'green'});
+							frappe.set_route("Form", "BF Contract", r.message.contract);
+						} else {
+							frappe.model.open_mapped_doc({
+								method: "consms.construction_management.doctype.bf_tender.bf_tender.make_bf_contract",
+								source_name: r.message.tender
+							});
+						}
+					}, __("Create"));
+				}
+			});
+
 			frm.add_custom_button(__("Material Request"), function() {
 				frappe.model.open_mapped_doc({
 					method: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.make_material_request",

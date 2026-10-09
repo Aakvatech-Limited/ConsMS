@@ -9,8 +9,7 @@
   "sb_billing",
   "default_progress_claim_item",
   "sb_defaults",
-  "default_retention_percentage",
-  "default_vat_percentage"
+  "default_retention_percentage"
  ],
  "fields": [
   {
@@ -30,7 +29,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-28 10:51:31.600710",
+ "modified": "2026-10-09 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

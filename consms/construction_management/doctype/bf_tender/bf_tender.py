@@ -7,7 +7,11 @@ from frappe.model.mapper import get_mapped_doc
 
 
 class BFTender(Document):
-    pass
+	def before_insert(self):
+		self.status = "Draft"
+
+	def on_submit(self):
+		self.db_set("status", "Awarded")
 
 
 @frappe.whitelist()

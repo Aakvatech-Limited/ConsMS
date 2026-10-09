@@ -19,6 +19,7 @@
   "contract_amount",
   "contingency_percentage",
   "retention_percentage",
+  "cb_contract_totals",
   "contingency_amount",
   "total_contract_amount",
   "amended_from",
@@ -45,6 +46,7 @@
    "label": "Contract Reference"
   },
   {
+   "description": "The awarded tender this contract comes from.",
    "fieldname": "tender",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -53,47 +55,53 @@
    "reqd": 1
   },
   {
+   "description": "The project this work is for.",
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
   },
   {
+   "default": "Main Contract",
+   "description": "Main Contract: our agreement with the client. Subcontract: an agreement where we hire another company to do part of the work.",
    "fieldname": "contract_type",
    "fieldtype": "Select",
    "label": "Contract Type",
    "options": "Main Contract\nSubcontract",
-   "default": "Main Contract",
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.contract_type=='Subcontract';",
+   "description": "For a subcontract only: the main client contract this work falls under.",
    "fieldname": "main_contract",
    "fieldtype": "Link",
    "label": "Parent Main Contract",
-   "options": "BF Contract",
-   "depends_on": "eval:doc.contract_type=='Subcontract';"
+   "options": "BF Contract"
   },
   {
+   "depends_on": "eval:doc.contract_type=='Main Contract';",
+   "description": "The client who pays us for this work.",
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Client (Customer)",
-   "options": "Customer",
-   "depends_on": "eval:doc.contract_type=='Main Contract';",
-   "mandatory_depends_on": "eval:doc.contract_type=='Main Contract';"
+   "mandatory_depends_on": "eval:doc.contract_type=='Main Contract';",
+   "options": "Customer"
   },
   {
+   "depends_on": "eval:doc.contract_type=='Subcontract';",
+   "description": "The company we hire to do part of the work (subcontracts only).",
    "fieldname": "supplier",
    "fieldtype": "Link",
    "label": "Subcontractor (Supplier)",
-   "options": "Supplier",
-   "depends_on": "eval:doc.contract_type=='Subcontract';",
-   "mandatory_depends_on": "eval:doc.contract_type=='Subcontract';"
+   "mandatory_depends_on": "eval:doc.contract_type=='Subcontract';",
+   "options": "Supplier"
   },
   {
    "fieldname": "cb_885ac733",
    "fieldtype": "Column Break"
   },
   {
+   "description": "The agreed price for all the work in the BOQ. Filled in automatically from the BOQ total.",
    "fetch_from": "boq.total_amount",
    "fieldname": "contract_amount",
    "fieldtype": "Currency",
@@ -102,19 +110,24 @@
   },
   {
    "default": "5",
-   "description": "Standard industry practice is 5-10%",
+   "description": "Extra money set aside for unexpected costs, such as hidden rock during digging or price increases. Usually 5–10% of the contract amount.",
    "fieldname": "contingency_percentage",
    "fieldtype": "Percent",
    "label": "Contingency (%)"
   },
   {
    "default": "5",
-   "description": "Amount withheld until the end of the defects liability period",
+   "description": "Part of each payment that the client holds back until the work is finished and any defects are fixed. It is paid out at the end. Usually 5–10%.",
    "fieldname": "retention_percentage",
    "fieldtype": "Percent",
    "label": "Retention (%)"
   },
   {
+   "fieldname": "cb_contract_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Calculated automatically: Contract Amount × Contingency %.",
    "fieldname": "contingency_amount",
    "fieldtype": "Currency",
    "label": "Contingency Amount",
@@ -122,6 +135,7 @@
   },
   {
    "bold": 1,
+   "description": "The full budget for this contract: Contract Amount + Contingency Amount.",
    "fieldname": "total_contract_amount",
    "fieldtype": "Currency",
    "label": "Total Contract Value",
@@ -138,6 +152,7 @@
    "search_index": 1
   },
   {
+   "description": "The Bill of Quantities (the list of work items, quantities and prices) this contract is based on.",
    "fetch_from": "tender.boq",
    "fieldname": "boq",
    "fieldtype": "Link",
@@ -152,6 +167,8 @@
    "label": "Required Submittals"
   },
   {
+   "allow_on_submit": 1,
+   "description": "Documents the contractor must hand in before or during the work, such as insurance, performance security and work programme.",
    "fieldname": "submittals",
    "fieldtype": "Table",
    "label": "Submittals",
@@ -162,7 +179,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-28 10:57:10.580375",
+ "modified": "2026-10-09 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 from frappe.model.mapper import get_mapped_doc
@@ -13,6 +14,19 @@ class BFContract(Document):
 		
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
+		self.validate_submittals()
+
+	def before_update_after_submit(self):
+		self.validate_submittals()
+
+	def validate_submittals(self):
+		for row in self.get("submittals"):
+			if row.status in ("Approved", "Rejected") and not row.attachment:
+				frappe.throw(
+					_("Row {0}: attach the {1} document before marking it {2}.").format(
+						row.idx, row.submittal_type, row.status
+					)
+				)
 
 @frappe.whitelist()
 def make_site_mobilization(source_name, target_doc=None):
@@ -26,6 +40,26 @@ def make_site_mobilization(source_name, target_doc=None):
 		}
 	}, target_doc)
 
+	return doc
+
+@frappe.whitelist()
+def make_site_measurement_log(source_name, target_doc=None):
+	if not frappe.db.exists("BF Site Mobilization", {"contract": source_name, "docstatus": 1}):
+		frappe.throw(_("Submit the Site Mobilization for this contract before recording measurements."))
+
+	def set_missing_values(source, target):
+		target.date = frappe.utils.today()
+
+	doc = get_mapped_doc("BF Contract", source_name, {
+		"BF Contract": {
+			"doctype": "BF Site Measurement Log",
+			"field_map": {
+				"project": "project",
+				"boq": "boq",
+				"name": "contract"
+			}
+		}
+	}, target_doc, set_missing_values)
 	return doc
 
 @frappe.whitelist()

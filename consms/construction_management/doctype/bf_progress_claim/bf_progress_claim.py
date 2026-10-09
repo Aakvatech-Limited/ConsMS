@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
 from frappe.utils import flt
 
 class BFProgressClaim(Document):
@@ -54,9 +55,6 @@ class BFProgressClaim(Document):
 		# Deductions
 		total_deductions = flt(self.retention_deduction) + flt(self.advance_payment_recovery) + flt(self.previous_certified_amount)
 		self.net_amount_due = self.gross_valuation - total_deductions
-		
-		self.vat_amount = (flt(self.vat_percentage) / 100.0) * self.net_amount_due
-		self.total_amount_certified = self.net_amount_due + self.vat_amount
 
 
 @frappe.whitelist()
@@ -200,6 +198,9 @@ def make_sales_invoice(source_name, target_doc=None):
 	)
 	
 	doclist.set_missing_values()
+	if not doclist.get("taxes"):
+		# VAT is charged on the invoice, not on the claim
+		doclist.update(get_default_taxes_and_charges("Sales Taxes and Charges Template", company=doclist.company) or {})
 	
 	return doclist
 
@@ -231,5 +232,8 @@ def make_purchase_invoice(source_name, target_doc=None):
 	)
 	
 	doclist.set_missing_values()
+	if not doclist.get("taxes"):
+		# VAT is charged on the invoice, not on the claim
+		doclist.update(get_default_taxes_and_charges("Purchase Taxes and Charges Template", company=doclist.company) or {})
 	
 	return doclist
