@@ -1,0 +1,17 @@
+{
+ "color": "#e74c3c",
+ "creation": "2026-10-09 21:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Claims Not Yet Invoiced",
+ "method": "consms.construction_management.dashboard.claims_not_invoiced",
+ "modified": "2026-10-09 21:00:00.000000",
+ "module": "Construction Management",
+ "name": "Claims Not Invoiced",
+ "show_percentage_stats": 0,
+ "type": "Custom"
+}

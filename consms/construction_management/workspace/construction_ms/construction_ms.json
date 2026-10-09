@@ -3,9 +3,17 @@
   {
    "chart_name": "Monthly Contract Awards",
    "label": "Monthly Contract Awards"
+  },
+  {
+   "chart_name": "Contract Value by Project",
+   "label": "Contract Value by Project"
+  },
+  {
+   "chart_name": "Certified per Month",
+   "label": "Certified per Month"
   }
  ],
- "content": "[{\"id\": \"ch2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Contract Awards\", \"col\": 12}}, {\"id\": \"hdr1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Pre-Construction</b></span>\", \"col\": 12}}, {\"id\": \"s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Bill of Quantities\", \"col\": 3}}, {\"id\": \"s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Tenders\", \"col\": 3}}, {\"id\": \"s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"id\": \"s4imp\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Import BOQ\", \"col\": 3}}, {\"id\": \"hdr2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Execution</b></span>\", \"col\": 12}}, {\"id\": \"s5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization\", \"col\": 3}}, {\"id\": \"s6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Variation Orders\", \"col\": 3}}, {\"id\": \"s7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Measurement Logs\", \"col\": 3}}, {\"id\": \"d000bac4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Progress Claims (IPC)\", \"col\": 3}}, {\"id\": \"hdr3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Configuration</b></span>\", \"col\": 12}}, {\"id\": \"s8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Document Types\", \"col\": 3}}, {\"id\": \"s9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization Templates\", \"col\": 3}}, {\"id\": \"e11e292d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Construction Settings\", \"col\": 3}}]",
+ "content": "[{\"id\": \"h1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Pre-Construction</b></span>\", \"col\": 12}}, {\"id\": \"s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Bill of Quantities\", \"col\": 3}}, {\"id\": \"s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Tenders\", \"col\": 3}}, {\"id\": \"s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"id\": \"s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Import BOQ\", \"col\": 3}}, {\"id\": \"n1\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"BOQ Value\", \"col\": 3}}, {\"id\": \"n2\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Open Tenders\", \"col\": 3}}, {\"id\": \"n3\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Active Contracts\", \"col\": 3}}, {\"id\": \"n4\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Total Contract Value\", \"col\": 3}}, {\"id\": \"c1\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Contract Awards\", \"col\": 6}}, {\"id\": \"c2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Contract Value by Project\", \"col\": 6}}, {\"id\": \"sp1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Site Execution</b></span>\", \"col\": 12}}, {\"id\": \"s5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mobilization\", \"col\": 3}}, {\"id\": \"s6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Measurement Logs\", \"col\": 3}}, {\"id\": \"s7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Variation Orders\", \"col\": 3}}, {\"id\": \"s8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Material Requests\", \"col\": 3}}, {\"id\": \"n5\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Pending Submittals\", \"col\": 3}}, {\"id\": \"n6\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Mobilizations in Progress\", \"col\": 3}}, {\"id\": \"n7\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Measurements This Month\", \"col\": 3}}, {\"id\": \"n8\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Approved Variations\", \"col\": 3}}, {\"id\": \"sp2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Billing</b></span>\", \"col\": 12}}, {\"id\": \"s9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Progress Claims (IPC)\", \"col\": 3}}, {\"id\": \"s10\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contract Status Summary\", \"col\": 3}}, {\"id\": \"s11\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sales Invoices\", \"col\": 3}}, {\"id\": \"s12\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Payments Received\", \"col\": 3}}, {\"id\": \"n9\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Certified to Date (Excl. VAT)\", \"col\": 3}}, {\"id\": \"n10\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Retention Held\", \"col\": 3}}, {\"id\": \"n11\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Claims Not Yet Invoiced\", \"col\": 3}}, {\"id\": \"n12\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Work Certified % of Contracts\", \"col\": 3}}, {\"id\": \"c4\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Certified per Month\", \"col\": 12}}, {\"id\": \"sp3\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h4\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Reports & Setup</b></span>\", \"col\": 12}}, {\"id\": \"k1\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"k2\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}]",
  "creation": "2026-06-26 15:29:06.862031",
  "custom_blocks": [],
  "docstatus": 0,
@@ -20,8 +28,57 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Pre-Construction",
+   "label": "Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Contract Status Summary",
    "link_count": 0,
+   "link_to": "Contract Status Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "BF Contract Profitability",
+   "link_count": 0,
+   "link_to": "BF Contract Profitability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "BOQ Budget vs Expenditure",
+   "link_count": 0,
+   "link_to": "BOQ Budget vs Expenditure",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Variation vs Budget",
+   "link_count": 0,
+   "link_to": "Variation vs Budget Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setup",
+   "link_count": 5,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -29,90 +86,12 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Bill of Quantities",
+   "label": "Construction Settings",
    "link_count": 0,
-   "link_to": "BF Bill of Quantities",
+   "link_to": "BF Construction Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Tenders",
-   "link_count": 0,
-   "link_to": "BF Tender",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Contracts",
-   "link_count": 0,
-   "link_to": "BF Contract",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Execution",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Mobilization",
-   "link_count": 0,
-   "link_to": "BF Site Mobilization",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Variation Orders",
-   "link_count": 0,
-   "link_to": "BF Variation Order",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Measurement Logs",
-   "link_count": 0,
-   "link_to": "BF Site Measurement Log",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Progress Claims (IPC)",
-   "link_count": 0,
-   "link_to": "BF Progress Claim",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Configuration",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
   },
   {
    "hidden": 0,
@@ -137,19 +116,78 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Construction Settings",
+   "label": "Mobilization Tasks",
    "link_count": 0,
-   "link_to": "BF Construction Settings",
+   "link_to": "BF Mobilization Task",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project",
+   "link_count": 0,
+   "link_to": "Project",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-10-09 13:00:00.000000",
+ "modified": "2026-10-09 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "BOQ Value",
+   "number_card_name": "BOQ Value"
+  },
+  {
+   "label": "Open Tenders",
+   "number_card_name": "Active Tenders"
+  },
+  {
+   "label": "Active Contracts",
+   "number_card_name": "Total Awarded Contracts"
+  },
+  {
+   "label": "Total Contract Value",
+   "number_card_name": "Total Contract Value"
+  },
+  {
+   "label": "Pending Submittals",
+   "number_card_name": "Pending Submittals"
+  },
+  {
+   "label": "Mobilizations in Progress",
+   "number_card_name": "Mobilizations in Progress"
+  },
+  {
+   "label": "Measurements This Month",
+   "number_card_name": "Measurements This Month"
+  },
+  {
+   "label": "Approved Variations",
+   "number_card_name": "Total Variation Value"
+  },
+  {
+   "label": "Certified to Date (Excl. VAT)",
+   "number_card_name": "Certified to Date"
+  },
+  {
+   "label": "Retention Held",
+   "number_card_name": "Retention Held"
+  },
+  {
+   "label": "Claims Not Yet Invoiced",
+   "number_card_name": "Claims Not Invoiced"
+  },
+  {
+   "label": "Work Certified % of Contracts",
+   "number_card_name": "Billed Percent"
+  }
+ ],
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [],
@@ -189,26 +227,20 @@
   },
   {
    "doc_view": "",
-   "label": "Variation Orders",
-   "link_to": "BF Variation Order",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
    "label": "Measurement Logs",
    "link_to": "BF Site Measurement Log",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Document Types",
-   "link_to": "BF Document Type",
+   "label": "Variation Orders",
+   "link_to": "BF Variation Order",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Mobilization Templates",
-   "link_to": "BF Mobilization Template",
+   "label": "Material Requests",
+   "link_to": "Material Request",
    "type": "DocType"
   },
   {
@@ -218,9 +250,24 @@
    "type": "DocType"
   },
   {
+   "color": "Green",
    "doc_view": "",
-   "label": "Construction Settings",
-   "link_to": "BF Construction Settings",
+   "label": "Contract Status Summary",
+   "link_to": "Contract Status Summary",
+   "report_ref_doctype": "BF Contract",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "label": "Sales Invoices",
+   "link_to": "Sales Invoice",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Payments Received",
+   "link_to": "Payment Entry",
+   "stats_filter": "[[\"Payment Entry\", \"payment_type\", \"=\", \"Receive\"]]",
    "type": "DocType"
   }
  ],

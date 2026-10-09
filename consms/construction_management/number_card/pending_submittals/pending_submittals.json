@@ -1,15 +1,19 @@
 {
+ "color": "#e74c3c",
  "creation": "2026-06-26 12:00:00.000000",
  "docstatus": 0,
  "doctype": "Number Card",
- "is_standard": 1,
- "module": "Construction Management",
- "name": "Pending Submittals",
- "document_type": "GE Site Submittal",
+ "document_type": "BF Contract Submittal",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"BF Contract Submittal\", \"docstatus\", \"=\", 1, false], [\"BF Contract Submittal\", \"status\", \"=\", \"Pending\", false]]",
  "function": "Count",
  "is_public": 1,
+ "is_standard": 1,
  "label": "Pending Submittals",
- "filters_json": "[[\"GE Site Submittal\",\"status\",\"=\",\"Pending\",false]]",
- "color": "#e74c3c",
- "modified": "2026-06-26 20:05:08.607961"
+ "modified": "2026-10-09 21:00:00.000000",
+ "module": "Construction Management",
+ "name": "Pending Submittals",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Monthly",
+ "type": "Document Type"
 }
