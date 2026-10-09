@@ -60,6 +60,14 @@ def check_existing_tender(boq_name):
 	return None
 
 @frappe.whitelist()
+def get_awarded_tender(boq_name):
+	tender = frappe.db.get_value("BF Tender", {"boq": boq_name, "docstatus": 1, "status": "Awarded"}, "name")
+	if not tender:
+		return None
+	contract = frappe.db.get_value("BF Contract", {"tender": tender, "docstatus": ["!=", 2]}, "name")
+	return {"tender": tender, "contract": contract}
+
+@frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	filters = filters or {}
