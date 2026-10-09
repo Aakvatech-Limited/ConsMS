@@ -43,6 +43,26 @@ def make_site_mobilization(source_name, target_doc=None):
 	return doc
 
 @frappe.whitelist()
+def make_site_measurement_log(source_name, target_doc=None):
+	if not frappe.db.exists("BF Site Mobilization", {"contract": source_name, "docstatus": 1}):
+		frappe.throw(_("Submit the Site Mobilization for this contract before recording measurements."))
+
+	def set_missing_values(source, target):
+		target.date = frappe.utils.today()
+
+	doc = get_mapped_doc("BF Contract", source_name, {
+		"BF Contract": {
+			"doctype": "BF Site Measurement Log",
+			"field_map": {
+				"project": "project",
+				"boq": "boq",
+				"name": "contract"
+			}
+		}
+	}, target_doc, set_missing_values)
+	return doc
+
+@frappe.whitelist()
 def make_variation_order(source_name, target_doc=None):
 	doc = get_mapped_doc("BF Contract", source_name, {
 		"BF Contract": {
