@@ -63,9 +63,6 @@ frappe.ui.form.on("BF Progress Claim", {
 	advance_payment_recovery: function(frm) {
 		frm.trigger("calculate_totals_frontend");
 	},
-	vat_percentage: function(frm) {
-		frm.trigger("calculate_totals_frontend");
-	},
 	
 	calculate_totals_frontend: function(frm) {
 		var total_work = frm.doc.total_work_executed || 0.0;
@@ -85,11 +82,6 @@ frappe.ui.form.on("BF Progress Claim", {
 		var deductions = retention + flt(frm.doc.advance_payment_recovery) + flt(frm.doc.previous_certified_amount);
 		var net = gross - deductions;
 		frm.set_value("net_amount_due", net);
-		
-		var vat = (flt(frm.doc.vat_percentage) / 100.0) * net;
-		frm.set_value("vat_amount", vat);
-		
-		frm.set_value("total_amount_certified", net + vat);
 	}
 });
 
