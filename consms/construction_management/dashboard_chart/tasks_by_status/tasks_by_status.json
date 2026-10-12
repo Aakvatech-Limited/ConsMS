@@ -1,0 +1,23 @@
+{
+ "based_on": "creation",
+ "chart_name": "Tasks by Status",
+ "chart_type": "Group By",
+ "creation": "2026-10-12 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "document_type": "Task",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Task\", \"is_template\", \"=\", 0, false]]",
+ "group_by_based_on": "status",
+ "group_by_type": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2026-10-12 12:00:00.000000",
+ "module": "Construction Management",
+ "name": "Tasks by Status",
+ "number_of_groups": 0,
+ "timeseries": 0,
+ "type": "Donut",
+ "use_report_chart": 0,
+ "y_axis": []
+}
