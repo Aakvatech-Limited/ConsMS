@@ -91,10 +91,10 @@ def billed_percent(filters=None):
 		)[0][0]
 	)
 	certified = sum(flt(c.gross_valuation) for c in get_latest_client_claims())
-	percent = certified / contract_value * 100 if contract_value else 0
 	return {
-		# Sent as text: the card shortens numbers, which rounds small percentages
-		"value": f"{percent:.2f}%",
-		"fieldtype": "Data",
+		# The card has show_full_number on, so small percentages are not rounded away
+		"value": certified / contract_value * 100 if contract_value else 0,
+		"fieldtype": "Percent",
+		"precision": 2,
 		"route": ["query-report", "Contract Status Summary"],
 	}
