@@ -62,8 +62,11 @@ def get_items_for_material_request(source_name, target_doc=None):
 				"bf_boq": source.name,
 				"bf_boq_item": row.name,
 				"bf_boq_item_id": row.name,
+				# filled only when Task is an accounting dimension
+				"task": row.task if has_task_dimension else None,
 			})
 
+	has_task_dimension = frappe.get_meta("Material Request Item").has_field("task")
 	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
 		"BF Bill of Quantities": {"doctype": "Material Request"}
 	}, target_doc, set_missing_values)

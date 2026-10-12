@@ -6,10 +6,11 @@ def get_data():
 		"fieldname": "site_mobilization",
 		"internal_links": {
 			"BF Contract": "contract",
-			"BF Mobilization Template": "mobilization_template",
+			"Project Template": "mobilization_template",
+			"Task": ["mobilization_checklist", "task"],
 		},
 		"transactions": [
 			{"label": _("Contract"), "items": ["BF Contract"]},
-			{"label": _("Template"), "items": ["BF Mobilization Template"]},
+			{"label": _("Tasks"), "items": ["Task", "Project Template"]},
 		],
 	}

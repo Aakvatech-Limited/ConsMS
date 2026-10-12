@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:construction_type",
+ "creation": "2026-10-12 11:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "construction_type",
+  "measurement_method",
+  "custom_method",
+  "cb_method",
+  "location_label",
+  "description",
+  "sb_labels",
+  "label_multiplier",
+  "label_length",
+  "cb_labels",
+  "label_width",
+  "label_height"
+ ],
+ "fields": [
+  {
+   "description": "e.g. Building, Road, Pipeline.",
+   "fieldname": "construction_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Construction Type",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Dimensions",
+   "description": "Dimensions: No. × L × W × H. Chainage: No. × (Chainage To − From) × W × H. Percent Complete: % of the BOQ quantity. Custom: a method provided by another app.",
+   "fieldname": "measurement_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Measurement Method",
+   "options": "Dimensions\nChainage\nPercent Complete\nCustom",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.measurement_method=='Custom'",
+   "description": "Name registered by an app in hooks.py under consms_measurement_methods.",
+   "fieldname": "custom_method",
+   "fieldtype": "Data",
+   "label": "Custom Method",
+   "mandatory_depends_on": "eval:doc.measurement_method=='Custom'"
+  },
+  {
+   "fieldname": "cb_method",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Location / Grid Ref",
+   "description": "Label for where the work was measured, e.g. Floor / Grid or Section.",
+   "fieldname": "location_label",
+   "fieldtype": "Data",
+   "label": "Location Label"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "description": "Leave a label empty to hide that box on the Measurement Log.",
+   "fieldname": "sb_labels",
+   "fieldtype": "Section Break",
+   "label": "Measurement Box Labels"
+  },
+  {
+   "default": "No.",
+   "fieldname": "label_multiplier",
+   "fieldtype": "Data",
+   "label": "No. Label"
+  },
+  {
+   "default": "Length (L)",
+   "depends_on": "eval:doc.measurement_method=='Dimensions' || doc.measurement_method=='Custom'",
+   "fieldname": "label_length",
+   "fieldtype": "Data",
+   "label": "Length Label"
+  },
+  {
+   "fieldname": "cb_labels",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Width (W)",
+   "fieldname": "label_width",
+   "fieldtype": "Data",
+   "label": "Width Label"
+  },
+  {
+   "default": "Height/Depth (H)",
+   "fieldname": "label_height",
+   "fieldtype": "Data",
+   "label": "Height Label"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-12 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Construction Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects User"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

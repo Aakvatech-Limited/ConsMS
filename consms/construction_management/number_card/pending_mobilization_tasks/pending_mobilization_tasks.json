@@ -1,0 +1,19 @@
+{
+ "color": "#f59e0b",
+ "creation": "2026-10-12 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Task",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Task\", \"is_template\", \"=\", 0, false], [\"Task\", \"type\", \"=\", \"Mobilization\", false], [\"Task\", \"status\", \"not in\", [\"Completed\", \"Cancelled\"], false]]",
+ "function": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Pending Mobilization Tasks",
+ "modified": "2026-10-12 12:00:00.000000",
+ "module": "Construction Management",
+ "name": "Pending Mobilization Tasks",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Monthly",
+ "type": "Document Type"
+}
