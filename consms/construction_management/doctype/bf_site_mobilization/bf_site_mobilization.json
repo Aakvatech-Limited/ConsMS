@@ -53,11 +53,12 @@
    "read_only": 1
   },
   {
+   "description": "Pick a Project Template, e.g. Standard Mobilization. On save, its tasks are created in this project.",
    "fieldname": "mobilization_template",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Mobilization Template",
-   "options": "BF Mobilization Template"
+   "label": "Project Template",
+   "options": "Project Template"
   },
   {
    "fieldname": "checklist_section",
@@ -91,7 +92,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 18:00:00.000000",
+ "modified": "2026-10-12 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Mobilization",

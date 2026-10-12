@@ -7,16 +7,27 @@
  "engine": "InnoDB",
  "field_order": [
   "task",
+  "subject",
   "status"
  ],
  "fields": [
   {
+   "columns": 3,
    "fieldname": "task",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Mobilization Task",
-   "options": "BF Mobilization Task",
+   "options": "Task",
    "reqd": 1
+  },
+  {
+   "columns": 4,
+   "fetch_from": "task.subject",
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "read_only": 1
   },
   {
    "default": "Pending",
@@ -30,7 +41,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-28 10:57:03.415755",
+ "modified": "2026-10-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Mobilization Item",

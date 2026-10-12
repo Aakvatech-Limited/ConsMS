@@ -15,6 +15,7 @@
   "customer",
   "supplier",
   "main_contract",
+  "construction_type",
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
@@ -77,6 +78,14 @@
    "fieldtype": "Link",
    "label": "Parent Main Contract",
    "options": "BF Contract"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The kind of work, e.g. Building, Road or Pipeline. It decides how site work is measured.",
+   "fieldname": "construction_type",
+   "fieldtype": "Link",
+   "label": "Construction Type",
+   "options": "BF Construction Type"
   },
   {
    "depends_on": "eval:doc.contract_type=='Main Contract';",
@@ -179,7 +188,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 17:00:00.000000",
+ "modified": "2026-10-12 11:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

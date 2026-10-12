@@ -1,6 +1,9 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from consms.construction_management.measurement import ensure_standard_construction_types
+from consms.construction_management.tasks import ensure_mobilization_task_type
+
 
 def after_migrate():
 
@@ -48,6 +51,9 @@ def after_migrate():
         "Purchase Receipt Item": boq_item_link_fields,
         "Purchase Invoice Item": boq_item_link_fields,
     })
+
+    ensure_mobilization_task_type()
+    ensure_standard_construction_types()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:

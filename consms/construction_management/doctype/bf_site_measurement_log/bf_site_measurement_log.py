@@ -4,9 +4,22 @@
 import frappe
 from frappe.model.document import Document
 
+from consms.construction_management.measurement import calculate_quantity, update_task_progress
+
 
 class BFSiteMeasurementLog(Document):
-	pass
+	def validate(self):
+		construction_type = (
+			frappe.get_cached_doc("BF Construction Type", self.construction_type) if self.construction_type else None
+		)
+		for row in self.measurements:
+			row.total_quantity = calculate_quantity(row, construction_type)
+
+	def on_submit(self):
+		update_task_progress(row.task for row in self.measurements)
+
+	def on_cancel(self):
+		update_task_progress(row.task for row in self.measurements)
 
 @frappe.whitelist()
 def fetch_boq_items(boq_name):
@@ -14,7 +27,7 @@ def fetch_boq_items(boq_name):
 	items = frappe.get_all(
 		"BF BOQ Item",
 		filters={"parent": boq_name},
-		fields=["name", "description", "uom"],
+		fields=["name", "description", "uom", "task"],
 		ignore_permissions=True
 	)
 	return items
@@ -25,7 +38,7 @@ def get_boq_item_details(item_name):
 	return frappe.db.get_value(
 		"BF BOQ Item", 
 		item_name, 
-		["description", "uom"], 
+		["description", "uom", "task"], 
 		as_dict=True,
 		ignore=True
 	)
