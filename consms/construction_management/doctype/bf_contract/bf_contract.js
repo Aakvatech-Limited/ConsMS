@@ -5,6 +5,7 @@ frappe.ui.form.on("BF Contract", {
 	refresh(frm) {
 		calculate_contingency(frm);
 		show_time_status(frm);
+		show_expiring_documents(frm);
 		
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__("Variation Order"), function() {
@@ -82,5 +83,19 @@ function show_time_status(frm) {
 		frm.dashboard.set_headline_alert(__("Overdue by {0} days (completion was {1}).", [-days, frappe.datetime.str_to_user(d.revised_completion_date)]), "red");
 	} else {
 		frm.dashboard.set_headline_alert(__("{0} days remaining to completion ({1}).", [days, frappe.datetime.str_to_user(d.revised_completion_date)]), days <= 30 ? "orange" : "blue");
+	}
+}
+
+function show_expiring_documents(frm) {
+	const today = frappe.datetime.get_today();
+	const soon = frappe.datetime.add_days(today, 30);
+	const rows = (frm.doc.submittals || []).filter((r) => r.expiry_date);
+	const expired = rows.filter((r) => r.expiry_date < today).map((r) => r.submittal_type);
+	const expiring = rows.filter((r) => r.expiry_date >= today && r.expiry_date <= soon).map((r) => r.submittal_type);
+	if (expired.length) {
+		frm.dashboard.add_comment(__("Expired documents: {0}", [expired.join(", ")]), "red", true);
+	}
+	if (expiring.length) {
+		frm.dashboard.add_comment(__("Expiring within 30 days: {0}", [expiring.join(", ")]), "orange", true);
 	}
 }

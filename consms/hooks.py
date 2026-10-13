@@ -164,6 +164,12 @@ after_migrate = [
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+	"daily": [
+		"consms.construction_management.reminders.send_expiry_reminders",
+	],
+}
+
 # scheduler_events = {
 # 	"all": [
 # 		"consms.tasks.all"

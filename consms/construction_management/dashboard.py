@@ -98,3 +98,16 @@ def billed_percent(filters=None):
 		"precision": 2,
 		"route": ["query-report", "Contract Status Summary"],
 	}
+
+
+@frappe.whitelist()
+def expiring_documents(filters=None):
+	from consms.construction_management.reminders import get_expiring_submittals
+
+	rows = get_expiring_submittals()
+	return {
+		"value": len(rows),
+		"fieldtype": "Int",
+		"route": ["List", "BF Contract"],
+		"route_options": {"name": ["in", list({r.contract for r in rows}) or [""]]},
+	}
