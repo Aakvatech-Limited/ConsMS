@@ -6,3 +6,4 @@
 # Patches added in this section will be executed after doctypes are migrated
 consms.patches.v1_0.move_mobilization_to_tasks
 consms.patches.v1_0.set_boq_erp_uom
+consms.patches.v1_0.create_contract_site_stores

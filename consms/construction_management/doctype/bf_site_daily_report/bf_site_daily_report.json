@@ -91,6 +91,8 @@
   },
   {
    "description": "Store the materials below are taken from.",
+   "fetch_from": "contract.site_warehouse",
+   "fetch_if_empty": 1,
    "fieldname": "source_warehouse",
    "fieldtype": "Link",
    "label": "Site Store",
@@ -218,7 +220,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Daily Report",

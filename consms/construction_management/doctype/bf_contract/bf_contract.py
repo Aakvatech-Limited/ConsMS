@@ -16,6 +16,16 @@ class BFContract(Document):
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
 		self.validate_submittals()
 
+	def on_submit(self):
+		self.create_site_store()
+
+	def create_site_store(self):
+		"""Each contract gets its own store on site, under the company's warehouses."""
+		if self.site_warehouse or not self.project:
+			return
+		company = frappe.db.get_value("Project", self.project, "company")
+		self.db_set("site_warehouse", get_or_create_site_store(self.project, company))
+
 	def before_update_after_submit(self):
 		self.validate_submittals()
 
@@ -27,6 +37,16 @@ class BFContract(Document):
 						row.idx, row.submittal_type, row.status
 					)
 				)
+
+def get_or_create_site_store(project, company):
+	abbr = frappe.get_cached_value("Company", company, "abbr")
+	name = f"{project} Site Store - {abbr}"
+	if not frappe.db.exists("Warehouse", name):
+		parent = frappe.db.get_value("Warehouse", {"company": company, "is_group": 1, "parent_warehouse": ["is", "not set"]})
+		frappe.get_doc(
+			{"doctype": "Warehouse", "warehouse_name": f"{project} Site Store", "company": company, "parent_warehouse": parent}
+		).insert(ignore_permissions=True)
+	return name
 
 @frappe.whitelist()
 def make_site_mobilization(source_name, target_doc=None):
@@ -69,7 +89,7 @@ def make_site_daily_report(source_name, target_doc=None):
 
 	def set_missing_values(source, target):
 		target.date = frappe.utils.today()
-		target.source_warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+		target.source_warehouse = source.site_warehouse or frappe.db.get_single_value("Stock Settings", "default_warehouse")
 
 	return get_mapped_doc("BF Contract", source_name, {
 		"BF Contract": {

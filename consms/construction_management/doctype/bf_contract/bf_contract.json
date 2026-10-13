@@ -8,14 +8,16 @@
  "engine": "InnoDB",
  "field_order": [
   "details_tab",
-  "contract_type",
+  "connections_tab",
   "contract_reference",
   "tender",
   "project",
-  "customer",
-  "supplier",
+  "contract_type",
   "main_contract",
   "construction_type",
+  "site_warehouse",
+  "customer",
+  "supplier",
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
@@ -26,8 +28,7 @@
   "amended_from",
   "boq",
   "submittals_section",
-  "submittals",
-  "connections_tab"
+  "submittals"
  ],
  "fields": [
   {
@@ -86,6 +87,14 @@
    "fieldtype": "Link",
    "label": "Construction Type",
    "options": "BF Construction Type"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Store on site for this contract's materials. Created automatically on submit if empty.",
+   "fieldname": "site_warehouse",
+   "fieldtype": "Link",
+   "label": "Site Store",
+   "options": "Warehouse"
   },
   {
    "depends_on": "eval:doc.contract_type=='Main Contract';",
@@ -188,7 +197,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-12 11:30:00.000000",
+ "modified": "2026-10-14 00:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

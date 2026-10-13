@@ -157,6 +157,9 @@ def get_items_for_material_request(source_name, target_doc=None):
 	def set_missing_values(source, target):
 		target.bf_budget = source.name
 		target.bf_boq = source.boq
+		site_store = frappe.db.get_value("BF Contract", source.contract, "site_warehouse")
+		if site_store:
+			target.set_warehouse = site_store
 		target.schedule_date = target.schedule_date or nowdate()
 		already_added = {row.bf_budget_item for row in target.get("items") if row.get("bf_budget_item")}
 		for row in source.items:
@@ -174,6 +177,7 @@ def get_items_for_material_request(source_name, target_doc=None):
 					"qty": remaining,
 					"uom": row.uom,
 					"schedule_date": target.schedule_date,
+					"warehouse": target.get("set_warehouse"),
 					"project": source.project,
 					"bf_budget": source.name,
 					"bf_budget_item": row.name,
