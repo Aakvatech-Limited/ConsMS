@@ -4,6 +4,7 @@
 frappe.ui.form.on("BF Contract", {
 	refresh(frm) {
 		calculate_contingency(frm);
+		show_time_status(frm);
 		
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__("Variation Order"), function() {
@@ -71,4 +72,15 @@ function calculate_contingency(frm) {
 	
 	let total = flt(frm.doc.contract_amount) + contingency;
 	frm.set_value("total_contract_amount", total);
+}
+
+function show_time_status(frm) {
+	const d = frm.doc;
+	if (d.docstatus !== 1 || !d.revised_completion_date || d.actual_completion_date) return;
+	const days = frappe.datetime.get_diff(d.revised_completion_date, frappe.datetime.get_today());
+	if (days < 0) {
+		frm.dashboard.set_headline_alert(__("Overdue by {0} days (completion was {1}).", [-days, frappe.datetime.str_to_user(d.revised_completion_date)]), "red");
+	} else {
+		frm.dashboard.set_headline_alert(__("{0} days remaining to completion ({1}).", [days, frappe.datetime.str_to_user(d.revised_completion_date)]), days <= 30 ? "orange" : "blue");
+	}
 }

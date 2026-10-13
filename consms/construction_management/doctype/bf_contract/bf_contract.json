@@ -27,6 +27,16 @@
   "total_contract_amount",
   "amended_from",
   "boq",
+  "sb_period",
+  "start_date",
+  "original_completion_date",
+  "contract_duration",
+  "cb_period",
+  "approved_extension_days",
+  "revised_completion_date",
+  "actual_completion_date",
+  "sb_extensions",
+  "extensions",
   "submittals_section",
   "submittals"
  ],
@@ -180,6 +190,73 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_period",
+   "fieldtype": "Section Break",
+   "label": "Contract Period"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Commencement date (site possession). Can be set once on a submitted contract; after that, change the time with an Extension of Time.",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Can be set once on a submitted contract; after that, change the time with an Extension of Time.",
+   "fieldname": "original_completion_date",
+   "fieldtype": "Date",
+   "label": "Original Completion Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "contract_duration",
+   "fieldtype": "Int",
+   "label": "Contract Duration (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "approved_extension_days",
+   "fieldtype": "Int",
+   "label": "Approved Extension (Days)",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "bold": 1,
+   "description": "Original completion + approved extensions of time.",
+   "fieldname": "revised_completion_date",
+   "fieldtype": "Date",
+   "label": "Revised Completion Date",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Fill when the works are completed (e.g. taking-over certificate).",
+   "fieldname": "actual_completion_date",
+   "fieldtype": "Date",
+   "label": "Actual Completion Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_extensions",
+   "fieldtype": "Section Break",
+   "label": "Extensions of Time"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Requests for more time. Only Approved ones move the completion date.",
+   "fieldname": "extensions",
+   "fieldtype": "Table",
+   "label": "Extensions of Time",
+   "options": "BF Contract Extension"
+  },
+  {
    "fieldname": "submittals_section",
    "fieldtype": "Section Break",
    "label": "Required Submittals"
@@ -197,7 +274,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 00:30:00.000000",
+ "modified": "2026-10-14 04:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

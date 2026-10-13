@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import add_days, cint, date_diff, flt, getdate
 from frappe.model.mapper import get_mapped_doc
 
 class BFContract(Document):
@@ -15,9 +15,11 @@ class BFContract(Document):
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
 		self.validate_submittals()
+		self.calculate_period()
 
 	def on_submit(self):
 		self.create_site_store()
+		self.sync_project_dates()
 
 	def create_site_store(self):
 		"""Each contract gets its own store on site, under the company's warehouses."""
@@ -28,6 +30,50 @@ class BFContract(Document):
 
 	def before_update_after_submit(self):
 		self.validate_submittals()
+		self.lock_original_dates()
+		self.calculate_period()
+
+	def lock_original_dates(self):
+		"""Original dates may be filled in once after submit, never changed: time changes go through extensions."""
+		before = self.get_doc_before_save()
+		for field in ("start_date", "original_completion_date"):
+			old = before.get(field) if before else None
+			if old and getdate(old) != getdate(self.get(field)):
+				frappe.throw(
+					_("{0} is already set to {1}. Record an Extension of Time instead of changing it.").format(
+						_(self.meta.get_label(field)), frappe.utils.formatdate(old)
+					)
+				)
+
+	def on_update_after_submit(self):
+		self.sync_project_dates()
+
+	def calculate_period(self):
+		if self.start_date and self.original_completion_date:
+			if getdate(self.original_completion_date) < getdate(self.start_date):
+				frappe.throw(_("Original Completion Date cannot be before the Start Date."))
+			self.contract_duration = date_diff(self.original_completion_date, self.start_date)
+		for row in self.extensions:
+			if row.status == "Approved" and not row.approved_on:
+				row.approved_on = frappe.utils.today()
+		self.approved_extension_days = sum(cint(r.days) for r in self.extensions if r.status == "Approved")
+		self.revised_completion_date = (
+			add_days(self.original_completion_date, self.approved_extension_days) if self.original_completion_date else None
+		)
+
+	def sync_project_dates(self):
+		"""Keep the ERPNext Project's dates in line with the contract period (main contracts only)."""
+		if self.contract_type != "Main Contract" or not self.project:
+			return
+		values = {}
+		if self.start_date:
+			values["expected_start_date"] = self.start_date
+		if self.revised_completion_date:
+			values["expected_end_date"] = self.revised_completion_date
+		if self.actual_completion_date:
+			values["actual_end_date"] = self.actual_completion_date
+		if values:
+			frappe.db.set_value("Project", self.project, values)
 
 	def validate_submittals(self):
 		for row in self.get("submittals"):
