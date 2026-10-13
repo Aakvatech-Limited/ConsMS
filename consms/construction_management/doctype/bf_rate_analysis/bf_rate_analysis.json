@@ -1,7 +1,6 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "field:rate_analysis_name",
+ "autoname": "format:RA-{####}",
  "creation": "2026-10-13 21:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -14,17 +13,18 @@
   "sb_resources",
   "items",
   "sb_notes",
-  "description"
+  "description",
+  "revision_reason",
+  "amended_from"
  ],
  "fields": [
   {
-   "description": "The work item this recipe prices, e.g. Concrete Class C30.",
+   "description": "The work item this recipe prices, e.g. Concrete Class C30. A new version (Amend) keeps the same name.",
    "fieldname": "rate_analysis_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Rate Analysis Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "description": "The unit of work the quantities below are for, e.g. Cubic Meter = per 1 m³.",
@@ -75,20 +75,38 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "depends_on": "amended_from",
+   "description": "Why this new version was made, e.g. new mix design from the lab.",
+   "fieldname": "revision_reason",
+   "fieldtype": "Small Text",
+   "label": "Revision Reason"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Previous Version",
+   "no_copy": 1,
+   "options": "BF Rate Analysis",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-10-13 21:00:00.000000",
+ "modified": "2026-10-13 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Rate Analysis",
- "naming_rule": "By fieldname",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
    "export": 1,
    "import": 1,
    "print": 1,
@@ -96,12 +114,14 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
    "export": 1,
    "import": 1,
    "print": 1,
@@ -109,18 +129,18 @@
    "report": 1,
    "role": "Projects Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
-   "create": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Projects User",
-   "write": 1
+   "role": "Projects User"
   }
  ],
- "search_fields": "uom, cost_per_unit",
+ "search_fields": "rate_analysis_name, uom, cost_per_unit",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

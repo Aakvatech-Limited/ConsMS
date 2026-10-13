@@ -20,6 +20,8 @@ class BFBudget(Document):
 		if self.amended_from and not (self.revision_reason or "").strip():
 			frappe.throw(_("Enter the Revision Reason: why this budget is being revised."))
 		self.validate_one_budget_per_contract()
+		self.validate_rate_analyses()
+		self.apply_rate_analyses()
 		self.calculate_totals()
 
 	def on_submit(self):
@@ -36,31 +38,69 @@ class BFBudget(Document):
 		if other:
 			frappe.throw(_("Contract {0} already has Budget {1}. Amend it to make a revision.").format(self.contract, other))
 
-	def populate_from_boq(self):
-		"""Budget resources = each BOQ line's quantity x its Rate Analysis recipe."""
-		company = frappe.db.get_value("Project", self.project, "company")
-		self.set("items", [])
-		missing = []
-		for line in frappe.get_doc("BF Bill of Quantities", self.boq).items:
-			if not line.rate_analysis:
-				missing.append(line.description)
+	def validate_rate_analyses(self):
+		for line in self.boq_lines:
+			if not line.rate_analysis or line.rate_analysis == line.applied_rate_analysis:
 				continue
-			for res in frappe.get_doc("BF Rate Analysis", line.rate_analysis).items:
-				self.append(
-					"items",
-					{
-						"boq_item": line.name,
-						"boq_description": line.description,
-						"rate_analysis": line.rate_analysis,
-						"resource_type": res.resource_type,
-						"item_code": res.item_code,
-						"qty": flt(line.quantity) * flt(res.qty) * (1 + flt(res.wastage_percent) / 100),
-						"uom": res.uom,
-						"rate": res.rate,
-						"expense_account": get_expense_account(res.item_code, company),
-					},
+			ra = frappe.db.get_value("BF Rate Analysis", line.rate_analysis, ["docstatus", "uom"], as_dict=True)
+			if ra.docstatus != 1:
+				frappe.throw(
+					_("Row {0}: Rate Analysis {1} is not approved. Only submitted Rate Analyses can be used.").format(
+						line.idx, frappe.bold(line.rate_analysis)
+					)
 				)
-		self.missing_rate_analysis = "\n".join(missing)
+			boq_uom = frappe.db.get_value("BF BOQ Item", line.boq_item, "erp_uom")
+			if boq_uom and ra.uom != boq_uom:
+				frappe.msgprint(
+					_("Row {0} ({1}): the BOQ line is in {2} but Rate Analysis {3} is per {4}. Check the quantities.").format(
+						line.idx, line.description, frappe.bold(boq_uom), line.rate_analysis, frappe.bold(ra.uom)
+					),
+					title=_("Unit mismatch"),
+					indicator="orange",
+				)
+
+	def build_boq_lines(self):
+		"""One row per BOQ line, keeping recipes already chosen."""
+		chosen = {line.boq_item: line.rate_analysis for line in self.boq_lines}
+		self.set("boq_lines", [])
+		for item in frappe.get_doc("BF Bill of Quantities", self.boq).items:
+			self.append(
+				"boq_lines",
+				{
+					"boq_item": item.name,
+					"description": item.description,
+					"rate_analysis": chosen.get(item.name),
+					"boq_qty": item.quantity,
+					"boq_unit": item.uom,
+					"boq_amount": item.amount,
+				},
+			)
+
+	def apply_rate_analyses(self, rebuild_all=False):
+		"""Rebuild resources only for BOQ lines whose recipe changed, so manual edits elsewhere are kept."""
+		company = frappe.db.get_value("Project", self.project, "company")
+		for line in self.boq_lines:
+			if not rebuild_all and line.rate_analysis == line.applied_rate_analysis:
+				continue
+			self.set("items", [row for row in self.items if row.boq_item != line.boq_item])
+			if line.rate_analysis:
+				for res in frappe.get_doc("BF Rate Analysis", line.rate_analysis).items:
+					self.append(
+						"items",
+						{
+							"boq_item": line.boq_item,
+							"boq_description": line.description,
+							"rate_analysis": line.rate_analysis,
+							"resource_type": res.resource_type,
+							"item_code": res.item_code,
+							"qty": flt(line.boq_qty) * flt(res.qty) * (1 + flt(res.wastage_percent) / 100),
+							"uom": res.uom,
+							"rate": res.rate,
+							"expense_account": get_expense_account(res.item_code, company),
+						},
+					)
+			line.applied_rate_analysis = line.rate_analysis
+		self.missing_rate_analysis = "\n".join(line.description for line in self.boq_lines if not line.rate_analysis)
 
 	def calculate_totals(self):
 		cost_per_line = {}
@@ -68,26 +108,12 @@ class BFBudget(Document):
 			row.amount = flt(row.qty) * flt(row.rate)
 			cost_per_line[row.boq_item] = cost_per_line.get(row.boq_item, 0) + row.amount
 
-		self.set("boq_lines", [])
-		self.contract_value = 0
-		for line in frappe.get_doc("BF Bill of Quantities", self.boq).items if self.boq else []:
-			boq_amount = flt(line.amount)
-			cost = cost_per_line.get(line.name, 0)
-			self.contract_value += boq_amount
-			self.append(
-				"boq_lines",
-				{
-					"boq_item": line.name,
-					"description": line.description,
-					"rate_analysis": line.rate_analysis,
-					"boq_qty": line.quantity,
-					"boq_unit": line.uom,
-					"boq_amount": boq_amount,
-					"budget_cost": cost,
-					"margin": boq_amount - cost,
-					"margin_percent": (boq_amount - cost) / boq_amount * 100 if boq_amount else 0,
-				},
-			)
+		for line in self.boq_lines:
+			line.budget_cost = cost_per_line.get(line.boq_item, 0)
+			line.margin = flt(line.boq_amount) - line.budget_cost
+			line.margin_percent = line.margin / flt(line.boq_amount) * 100 if flt(line.boq_amount) else 0
+
+		self.contract_value = sum(flt(line.boq_amount) for line in self.boq_lines)
 		self.total_budget_cost = sum(cost_per_line.values())
 		self.expected_margin = flt(self.contract_value) - self.total_budget_cost
 		self.margin_percent = self.expected_margin / self.contract_value * 100 if self.contract_value else 0
@@ -95,7 +121,7 @@ class BFBudget(Document):
 
 @frappe.whitelist()
 def make_bf_budget(source_name, target_doc=None):
-	"""Contract -> Budget, filled from the contract's BOQ and the Rate Analysis on each BOQ line."""
+	"""Contract -> Budget with one row per BOQ line; the QS then picks a Rate Analysis per line."""
 	existing = frappe.db.get_value("BF Budget", {"contract": source_name, "docstatus": ["!=", 2]})
 	if existing:
 		frappe.throw(_("This contract already has Budget {0}.").format(existing))
@@ -106,17 +132,19 @@ def make_bf_budget(source_name, target_doc=None):
 
 	budget = frappe.new_doc("BF Budget")
 	budget.update({"contract": contract.name, "project": contract.project, "boq": contract.boq})
-	budget.populate_from_boq()
-	budget.calculate_totals()
+	budget.build_boq_lines()
+	budget.missing_rate_analysis = "\n".join(line.description for line in budget.boq_lines)
 	return budget
 
 
 @frappe.whitelist()
-def refresh_from_boq(budget_name):
+def rebuild_resources(budget_name):
+	"""Re-read the BOQ lines and rebuild all resources from the chosen Rate Analyses (draft only)."""
 	budget = frappe.get_doc("BF Budget", budget_name)
 	if budget.docstatus != 0:
-		frappe.throw(_("Only a draft budget can be refreshed. Amend it to make a revision."))
-	budget.populate_from_boq()
+		frappe.throw(_("Only a draft budget can be rebuilt. Cancel and Amend it to make a revision."))
+	budget.build_boq_lines()
+	budget.apply_rate_analyses(rebuild_all=True)
 	budget.save()
 	return budget.name
 

@@ -4,11 +4,16 @@
 const BUDGET_METHOD = "consms.construction_management.doctype.bf_budget.bf_budget";
 
 frappe.ui.form.on("BF Budget", {
+	setup(frm) {
+		// only approved recipes
+		frm.set_query("rate_analysis", "boq_lines", () => ({ filters: { docstatus: 1 } }));
+	},
+
 	refresh(frm) {
 		if (frm.doc.docstatus === 0 && !frm.is_new()) {
-			frm.add_custom_button(__("Refresh from BOQ"), () => {
-				frappe.confirm(__("Rebuild the resources from the BOQ and its Rate Analysis? Manual changes to resource lines will be lost."), () => {
-					frappe.xcall(`${BUDGET_METHOD}.refresh_from_boq`, { budget_name: frm.doc.name }).then(() => frm.reload_doc());
+			frm.add_custom_button(__("Rebuild All Resources"), () => {
+				frappe.confirm(__("Re-read the BOQ and rebuild every resource line from the chosen Rate Analyses? Manual changes to resource lines will be lost."), () => {
+					frappe.xcall(`${BUDGET_METHOD}.rebuild_resources`, { budget_name: frm.doc.name }).then(() => frm.reload_doc());
 				});
 			});
 		}
