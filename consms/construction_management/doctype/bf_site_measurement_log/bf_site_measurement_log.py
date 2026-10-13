@@ -54,12 +54,13 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	
 	query = """
 		SELECT 
-			name, item_code, description, quantity, uom
+			name, description, quantity, uom
 		FROM `tabBF BOQ Item`
 		WHERE parent = %s
-		AND (name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)
+		AND (name LIKE %s OR IFNULL(description, '') LIKE %s)
+		ORDER BY idx
 		LIMIT %s, %s
 	"""
-	
-	return frappe.db.sql(query, (boq_name, search_txt, search_txt, search_txt, start, page_len))
+
+	return frappe.db.sql(query, (boq_name, search_txt, search_txt, start, page_len))
 

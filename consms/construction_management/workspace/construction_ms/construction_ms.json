@@ -82,7 +82,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Setup",
-   "link_count": 6,
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -103,6 +103,16 @@
    "label": "Construction Types",
    "link_count": 0,
    "link_to": "BF Construction Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "UOM Mapping",
+   "link_count": 0,
+   "link_to": "BF UOM Mapping",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -148,7 +158,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-13 19:00:00.000000",
+ "modified": "2026-10-13 20:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",

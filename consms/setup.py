@@ -3,6 +3,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from consms.construction_management.measurement import ensure_standard_construction_types
 from consms.construction_management.tasks import ensure_mobilization_task_type
+from consms.construction_management.uom import ensure_standard_uom_mappings
 
 
 def after_migrate():
@@ -54,6 +55,7 @@ def after_migrate():
 
     ensure_mobilization_task_type()
     ensure_standard_construction_types()
+    ensure_standard_uom_mappings()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:

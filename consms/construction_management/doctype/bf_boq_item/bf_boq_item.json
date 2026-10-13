@@ -6,25 +6,17 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "item_code",
   "task",
   "description",
   "cb_e767826c",
   "quantity",
   "uom",
+  "erp_uom",
   "unit_rate",
   "amount",
   "requested_qty"
  ],
  "fields": [
-  {
-   "columns": 2,
-   "fieldname": "item_code",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Item",
-   "options": "Item"
-  },
   {
    "description": "Optional. The project task this work belongs to; used for cost per task and task progress.",
    "fieldname": "task",
@@ -33,10 +25,12 @@
    "options": "Task"
   },
   {
-   "fetch_from": "item_code.description",
+   "columns": 3,
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description"
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
   },
   {
    "fieldname": "cb_e767826c",
@@ -51,11 +45,20 @@
   },
   {
    "columns": 1,
-   "fetch_from": "item_code.stock_uom",
+   "description": "The unit exactly as written in the client's BOQ, e.g. m³, Nr, Ls.",
    "fieldname": "uom",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "UOM"
+   "label": "BOQ Unit"
+  },
+  {
+   "columns": 1,
+   "description": "ERPNext unit for budget and purchasing. Filled from UOM Mapping; required before the BOQ is submitted.",
+   "fieldname": "erp_uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
   },
   {
    "columns": 2,
@@ -65,7 +68,7 @@
    "label": "Unit Rate"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -76,7 +79,6 @@
    "default": "0",
    "fieldname": "requested_qty",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Requested Qty",
    "read_only": 1
   }
@@ -85,7 +87,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-12 10:00:00.000000",
+ "modified": "2026-10-13 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF BOQ Item",
@@ -94,7 +96,7 @@
  "permissions": [],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "description, item_code, quantity, uom",
+ "search_fields": "description, quantity, uom",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

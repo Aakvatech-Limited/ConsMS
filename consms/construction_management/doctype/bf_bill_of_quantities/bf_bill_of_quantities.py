@@ -8,6 +8,8 @@ from frappe.model.mapper import get_mapped_doc
 
 from frappe.utils import add_days, flt, nowdate
 
+from consms.construction_management.uom import get_uom_map, resolve_uom
+
 class BFBillofQuantities(Document):
 	def after_insert(self):
 		# Tender -> BOQ: keep the tender pointing at its (latest) BOQ so the contract picks it up
@@ -16,11 +18,28 @@ class BFBillofQuantities(Document):
 
 	def validate(self):
 		self.validate_one_boq_per_tender()
+		self.set_erp_uoms()
 		total = 0
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)
 			total += item.amount
 		self.total_amount = total
+
+	def before_submit(self):
+		unmapped = sorted({row.uom or _("(blank)") for row in self.items if not row.erp_uom})
+		if unmapped:
+			frappe.throw(
+				_("Map these BOQ units to an ERP UOM before submitting (UOM Mapping list): {0}").format(
+					", ".join(frappe.bold(u) for u in unmapped)
+				),
+				title=_("Unmapped BOQ Units"),
+			)
+
+	def set_erp_uoms(self):
+		uom_map = get_uom_map()
+		for row in self.items:
+			if row.uom and not row.erp_uom:
+				row.erp_uom = resolve_uom(row.uom, uom_map)
 
 	def validate_one_boq_per_tender(self):
 		if not self.tender:
@@ -62,7 +81,7 @@ def get_items_for_material_request(source_name, target_doc=None):
 		already_added = {row.bf_boq_item for row in target.get("items") if row.get("bf_boq_item")}
 
 		for row in source.items:
-			if row.name in already_added or not row.item_code:
+			if row.name in already_added or not row.get("item_code"):
 				continue
 			if not frappe.get_cached_value("Item", row.item_code, "is_stock_item"):
 				continue
@@ -116,8 +135,8 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 
 	if txt:
 		search_txt = f"%{txt}%"
-		conditions.append("(name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)")
-		params.extend([search_txt, search_txt, search_txt])
+		conditions.append("(name LIKE %s OR IFNULL(description, '') LIKE %s)")
+		params.extend([search_txt, search_txt])
 
 	where_stmt = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
@@ -125,7 +144,6 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 		SELECT 
 			name,
 			CONCAT(
-				IF(IFNULL(item_code, '') != '', CONCAT('[', item_code, '] '), ''),
 				IFNULL(description, ''), 
 				IF(IFNULL(uom, '') != '', CONCAT(' | UOM: ', uom), ''),
 				IF(IFNULL(quantity, 0) > 0, CONCAT(' | Qty: ', quantity), '')
