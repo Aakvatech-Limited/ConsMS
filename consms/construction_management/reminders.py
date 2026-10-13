@@ -23,6 +23,7 @@ def get_expiring_submittals(days=SUBMITTAL_DAYS):
 
 
 def send_expiry_reminders():
+	send_response_reminders()
 	for row in get_expiring_submittals():
 		remind(
 			"BF Contract",
@@ -54,6 +55,23 @@ def send_expiry_reminders():
 				t.tender_name, formatdate(t.bid_security_expiry_date)
 			),
 			date=t.bid_security_expiry_date,
+		)
+
+
+def send_response_reminders():
+	"""Letters needing a reply that is due within 3 days or overdue."""
+	for c in frappe.get_all(
+		"BF Correspondence",
+		filters=[["status", "=", "Awaiting Response"], ["response_due_date", "is", "set"], ["response_due_date", "<=", add_days(today(), 3)]],
+		fields=["name", "owner", "subject", "response_due_date"],
+	):
+		remind(
+			"BF Correspondence",
+			c.name,
+			c.owner,
+			key=f"response:{c.name}:{c.response_due_date}",
+			text=_("Response due on {0}: {1}").format(formatdate(c.response_due_date), c.subject),
+			date=c.response_due_date,
 		)
 
 
