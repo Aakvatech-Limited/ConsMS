@@ -33,7 +33,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 5,
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -44,6 +44,26 @@
    "label": "Contract Status Summary",
    "link_count": 0,
    "link_to": "Contract Status Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "BOQ Progress",
+   "link_count": 0,
+   "link_to": "BOQ Progress",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Running Cost vs Budget",
+   "link_count": 0,
+   "link_to": "Running Cost vs Budget",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -168,7 +188,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-14 01:00:00.000000",
+ "modified": "2026-10-14 01:45:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",
