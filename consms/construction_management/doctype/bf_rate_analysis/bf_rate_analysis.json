@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rate_analysis_name",
+ "creation": "2026-10-13 21:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rate_analysis_name",
+  "uom",
+  "cb_1",
+  "construction_type",
+  "cost_per_unit",
+  "sb_resources",
+  "items",
+  "sb_notes",
+  "description"
+ ],
+ "fields": [
+  {
+   "description": "The work item this recipe prices, e.g. Concrete Class C30.",
+   "fieldname": "rate_analysis_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rate Analysis Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "The unit of work the quantities below are for, e.g. Cubic Meter = per 1 m³.",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Per Unit of",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "construction_type",
+   "fieldtype": "Link",
+   "label": "Construction Type",
+   "options": "BF Construction Type"
+  },
+  {
+   "description": "Total cost of all resources for one unit of work.",
+   "fieldname": "cost_per_unit",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost per Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_resources",
+   "fieldtype": "Section Break",
+   "label": "Resources per Unit"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Resources",
+   "options": "BF Rate Analysis Item",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-13 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Rate Analysis",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects User",
+   "write": 1
+  }
+ ],
+ "search_fields": "uom, cost_per_unit",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "rate_analysis_name",
+ "track_changes": 1
+}

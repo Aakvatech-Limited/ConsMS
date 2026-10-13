@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "autoname": "format:BF-BUD-{YYYY}-{####}",
+ "creation": "2026-10-13 21:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract",
+  "project",
+  "boq",
+  "erp_budget",
+  "cb_1",
+  "contract_value",
+  "total_budget_cost",
+  "cb_2",
+  "expected_margin",
+  "margin_percent",
+  "revision_reason",
+  "sb_lines",
+  "boq_lines",
+  "missing_rate_analysis",
+  "sb_items",
+  "items",
+  "amended_from",
+  "connections_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract",
+   "options": "BF Contract",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "contract.project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "contract.boq",
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "Bill of Quantities",
+   "options": "BF Bill of Quantities",
+   "read_only": 1
+  },
+  {
+   "description": "Created on submit: amounts per expense account, used by ERPNext to warn on Material Requests, Purchase Orders and expenses.",
+   "fieldname": "erp_budget",
+   "fieldtype": "Link",
+   "label": "ERPNext Budget",
+   "no_copy": 1,
+   "options": "Budget",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "What the client pays: the BOQ total.",
+   "fieldname": "contract_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "BOQ Value",
+   "read_only": 1
+  },
+  {
+   "description": "What it should cost Gemen to do the work.",
+   "fieldname": "total_budget_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Budget Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "expected_margin",
+   "fieldtype": "Currency",
+   "label": "Expected Margin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "margin_percent",
+   "fieldtype": "Percent",
+   "label": "Margin %",
+   "read_only": 1
+  },
+  {
+   "depends_on": "amended_from",
+   "description": "Why this budget was revised, e.g. fuel price went from 2,400 to 2,650.",
+   "fieldname": "revision_reason",
+   "fieldtype": "Small Text",
+   "label": "Revision Reason",
+   "mandatory_depends_on": "amended_from"
+  },
+  {
+   "fieldname": "sb_lines",
+   "fieldtype": "Section Break",
+   "label": "Budget per BOQ Line"
+  },
+  {
+   "fieldname": "boq_lines",
+   "fieldtype": "Table",
+   "label": "BOQ Lines",
+   "options": "BF Budget BOQ Line",
+   "read_only": 1
+  },
+  {
+   "depends_on": "missing_rate_analysis",
+   "description": "These BOQ lines have no Rate Analysis, so they have no budget yet.",
+   "fieldname": "missing_rate_analysis",
+   "fieldtype": "Small Text",
+   "label": "BOQ Lines Without Rate Analysis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "Resources"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Budget Resources",
+   "options": "BF Budget Item"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Revision Of",
+   "no_copy": 1,
+   "options": "BF Budget",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-13 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Budget",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects User",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

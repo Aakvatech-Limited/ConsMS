@@ -147,9 +147,9 @@ doctype_js = {
 
 doc_events = {
 	"Material Request": {
-		"validate": "consms.material_request.warn_if_over_boq",
-		"on_submit": "consms.material_request.update_boq_requested_qty",
-		"on_cancel": "consms.material_request.update_boq_requested_qty",
+		"validate": "consms.material_request.warn_if_over_budget",
+		"on_submit": "consms.material_request.update_budget_requested_qty",
+		"on_cancel": "consms.material_request.update_budget_requested_qty",
 	},
 	"Task": {
 		"on_update": "consms.construction_management.tasks.update_mobilization_from_task",

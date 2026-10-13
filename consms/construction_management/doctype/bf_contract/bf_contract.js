@@ -20,6 +20,19 @@ frappe.ui.form.on("BF Contract", {
 				});
 			}, __("Create"));
 
+			frm.add_custom_button(__("Budget"), function() {
+				frappe.db.get_value("BF Budget", { contract: frm.doc.name, docstatus: ["!=", 2] }, "name").then((r) => {
+					if (r.message && r.message.name) {
+						frappe.set_route("Form", "BF Budget", r.message.name);
+					} else {
+						frappe.model.open_mapped_doc({
+							method: "consms.construction_management.doctype.bf_budget.bf_budget.make_bf_budget",
+							frm: frm
+						});
+					}
+				});
+			}, __("Create"));
+
 			frm.add_custom_button(__("Site Mobilization"), function() {
 				frappe.model.open_mapped_doc({
 					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_mobilization",

@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 21:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "resource_type",
+  "item_code",
+  "item_name",
+  "qty",
+  "uom",
+  "rate",
+  "wastage_percent",
+  "amount"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "default": "Material",
+   "fieldname": "resource_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Resource Type",
+   "options": "Material\nLabour\nPlant\nSubcontract\nOther",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "description": "How much of this resource one unit of work needs, e.g. 7 bags of cement per 1 m³ of concrete.",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty per Unit",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_code.stock_uom",
+   "fetch_if_empty": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "columns": 1,
+   "description": "Cost per UOM. Defaults from the item's buying price.",
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate"
+  },
+  {
+   "columns": 1,
+   "description": "Extra allowed for waste, e.g. 5 for 5%.",
+   "fieldname": "wastage_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Wastage %"
+  },
+  {
+   "columns": 1,
+   "description": "Qty per Unit x (1 + Wastage %) x Rate.",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost per Unit",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Rate Analysis Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

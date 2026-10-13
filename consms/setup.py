@@ -53,6 +53,29 @@ def after_migrate():
         "Purchase Invoice Item": boq_item_link_fields,
     })
 
+    # Budget link on buying documents, carried MR -> RFQ -> Supplier Quotation -> PO -> Receipt -> Invoice
+    parent_budget_field = [
+        {"fieldname": "bf_budget", "label": "BF Budget", "fieldtype": "Link", "options": "BF Budget",
+         "insert_after": "bf_boq", "read_only": 1},
+    ]
+    item_budget_fields = [
+        {"fieldname": "bf_budget", "label": "BF Budget", "fieldtype": "Link", "options": "BF Budget",
+         "insert_after": "bf_boq_item_id", "read_only": 1},
+        {"fieldname": "bf_budget_item", "label": "Budget Line", "fieldtype": "Link", "options": "BF Budget Item",
+         "insert_after": "bf_budget", "read_only": 1},
+    ]
+    create_custom_fields({
+        "Request for Quotation": parent_boq_field,
+        "Supplier Quotation": parent_boq_field,
+        "Request for Quotation Item": boq_item_link_fields,
+        "Supplier Quotation Item": boq_item_link_fields,
+    })
+    buying = ["Material Request", "Request for Quotation", "Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]
+    create_custom_fields({
+        **{dt: parent_budget_field for dt in buying},
+        **{f"{dt} Item": item_budget_fields for dt in buying},
+    })
+
     ensure_mobilization_task_type()
     ensure_standard_construction_types()
     ensure_standard_uom_mappings()
@@ -62,9 +85,10 @@ def get_material_request_dashboard(data):
         data["internal_links"] = {}
         
     data["internal_links"]["BF Bill of Quantities"] = ["items", "bf_boq"]
-    
+    data["internal_links"]["BF Budget"] = ["items", "bf_budget"]
+
     data["transactions"].append({
         "label": "Construction",
-        "items": ["BF Bill of Quantities"]
+        "items": ["BF Budget", "BF Bill of Quantities"]
     })
     return data

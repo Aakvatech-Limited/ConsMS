@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 21:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "boq_item",
+  "description",
+  "rate_analysis",
+  "boq_qty",
+  "boq_unit",
+  "boq_amount",
+  "budget_cost",
+  "margin",
+  "margin_percent"
+ ],
+ "fields": [
+  {
+   "fieldname": "boq_item",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "BOQ Line",
+   "options": "BF BOQ Item",
+   "read_only": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "BOQ Work Item",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "rate_analysis",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Rate Analysis",
+   "options": "BF Rate Analysis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "boq_qty",
+   "fieldtype": "Float",
+   "label": "BOQ Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "boq_unit",
+   "fieldtype": "Data",
+   "label": "BOQ Unit",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "description": "What the client pays for this line (BOQ qty x BOQ rate).",
+   "fieldname": "boq_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "BOQ Value",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "budget_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Budget Cost",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "margin",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Margin",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "margin_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Margin %",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Budget BOQ Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

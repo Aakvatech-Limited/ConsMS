@@ -28,13 +28,6 @@ frappe.ui.form.on("BF Bill of Quantities", {
 					}, __("Create"));
 				}
 			});
-
-			frm.add_custom_button(__("Material Request"), function() {
-				frappe.model.open_mapped_doc({
-					method: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.make_material_request",
-					frm: frm
-				});
-			}, __("Create"));
 		}
 	},
 });

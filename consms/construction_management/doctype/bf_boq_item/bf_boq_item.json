@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "rate_analysis",
   "task",
   "description",
   "cb_e767826c",
@@ -13,10 +14,17 @@
   "uom",
   "erp_uom",
   "unit_rate",
-  "amount",
-  "requested_qty"
+  "amount"
  ],
  "fields": [
+  {
+   "allow_on_submit": 1,
+   "description": "The recipe of materials, labour and plant for one unit of this work. Used to build the Budget.",
+   "fieldname": "rate_analysis",
+   "fieldtype": "Link",
+   "label": "Rate Analysis",
+   "options": "BF Rate Analysis"
+  },
   {
    "description": "Optional. The project task this work belongs to; used for cost per task and task progress.",
    "fieldname": "task",
@@ -74,20 +82,13 @@
    "in_list_view": 1,
    "label": "Amount",
    "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "requested_qty",
-   "fieldtype": "Float",
-   "label": "Requested Qty",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-13 20:00:00.000000",
+ "modified": "2026-10-13 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF BOQ Item",
