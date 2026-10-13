@@ -62,6 +62,59 @@ def set_status(tender_name, status):
 
 
 @frappe.whitelist()
+def get_tender_submission(tender_name):
+	"""Files and email details for sending the bid: tender documents + the BOQ as PDF."""
+	tender = frappe.get_doc("BF Tender", tender_name)
+	tender.check_permission("read")
+	if not tender.boq or frappe.db.get_value("BF Bill of Quantities", tender.boq, "docstatus") != 1:
+		frappe.throw(_("Submit the priced Bill of Quantities before sending the tender."))
+
+	warnings = []
+	urls = [row.attachment for row in tender.documents if row.status == "Ready" and row.attachment]
+	pending = [row.document_type for row in tender.documents if row.status == "Pending"]
+	if pending:
+		warnings.append(_("Still Pending: {0}").format(", ".join(pending)))
+
+	boq_pdf = None
+	try:
+		pdf = frappe.get_print("BF Bill of Quantities", tender.boq, print_format="BOQ Client Layout", as_pdf=True)
+		boq_pdf = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"BOQ {tender.boq}.pdf",
+				"content": pdf,
+				"attached_to_doctype": "BF Tender",
+				"attached_to_name": tender.name,
+				"is_private": 1,
+			}
+		).insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(title=f"BOQ PDF for tender {tender.name}")
+		warnings.append(_("The BOQ PDF could not be generated; attach it manually."))
+
+	files = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_url": ["in", urls or [""]]},
+		fields=["name", "file_name", "file_url"],
+	)
+	if boq_pdf:
+		files.append({"name": boq_pdf.name, "file_name": boq_pdf.file_name, "file_url": boq_pdf.file_url})
+
+	customer = frappe.db.get_value("Project", tender.project, "customer") if tender.project else None
+	recipient = frappe.db.get_value("Customer", customer, "email_id") if customer else None
+	documents = [row.document_type for row in tender.documents if row.status == "Ready"]
+	return {
+		"files": files,
+		"recipients": recipient or "",
+		"subject": _("Tender Submission: {0}").format(tender.tender_name),
+		"message": _("Dear Sir/Madam,<br><br>Please find attached our tender for <b>{0}</b>: the priced Bill of Quantities and the following documents:<ul>{1}</ul>Kind regards,").format(
+			tender.tender_name, "".join(f"<li>{d}</li>" for d in documents)
+		),
+		"warnings": warnings,
+	}
+
+
+@frappe.whitelist()
 def make_bf_boq(source_name, target_doc=None):
 	"""Tender -> BOQ: the BOQ is priced for this tender (one BOQ per tender)."""
 	existing = frappe.db.get_value("BF Tender", source_name, "boq")

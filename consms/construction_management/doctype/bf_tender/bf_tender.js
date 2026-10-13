@@ -15,6 +15,10 @@ frappe.ui.form.on("BF Tender", {
 			}, __("Create"));
 		}
 
+		if (frm.doc.boq && (frm.doc.docstatus === 0 || frm.doc.status === "Bid Submitted")) {
+			frm.add_custom_button(__("Send Tender"), () => frm.events.send_tender(frm));
+		}
+
 		if (frm.doc.docstatus === 1 && frm.doc.status === "Bid Submitted") {
 			[["Awarded", __("Mark Awarded")], ["Lost", __("Mark Lost")]].forEach(([status, label]) => {
 				frm.add_custom_button(label, () => frm.events.set_status(frm, status), __("Status"));
@@ -40,6 +44,31 @@ frappe.ui.form.on("BF Tender", {
 				});
 			}, __("Create"));
 		}
+	},
+
+	send_tender(frm) {
+		frappe.call({
+			method: `${TENDER_METHOD}.get_tender_submission`,
+			args: { tender_name: frm.doc.name },
+			freeze: true,
+			freeze_message: __("Preparing tender documents and BOQ PDF..."),
+		}).then(({ message: data }) => {
+			if (!data) return;
+			(data.warnings || []).forEach((w) => frappe.show_alert({ message: w, indicator: "orange" }, 8));
+			frm.reload_doc().then(() => {
+				const composer = new frappe.views.CommunicationComposer({
+					doc: frm.doc,
+					frm,
+					recipients: data.recipients,
+					subject: data.subject,
+					message: data.message,
+					attachments: data.files,
+				});
+				// tick every tender file so all go in one email
+				const list = $(composer.dialog.fields_dict.select_attachments.wrapper);
+				data.files.forEach((f) => list.find(`[data-file-name="${f.name}"]`).prop("checked", true));
+			});
+		});
 	},
 
 	set_status(frm, status) {
