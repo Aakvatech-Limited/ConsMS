@@ -15,6 +15,8 @@
   "mobilization_template",
   "checklist_section",
   "mobilization_checklist",
+  "sb_resources",
+  "resources",
   "amended_from",
   "connections_tab"
  ],
@@ -72,6 +74,19 @@
    "options": "BF Site Mobilization Item"
   },
   {
+   "fieldname": "sb_resources",
+   "fieldtype": "Section Break",
+   "label": "Labour & Equipment to Site"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Crews and machines sent to site: how many, when they arrive and when they are released.",
+   "fieldname": "resources",
+   "fieldtype": "Table",
+   "label": "Labour & Equipment",
+   "options": "BF Mobilization Resource"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -92,7 +107,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-12 13:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Mobilization",
