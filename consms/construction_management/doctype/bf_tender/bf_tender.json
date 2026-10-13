@@ -15,6 +15,19 @@
   "status",
   "sb_documents",
   "documents",
+  "sb_bid_security",
+  "bid_security_type",
+  "bid_security_amount",
+  "bid_security_number",
+  "bid_security_issuer",
+  "cb_bs",
+  "bid_security_issue_date",
+  "bid_security_expiry_date",
+  "bid_security_status",
+  "bid_security_returned_on",
+  "sb_costs",
+  "costs",
+  "total_tender_cost",
   "amended_from",
   "connections_tab"
  ],
@@ -74,6 +87,90 @@
    "options": "BF Tender Document"
   },
   {
+   "collapsible": 1,
+   "fieldname": "sb_bid_security",
+   "fieldtype": "Section Break",
+   "label": "Bid Security"
+  },
+  {
+   "fieldname": "bid_security_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nBank Guarantee\nInsurance Bond\nCash\nNot Required"
+  },
+  {
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "fieldname": "bid_security_amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "fieldname": "bid_security_number",
+   "fieldtype": "Data",
+   "label": "Guarantee / Bond No."
+  },
+  {
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "fieldname": "bid_security_issuer",
+   "fieldtype": "Data",
+   "label": "Issued By (Bank / Insurer)"
+  },
+  {
+   "fieldname": "cb_bs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "fieldname": "bid_security_issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "fieldname": "bid_security_expiry_date",
+   "fieldtype": "Date",
+   "label": "Expiry Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
+   "description": "Follow up the return of the security after award or loss.",
+   "fieldname": "bid_security_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nHeld by Client\nReturned\nForfeited"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.bid_security_status=='Returned'",
+   "fieldname": "bid_security_returned_on",
+   "fieldtype": "Date",
+   "label": "Returned On"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_costs",
+   "fieldtype": "Section Break",
+   "label": "Tender Costs"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Money spent on this tender: document fees, site visits, printing, consultants. Can be added after the bid is submitted.",
+   "fieldname": "costs",
+   "fieldtype": "Table",
+   "label": "Tender Costs",
+   "options": "BF Tender Cost"
+  },
+  {
+   "allow_on_submit": 1,
+   "bold": 1,
+   "fieldname": "total_tender_cost",
+   "fieldtype": "Currency",
+   "label": "Total Tender Cost",
+   "read_only": 1
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -94,7 +191,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 02:00:00.000000",
+ "modified": "2026-10-14 03:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Tender",

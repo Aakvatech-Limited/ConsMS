@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.utils import flt
 
 def get_document_types(applies_to):
 	"""Document types required for a Tender or a Contract (including 'Both')."""
@@ -25,12 +26,18 @@ class BFTender(Document):
 				self.append("documents", {"document_type": doc_type, "status": "Pending"})
 
 	def validate(self):
+		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
 		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
 		for row in self.documents:
 			if row.status == "Not Applicable" and row.document_type in mandatory:
 				frappe.throw(_("Row {0}: {1} is mandatory and cannot be Not Applicable.").format(row.idx, frappe.bold(row.document_type)))
 			if row.status == "Ready" and not row.attachment:
 				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
+
+	def before_update_after_submit(self):
+		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
+		if self.bid_security_status == "Returned" and not self.bid_security_returned_on:
+			self.bid_security_returned_on = frappe.utils.today()
 
 	def before_submit(self):
 		pending = [row.document_type for row in self.documents if row.status == "Pending"]

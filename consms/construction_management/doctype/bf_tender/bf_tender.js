@@ -3,8 +3,14 @@
 
 const TENDER_METHOD = "consms.construction_management.doctype.bf_tender.bf_tender";
 
+frappe.ui.form.on("BF Tender Cost", {
+	amount: (frm) => frm.set_value("total_tender_cost", (frm.doc.costs || []).reduce((t, r) => t + flt(r.amount), 0)),
+	costs_remove: (frm) => frm.set_value("total_tender_cost", (frm.doc.costs || []).reduce((t, r) => t + flt(r.amount), 0)),
+});
+
 frappe.ui.form.on("BF Tender", {
 	refresh(frm) {
+		frm.events.bid_security_alert(frm);
 		if (frm.is_new()) return;
 
 		if (frm.doc.boq) {
@@ -43,6 +49,17 @@ frappe.ui.form.on("BF Tender", {
 					}
 				});
 			}, __("Create"));
+		}
+	},
+
+	bid_security_alert(frm) {
+		const d = frm.doc;
+		if (!d.bid_security_expiry_date || ["Returned", "Forfeited"].includes(d.bid_security_status)) return;
+		const days = frappe.datetime.get_diff(d.bid_security_expiry_date, frappe.datetime.get_today());
+		if (days < 0) {
+			frm.dashboard.set_headline_alert(__("Bid security expired {0} days ago and is not returned.", [-days]), "red");
+		} else if (days <= 14) {
+			frm.dashboard.set_headline_alert(__("Bid security expires in {0} days ({1}).", [days, frappe.datetime.str_to_user(d.bid_security_expiry_date)]), "orange");
 		}
 	},
 
