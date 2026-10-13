@@ -1,12 +1,24 @@
 # Copyright (c) 2026, Sydney Kibanga and contributors
 # For license information, please see license.txt
 
+from types import SimpleNamespace
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate
 
 from consms.construction_management.budget import cancel_erp_budget, get_expense_account, sync_erp_budget
+
+
+BUYING_DOCTYPES = (
+	"Material Request",
+	"Request for Quotation",
+	"Supplier Quotation",
+	"Purchase Order",
+	"Purchase Receipt",
+	"Purchase Invoice",
+)
 
 
 class BFBudget(Document):
@@ -26,9 +38,35 @@ class BFBudget(Document):
 
 	def on_submit(self):
 		sync_erp_budget(self)
+		if self.amended_from:
+			self.relink_procurement()
+
+	def before_cancel(self):
+		# a budget is replaced by its revision, so buying documents that point at it stay valid
+		self.ignore_linked_doctypes = BUYING_DOCTYPES + ("Budget",)
 
 	def on_cancel(self):
 		cancel_erp_budget(self)
+
+	def relink_procurement(self):
+		"""Point buying documents of the previous version at this revision, line by line, and carry Requested Qty over."""
+		from consms.material_request import update_budget_requested_qty
+
+		new_rows = {(row.boq_item, row.item_code): row.name for row in self.items}
+		old_rows = frappe.get_all("BF Budget Item", filters={"parent": self.amended_from}, fields=["name", "boq_item", "item_code"])
+		mapping = {old.name: new_rows[(old.boq_item, old.item_code)] for old in old_rows if (old.boq_item, old.item_code) in new_rows}
+
+		for doctype in BUYING_DOCTYPES:
+			frappe.db.sql(
+				f"update `tab{doctype}` set bf_budget = %s where bf_budget = %s", (self.name, self.amended_from)
+			)
+			for old, new in mapping.items():
+				frappe.db.sql(
+					f"update `tab{doctype} Item` set bf_budget = %s, bf_budget_item = %s where bf_budget_item = %s",
+					(self.name, new, old),
+				)
+
+		update_budget_requested_qty(SimpleNamespace(items=[frappe._dict(bf_budget_item=new) for new in mapping.values()]))
 
 	def validate_one_budget_per_contract(self):
 		other = frappe.db.get_value(
