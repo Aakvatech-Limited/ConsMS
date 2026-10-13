@@ -24,6 +24,12 @@ STANDARD_CONSTRUCTION_TYPES = [
 		"description": "Buildings and houses: No. x Length x Width x Height.",
 	},
 	{
+		"construction_type": "Bridge",
+		"measurement_method": "Dimensions",
+		"location_label": "Span / Pier",
+		"description": "Bridges and culverts (piers, abutments, decks): No. x Length x Width x Height.",
+	},
+	{
 		"construction_type": "Road",
 		"measurement_method": "Chainage",
 		"location_label": "Section",
