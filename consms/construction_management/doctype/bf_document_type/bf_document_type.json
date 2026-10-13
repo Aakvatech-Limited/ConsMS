@@ -7,7 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "document_name",
-  "description"
+  "description",
+  "applies_to",
+  "is_mandatory"
  ],
  "fields": [
   {
@@ -22,11 +24,28 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "Contract",
+   "description": "Tender: required with a bid. Contract: required after award (submittals).",
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Applies To",
+   "options": "Contract\nTender\nBoth"
+  },
+  {
+   "description": "Cannot be marked Not Applicable on a tender.",
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mandatory"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-27 10:00:00.000000",
+ "modified": "2026-10-14 02:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Document Type",

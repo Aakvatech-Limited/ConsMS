@@ -6,6 +6,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
+def get_document_types(applies_to):
+	"""Document types required for a Tender or a Contract (including 'Both')."""
+	return frappe.get_all(
+		"BF Document Type", filters={"applies_to": ["in", [applies_to, "Both"]]}, pluck="name", order_by="is_mandatory desc, name"
+	)
+
+
 # Status after submit -> statuses it may move to
 STATUS_TRANSITIONS = {"Bid Submitted": ("Awarded", "Lost")}
 
@@ -13,8 +20,27 @@ STATUS_TRANSITIONS = {"Bid Submitted": ("Awarded", "Lost")}
 class BFTender(Document):
 	def before_insert(self):
 		self.status = "Draft"
+		if not self.documents:
+			for doc_type in get_document_types("Tender"):
+				self.append("documents", {"document_type": doc_type, "status": "Pending"})
+
+	def validate(self):
+		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
+		for row in self.documents:
+			if row.status == "Not Applicable" and row.document_type in mandatory:
+				frappe.throw(_("Row {0}: {1} is mandatory and cannot be Not Applicable.").format(row.idx, frappe.bold(row.document_type)))
+			if row.status == "Ready" and not row.attachment:
+				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
 
 	def before_submit(self):
+		pending = [row.document_type for row in self.documents if row.status == "Pending"]
+		if pending:
+			frappe.throw(
+				_("These tender documents are still Pending: {0}. Mark each Ready (with attachment) or Not Applicable.").format(
+					", ".join(frappe.bold(d) for d in pending)
+				),
+				title=_("Tender documents incomplete"),
+			)
 		if not self.boq or frappe.db.get_value("BF Bill of Quantities", self.boq, "docstatus") != 1:
 			frappe.throw(_("Submit the priced Bill of Quantities for this tender before submitting the bid."))
 
@@ -81,8 +107,7 @@ def make_bf_contract(source_name, target_doc=None):
     )
 
     if not doc.get("submittals"):
-        document_types = frappe.get_all("BF Document Type", fields=["name"])
-        for doc_type in document_types:
-            doc.append("submittals", {"submittal_type": doc_type.name, "status": "Pending"})
+        for doc_type in get_document_types("Contract"):
+            doc.append("submittals", {"submittal_type": doc_type, "status": "Pending"})
 
     return doc

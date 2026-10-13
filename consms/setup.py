@@ -79,6 +79,7 @@ def after_migrate():
     ensure_mobilization_task_type()
     ensure_standard_construction_types()
     ensure_standard_uom_mappings()
+    ensure_tender_document_types()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:
@@ -92,3 +93,21 @@ def get_material_request_dashboard(data):
         "items": ["BF Budget", "BF Bill of Quantities"]
     })
     return data
+
+
+TENDER_DOCUMENT_TYPES = [
+    ("Bid Security / Bid Bond", 1, "Bank guarantee or insurance bond securing the bid; note its expiry date."),
+    ("Business Registration Certificate (BRELA)", 1, "Company registration certificate."),
+    ("Tax Clearance Certificate (TRA)", 1, "Valid tax clearance; note its expiry date."),
+    ("Contractor Registration Certificate (CRB)", 1, "Contractors Registration Board certificate in the required class."),
+    ("Signed Form of Tender", 1, "Form of tender signed by an authorised person."),
+    ("Power of Attorney", 0, "Authority for the person signing the bid."),
+    ("Company Profile", 0, "Experience, past projects, key staff and equipment."),
+]
+
+
+def ensure_tender_document_types():
+    for name, mandatory, description in TENDER_DOCUMENT_TYPES:
+        if not frappe.db.exists("BF Document Type", name):
+            frappe.get_doc({"doctype": "BF Document Type", "document_name": name, "applies_to": "Tender",
+                "is_mandatory": mandatory, "description": description}).insert(ignore_permissions=True)

@@ -13,6 +13,8 @@
   "cb_6b40a0ab",
   "boq",
   "status",
+  "sb_documents",
+  "documents",
   "amended_from",
   "connections_tab"
  ],
@@ -60,6 +62,18 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_documents",
+   "fieldtype": "Section Break",
+   "label": "Tender Documents"
+  },
+  {
+   "description": "Everything to submit with the bid. Each must be Ready (with attachment) or Not Applicable before the bid is submitted.",
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "Required Documents",
+   "options": "BF Tender Document"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -80,7 +94,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-13 19:00:00.000000",
+ "modified": "2026-10-14 02:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Tender",
