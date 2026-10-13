@@ -16,6 +16,16 @@ frappe.ui.form.on("BF Budget", {
 					frappe.xcall(`${BUDGET_METHOD}.rebuild_resources`, { budget_name: frm.doc.name }).then(() => frm.reload_doc());
 				});
 			});
+			frm.add_custom_button(__("Re-price from Price List"), () => {
+				frappe.xcall(`${BUDGET_METHOD}.reprice_from_price_list`, { budget_name: frm.doc.name }).then((changed) => {
+					frm.reload_doc();
+					frappe.msgprint({
+						title: __("Re-priced"),
+						message: changed && changed.length ? changed.join("<br>") : __("All rates already match the current prices."),
+						indicator: "blue",
+					});
+				});
+			});
 		}
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__("Material Request"), () => {

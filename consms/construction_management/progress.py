@@ -50,3 +50,16 @@ def get_actual_cost(contract):
 		for r in rows:
 			cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
 	return cost
+
+
+def get_baseline_cost(contract):
+	"""Budget cost per BOQ line from the first (baseline) version of the contract's budget."""
+	baseline = frappe.db.get_value(
+		"BF Budget", {"contract": contract, "amended_from": ["is", "not set"]}, "name", order_by="creation asc"
+	)
+	if not baseline:
+		return {}
+	cost = {}
+	for r in frappe.get_all("BF Budget Item", filters={"parent": baseline}, fields=["boq_item", "amount"]):
+		cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
+	return cost

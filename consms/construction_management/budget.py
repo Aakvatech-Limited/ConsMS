@@ -14,11 +14,13 @@ from frappe.utils import flt, nowdate
 @frappe.whitelist()
 def get_item_buying_rate(item_code, uom=None):
 	price_list = frappe.db.get_single_value("Buying Settings", "buying_price_list") or "Standard Buying"
-	filters = {"item_code": item_code, "price_list": price_list}
+	# the latest price already valid today (Item Price "Valid From")
+	filters = {"item_code": item_code, "price_list": price_list, "valid_from": ["<=", nowdate()]}
+	order = "valid_from desc, modified desc"
 	rate = None
 	if uom:
-		rate = frappe.db.get_value("Item Price", {**filters, "uom": uom}, "price_list_rate")
-	rate = rate or frappe.db.get_value("Item Price", filters, "price_list_rate")
+		rate = frappe.db.get_value("Item Price", {**filters, "uom": uom}, "price_list_rate", order_by=order)
+	rate = rate or frappe.db.get_value("Item Price", filters, "price_list_rate", order_by=order)
 	if not rate:
 		rate = frappe.db.get_value("Item", item_code, "valuation_rate") or frappe.db.get_value(
 			"Item", item_code, "last_purchase_rate"

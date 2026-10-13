@@ -188,6 +188,36 @@ def rebuild_resources(budget_name):
 
 
 @frappe.whitelist()
+def reprice_from_price_list(budget_name):
+	"""Apply current buying prices to the quantity not yet requested; what is already requested keeps its old price."""
+	from consms.construction_management.budget import get_item_buying_rate
+
+	budget = frappe.get_doc("BF Budget", budget_name)
+	if budget.docstatus != 0:
+		frappe.throw(_("Only a draft budget can be re-priced. Cancel and Amend it to make a revision."))
+
+	requested = {}
+	if budget.amended_from:
+		for old in frappe.get_all("BF Budget Item", filters={"parent": budget.amended_from}, fields=["boq_item", "item_code", "requested_qty"]):
+			requested[(old.boq_item, old.item_code)] = flt(old.requested_qty)
+
+	changed = []
+	for row in budget.items:
+		new_price = get_item_buying_rate(row.item_code, row.uom)
+		if not new_price or flt(new_price) == flt(row.rate):
+			continue
+		done = min(requested.get((row.boq_item, row.item_code), 0), flt(row.qty))
+		remaining = flt(row.qty) - done
+		row.previous_rate = row.rate
+		row.rate = (done * flt(row.rate) + remaining * new_price) / flt(row.qty) if flt(row.qty) else new_price
+		changed.append(_("{0}: {1} -> {2} (for {3} not yet requested)").format(
+			row.item_code, frappe.format(row.previous_rate, "Currency"), frappe.format(new_price, "Currency"), round(remaining, 2)))
+
+	budget.save()
+	return changed
+
+
+@frappe.whitelist()
 def get_items_for_material_request(source_name, target_doc=None):
 	"""Get Items From > BF Budget: stock materials still left to request."""
 	from frappe.model.mapper import get_mapped_doc

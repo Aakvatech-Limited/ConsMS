@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from consms.construction_management.progress import get_actual_cost, get_budget_cost, get_measured_qty
+from consms.construction_management.progress import get_actual_cost, get_baseline_cost, get_budget_cost, get_measured_qty
 
 
 def execute(filters=None):
@@ -18,7 +18,9 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("BOQ Work Item"), "fieldname": "description", "fieldtype": "Data", "width": 280},
-		{"label": _("Budget Cost"), "fieldname": "budget", "fieldtype": "Currency", "width": 130},
+		{"label": _("Baseline Budget"), "fieldname": "baseline", "fieldtype": "Currency", "width": 130},
+		{"label": _("Budget Change"), "fieldname": "budget_change", "fieldtype": "Currency", "width": 120},
+		{"label": _("Current Budget"), "fieldname": "budget", "fieldtype": "Currency", "width": 130},
 		{"label": _("% Work Done"), "fieldname": "percent_done", "fieldtype": "Percent", "width": 100},
 		{"label": _("Budget for Work Done"), "fieldname": "earned", "fieldtype": "Currency", "width": 150,
 		 "description": "What the work done so far should have cost."},
@@ -36,10 +38,14 @@ def get_data(contract):
 	done = get_measured_qty(contract)
 	budget_name, budget = get_budget_cost(contract)
 	actual = get_actual_cost(contract)
+	baseline = get_baseline_cost(contract)
 	data = []
 	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity"], order_by="idx"):
 		pct = done.get(line.name, 0) / flt(line.quantity) * 100 if flt(line.quantity) else 0
-		data.append(make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0)))
+		row = make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0))
+		row["baseline"] = baseline.get(line.name, row["budget"])
+		row["budget_change"] = row["budget"] - row["baseline"]
+		data.append(row)
 	unallocated = actual.get(None, 0) + actual.get("", 0)
 	if unallocated:
 		row = make_row(_("Costs not linked to a BOQ line"), 0, 0, unallocated)
@@ -92,7 +98,8 @@ def get_summary(data):
 	earned = sum(d["earned"] for d in data)
 	actual = sum(d["actual"] for d in data)
 	return [
-		{"value": budget, "indicator": "Blue", "label": _("Total Budget"), "datatype": "Currency"},
+		{"value": budget, "indicator": "Blue", "label": _("Current Budget"), "datatype": "Currency"},
+		{"value": budget - sum(d.get("baseline", d["budget"]) for d in data), "indicator": "Orange", "label": _("Change vs Baseline"), "datatype": "Currency"},
 		{"value": earned / budget * 100 if budget else 0, "indicator": "Green", "label": _("% Work Done (by budget)"), "datatype": "Percent"},
 		{"value": actual / budget * 100 if budget else 0, "indicator": "Orange", "label": _("% Budget Spent"), "datatype": "Percent"},
 		{"value": actual, "indicator": "Red", "label": _("Actual Cost"), "datatype": "Currency"},
