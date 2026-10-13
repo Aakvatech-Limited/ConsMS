@@ -4,12 +4,12 @@
 import frappe
 from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 
 class BFProgressClaim(Document):
 	def validate(self):
 		if self.period_from and self.period_to:
-			if self.period_from > self.period_to:
+			if getdate(self.period_from) > getdate(self.period_to):
 				frappe.throw("Period From cannot be after Period To.")
 			
 			overlapping = frappe.db.sql("""
