@@ -2,18 +2,35 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
 from frappe.utils import add_days, flt, nowdate
 
 class BFBillofQuantities(Document):
+	def after_insert(self):
+		# Tender -> BOQ: keep the tender pointing at its (latest) BOQ so the contract picks it up
+		if self.tender:
+			frappe.db.set_value("BF Tender", self.tender, "boq", self.name)
+
 	def validate(self):
+		self.validate_one_boq_per_tender()
 		total = 0
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)
 			total += item.amount
 		self.total_amount = total
+
+	def validate_one_boq_per_tender(self):
+		if not self.tender:
+			return
+		other = frappe.db.get_value(
+			"BF Bill of Quantities",
+			{"tender": self.tender, "docstatus": ["!=", 2], "name": ["not in", [self.name, self.amended_from or ""]]},
+		)
+		if other:
+			frappe.throw(_("Tender {0} already has Bill of Quantities {1}.").format(self.tender, other))
 
 @frappe.whitelist()
 def make_material_request(source_name, target_doc=None):
@@ -73,30 +90,6 @@ def get_items_for_material_request(source_name, target_doc=None):
 
 	doc.run_method("set_missing_values")
 	return doc
-
-@frappe.whitelist()
-def make_bf_tender(source_name, target_doc=None):
-	def set_missing_values(source, target):
-		target.tender_name = f"Tender for {source.project}"
-
-	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
-		"BF Bill of Quantities": {
-			"doctype": "BF Tender",
-			"field_map": {
-				"project": "project",
-				"name": "boq"
-			}
-		}
-	}, target_doc, set_missing_values)
-	
-	return doc
-
-@frappe.whitelist()
-def check_existing_tender(boq_name):
-	existing_tender = frappe.db.get_value("BF Tender", {"boq": boq_name}, "name")
-	if existing_tender:
-		return existing_tender
-	return None
 
 @frappe.whitelist()
 def get_awarded_tender(boq_name):

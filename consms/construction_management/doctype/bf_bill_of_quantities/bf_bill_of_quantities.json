@@ -10,6 +10,7 @@
  "field_order": [
   "basic_details",
   "project",
+  "tender",
   "date",
   "cb_93eaf144",
   "amended_from",
@@ -31,6 +32,15 @@
    "label": "Project",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "description": "The tender this BOQ was priced for.",
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Tender",
+   "options": "BF Tender",
+   "read_only": 1
   },
   {
    "default": "Today",
@@ -78,7 +88,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-28 10:56:57.076199",
+ "modified": "2026-10-13 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Bill of Quantities",
