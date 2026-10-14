@@ -28,13 +28,14 @@
   "summary_sb",
   "this_period_work",
   "materials_on_site",
+  "retention_release",
+  "cb_deductions",
   "retention_percentage",
   "retention_deduction",
   "advance_recovery_percentage",
   "advance_payment_recovery",
-  "retention_release",
   "liquidated_damages",
-  "cb_deductions",
+  "cb_totals",
   "net_amount_due",
   "vat_percentage",
   "vat_base",
@@ -239,7 +240,7 @@
   },
   {
    "bold": 1,
-   "description": "Amount to be paid for this claim: Gross Valuation − items 5, 6 and 7. VAT is added on the Sales Invoice.",
+   "description": "Work this certificate + materials + retention released - retention - advance recovery - liquidated damages.",
    "fieldname": "net_amount_due",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -311,7 +312,8 @@
    "fieldname": "vat_amount",
    "fieldtype": "Currency",
    "label": "Add: VAT",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Charged on the Sales Invoice exactly as shown here."
   },
   {
    "fieldname": "amount_due",
@@ -347,13 +349,17 @@
    "fieldtype": "Currency",
    "label": "Advance Balance",
    "read_only": 1
+  },
+  {
+   "fieldname": "cb_totals",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 09:00:00.000000",
+ "modified": "2026-10-15 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim",
