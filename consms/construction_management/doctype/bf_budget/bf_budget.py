@@ -8,7 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate
 
-from consms.construction_management.budget import cancel_erp_budget, get_expense_account, sync_erp_budget
+from consms.construction_management.budget import get_expense_account
 
 
 BUYING_DOCTYPES = (
@@ -23,8 +23,6 @@ BUYING_DOCTYPES = (
 
 class BFBudget(Document):
 	def before_insert(self):
-		# a revision gets its own ERPNext Budget on submit
-		self.erp_budget = None
 		for row in self.items:
 			row.requested_qty = 0
 
@@ -37,16 +35,12 @@ class BFBudget(Document):
 		self.calculate_totals()
 
 	def on_submit(self):
-		sync_erp_budget(self)
 		if self.amended_from:
 			self.relink_procurement()
 
 	def before_cancel(self):
 		# a budget is replaced by its revision, so buying documents that point at it stay valid
-		self.ignore_linked_doctypes = BUYING_DOCTYPES + ("Budget",)
-
-	def on_cancel(self):
-		cancel_erp_budget(self)
+		self.ignore_linked_doctypes = BUYING_DOCTYPES
 
 	def relink_procurement(self):
 		"""Point buying documents of the previous version at this revision, line by line, and carry Requested Qty over."""

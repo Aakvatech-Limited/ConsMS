@@ -8,7 +8,6 @@
   "contract",
   "project",
   "boq",
-  "erp_budget",
   "cb_1",
   "contract_value",
   "total_budget_cost",
@@ -49,15 +48,6 @@
    "fieldtype": "Link",
    "label": "Bill of Quantities",
    "options": "BF Bill of Quantities",
-   "read_only": 1
-  },
-  {
-   "description": "Created on submit: amounts per expense account, used by ERPNext to warn on Material Requests, Purchase Orders and expenses.",
-   "fieldname": "erp_budget",
-   "fieldtype": "Link",
-   "label": "ERPNext Budget",
-   "no_copy": 1,
-   "options": "Budget",
    "read_only": 1
   },
   {
@@ -156,7 +146,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-13 23:00:00.000000",
+ "modified": "2026-10-14 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Budget",
