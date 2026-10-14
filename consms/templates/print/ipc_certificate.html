@@ -23,6 +23,14 @@
 	<p style="margin:10px 0 4px">{{ _("Now this Payment Certificate reads as hereunder stated:") }}</p>
 	{% include "consms/templates/print/ipc_lines.html" %}
 	<p style="margin:6px 0"><b>{{ _("Amount in Words") }}:</b> {{ ipc.amount_in_words }}</p>
+	{% if ipc.currencies %}
+	<table class="grid small" style="margin:4px 0">
+		<tr><th style="text-align:left">{{ _("Payment Currency") }}</th><th>{{ _("Share") }}</th><th>{{ _("Exchange Rate") }}</th><th>{{ _("Amount for Payment") }}</th></tr>
+		{%- for c in ipc.currencies %}
+		<tr><td>{{ c.currency }}</td><td class="num">{{ c.share }}%</td><td class="num">{{ c.rate }}</td><td class="num">{{ frappe.utils.fmt_money(c.amount, precision=2, currency=c.currency) }}</td></tr>
+		{%- endfor %}
+	</table>
+	{% endif %}
 
 	<table class="grid small" style="margin-top:6px">
 		<tr><th colspan="4" style="text-align:left">{{ _("To Date") }}</th></tr>
@@ -50,6 +58,11 @@
 		<tr><td>{{ _("Name") }}: ......................................................</td><td>{{ _("Name") }}: ......................................................</td></tr>
 		<tr><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td></tr>
 	</table>
+	{%- set attached = doc.documents | selectattr("status", "equalto", "Ready") | list %}
+	{% if attached %}
+	<p style="margin-top:10px"><b>{{ _("Attached Items") }}:</b></p>
+	<ol style="margin:2px 0 0 18px">{% for d in attached %}<li>{{ d.document_type }}</li>{% endfor %}</ol>
+	{% endif %}
 	<p style="margin-top:12px"><b>{{ _("Remarks / Instructions") }}:</b></p>
 	<p class="muted">1. ..................................................................................................................................................................</p>
 	<p class="muted">2. ..................................................................................................................................................................</p>

@@ -134,10 +134,11 @@ def run_lines(lines, bases, previous_by_label=None, previous_by_role=None, contr
 
 
 def validate_template(template):
+	work_bases = {"Work This Certificate", "Work This Certificate (excl. VAT-Exempt)", "Work to Date", "Retention Held", "Advance Balance"}
 	allowed_calculations, blocked_bases = {
-		"Payment Certificate": ({"Work This Certificate", "Percentage", "Typed Amount"}, {"Total of Bills"}),
-		"BOQ Summary": ({"Total of Bills", "Provisional Sums", "Percentage", "Typed Amount"},
-			{"Work This Certificate", "Work This Certificate (excl. VAT-Exempt)", "Work to Date", "Retention Held", "Advance Balance"}),
+		"Payment Certificate": ({"Work This Certificate", "Percentage", "Typed Amount"}, {"Total of Bills", "Direct Cost", "BOQ Value"}),
+		"BOQ Summary": ({"Total of Bills", "Provisional Sums", "Percentage", "Typed Amount"}, work_bases | {"Direct Cost", "BOQ Value"}),
+		"Budget Overheads": ({"Direct Cost", "Percentage", "Typed Amount"}, work_bases | {"Total of Bills"}),
 	}[template.used_for]
 	for row in template.lines:
 		if row.line_type == "Subtotal":
@@ -382,6 +383,7 @@ def get_ipc_print_data(claim):
 			bills.append(by_bill[bill])
 		row = rows_by_item.get(item.name)
 		line = frappe._dict(
+			name=item.name,
 			item_no=item.item_no,
 			description=item.description,
 			uom=item.uom,
@@ -435,7 +437,16 @@ def get_ipc_print_data(claim):
 	company = frappe.db.get_value("Project", claim.project, "company") if claim.project else None
 	currency = frappe.get_cached_value("Company", company, "default_currency") if company else None
 
+	# payment split over currencies (e.g. 15% TZS, 85% USD at the contract's rate)
+	currencies = []
+	for row in (contract.payment_currencies if contract else []):
+		share = flt(claim.amount_due) * flt(row.share_percentage) / 100
+		currencies.append(frappe._dict(currency=row.currency, share=flt(row.share_percentage), rate=flt(row.exchange_rate) or 1,
+			amount=money(share / (flt(row.exchange_rate) or 1))))
+
 	return frappe._dict(
+		currencies=currencies,
+		boq_summary=get_boq_summary_columns(claim, bills, summary, by_bill),
 		title=_(CERTIFICATE_TITLES.get(claim.certificate_type or "Interim")),
 		contract=contract,
 		project_name=frappe.db.get_value("Project", claim.project, "project_name") if claim.project else "",
@@ -449,3 +460,56 @@ def get_ipc_print_data(claim):
 		has_exempt=bool(vat_line) and any(g.vat_exempt for g in bills),
 		amount_in_words=money_in_words(claim.amount_due, currency),
 	)
+
+
+class LineHolder:
+	"""Just enough of a document for build_lines / run_lines, for working out lines without saving them."""
+
+	def __init__(self):
+		self.lines = []
+
+	def get(self, _table):
+		return self.lines
+
+	def set(self, _table, rows):
+		self.lines = list(rows)
+
+	def append(self, _table, values):
+		row = frappe._dict(values, idx=len(self.lines) + 1)
+		self.lines.append(row)
+		return row
+
+
+def get_boq_summary_columns(claim, bills, summary, by_bill):
+	"""The BOQ's tender summary (A-I lines) worked out for each column of the certificate summary, plus the balance."""
+	template = frappe.db.get_value("BF Bill of Quantities", claim.boq, "summary_template") if claim.boq else None
+	if not template:
+		return None
+	typed = {l.label: flt(l.amount) for l in frappe.get_all("BF Certificate Line",
+		filters={"parent": claim.boq, "parenttype": "BF Bill of Quantities"}, fields=["label", "amount"])}
+	provisional = set(frappe.get_all("BF BOQ Item", filters={"parent": claim.boq, "is_provisional_sum": 1}, pluck="name"))
+
+	def provisional_total(key):
+		return sum(row[key] for group in bills for row in group.rows if row.name in provisional)
+
+	columns = {"original": ("amount", summary.original), "previous": ("previous_value", summary.previous),
+		"this": ("this_value", summary.this), "cumulative": ("cumulative_value", summary.cumulative)}
+	results = {}
+	for column, (row_key, total) in columns.items():
+		holder = LineHolder()
+		build_lines(holder, "lines", template)
+		for line in holder.lines:
+			if line.calculation == "Typed Amount":
+				line.amount = typed.get(line.label, 0) if column == "original" else 0
+		final, _roles = run_lines(holder.lines, {"Total of Bills": total, "Provisional Sums": provisional_total(row_key)},
+			contract_value=summary.original)
+		results[column] = ([money(l.amount) for l in holder.lines], final)
+	labels = [(l.label, l.line_type) for l in frappe.get_doc("BF Certificate Template", template).lines]
+	rows = []
+	for i, (label, line_type) in enumerate(labels):
+		values = {c: results[c][0][i] for c in results}
+		values["balance"] = values["original"] - values["cumulative"]
+		rows.append(frappe._dict(label=label, line_type=line_type, **values))
+	totals = frappe._dict({c: results[c][1] for c in results})
+	totals["balance"] = totals["original"] - totals["cumulative"]
+	return frappe._dict(rows=rows, totals=totals)

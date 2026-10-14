@@ -35,6 +35,29 @@ class BFProgressClaim(Document):
 					var.idx, var.cumulative_amount, var.approved_amount, var.variation_order))
 
 		self.calculate_totals()
+		self.set_documents()
+
+	def set_documents(self):
+		"""Add the document types this certificate type needs (keeps rows already filled in)."""
+		have = {row.document_type for row in self.documents}
+		for doc_type in get_certificate_document_types(self.certificate_type):
+			if doc_type not in have:
+				self.append("documents", {"document_type": doc_type, "status": "Pending"})
+
+	def before_submit(self):
+		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
+		needed = set(get_certificate_document_types(self.certificate_type))
+		missing = [row.document_type for row in self.documents
+			if row.document_type in mandatory and row.document_type in needed and row.status != "Ready"]
+		if missing:
+			frappe.throw(
+				_("Attach these documents and mark them Ready before submitting the certificate: {0}").format(
+					", ".join(frappe.bold(d) for d in missing)),
+				title=_("Supporting documents missing"),
+			)
+		for row in self.documents:
+			if row.status == "Ready" and not row.attachment:
+				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
 
 	def calculate_totals(self):
 		calculate(self)
@@ -51,6 +74,15 @@ class BFProgressClaim(Document):
 
 	def on_cancel(self):
 		update_contract_balances(self.contract)
+
+
+def get_certificate_document_types(certificate_type):
+	scopes = {"Interim": ["All Certificates"],
+		"Substantial Completion": ["All Certificates", "Substantial Completion and Final"],
+		"Final": ["All Certificates", "Substantial Completion and Final", "Final"]}[certificate_type or "Interim"]
+	return frappe.get_all("BF Document Type",
+		filters={"applies_to": "Payment Certificate", "certificate_types": ["in", scopes]},
+		pluck="name", order_by="is_mandatory desc, name")
 
 
 @frappe.whitelist()

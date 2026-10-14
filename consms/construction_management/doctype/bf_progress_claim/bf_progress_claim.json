@@ -41,6 +41,8 @@
   "retention_release",
   "liquidated_damages",
   "vat_base",
+  "sb_documents",
+  "documents",
   "sb_to_date",
   "total_work_executed",
   "approved_variations",
@@ -366,13 +368,26 @@
    "fieldtype": "Table",
    "label": "Certificate Lines",
    "options": "BF Certificate Line"
+  },
+  {
+   "fieldname": "sb_documents",
+   "fieldtype": "Section Break",
+   "label": "Supporting Documents",
+   "collapsible": 1,
+   "description": "Documents sent with this certificate (from Document Types for payment certificates). Mandatory ones must be Ready to submit."
+  },
+  {
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "Documents",
+   "options": "BF Tender Document"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 14:00:00.000000",
+ "modified": "2026-10-15 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim",

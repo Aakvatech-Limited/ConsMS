@@ -14,6 +14,11 @@
   "cb_2",
   "expected_margin",
   "margin_percent",
+  "sb_overheads",
+  "overhead_template",
+  "cb_overheads",
+  "total_with_overheads",
+  "overhead_lines",
   "revision_reason",
   "sb_lines",
   "boq_lines",
@@ -142,11 +147,40 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "sb_overheads",
+   "fieldtype": "Section Break",
+   "label": "Overheads",
+   "collapsible": 1,
+   "description": "Optional: contingency, supervision fee, equipment wear and tear... from a Budget Overheads template. The margin then uses the total with overheads."
+  },
+  {
+   "fieldname": "overhead_template",
+   "fieldtype": "Link",
+   "label": "Overheads Template",
+   "options": "BF Certificate Template"
+  },
+  {
+   "fieldname": "cb_overheads",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_with_overheads",
+   "fieldtype": "Currency",
+   "label": "Total Cost with Overheads",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overhead_lines",
+   "fieldtype": "Table",
+   "label": "Overhead Lines",
+   "options": "BF Certificate Line"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 22:00:00.000000",
+ "modified": "2026-10-15 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Budget",

@@ -37,7 +37,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 7,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -108,6 +108,16 @@
    "label": "Variation vs Budget",
    "link_count": 0,
    "link_to": "Variation vs Budget Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Budget Materials Summary",
+   "link_count": 0,
+   "link_to": "Budget Materials Summary",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -212,7 +222,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-15 15:00:00.000000",
+ "modified": "2026-10-15 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",

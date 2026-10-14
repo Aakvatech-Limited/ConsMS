@@ -14,11 +14,28 @@ class BFContract(Document):
 		if flt(self.contingency_percentage) > 15:
 			frappe.msgprint("Warning: A contingency exceeding 15% is unusually high for standard construction contracts and may require special budget approval. Please verify.", title="High Contingency Threshold", indicator="orange")
 		
+		self.set_value_from_boq()
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
 		self.validate_submittals()
 		self.calculate_period()
 		self.set_payment_terms()
+
+	def set_value_from_boq(self):
+		"""Contract amount = BOQ bid price without VAT (tender summary), or the total of bills."""
+		if not self.boq or self.docstatus:
+			return
+		boq = frappe.get_doc("BF Bill of Quantities", self.boq)
+		if boq.summary_lines:
+			vat = sum(flt(l.amount) for l in boq.summary_lines if l.role == "VAT" and not l.calculation_only)
+			self.contract_amount = flt(boq.bid_price) - vat
+			self.contract_sum_incl_vat = boq.bid_price
+			# the tender summary already holds the contingency
+			if self.is_new():
+				self.contingency_percentage = 0
+		else:
+			self.contract_amount = boq.total_amount
+			self.contract_sum_incl_vat = 0
 
 	def on_submit(self):
 		self.create_site_store()

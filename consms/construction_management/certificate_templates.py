@@ -88,8 +88,40 @@ BOQ_TEMPLATES = {
 }
 
 
+OVERHEAD_TEMPLATES = {
+	"Budget Overheads (Sengerema)": (
+		"Direct cost + contingency 10% + supervision fee 14.13% + equipment wear and tear (Sengerema budget).",
+		[
+			("Direct cost (resources)", "Add", "Direct Cost", 0, None, {}),
+			("Add: Contingency 10%", "Add", P, 10, "Direct Cost", {}),
+			("Total + contingency", "Subtotal", None, 0, None, {}),
+			("Add: Supervision fee 14.13%", "Add", P, 14.13, "Direct Cost", {}),
+			("Add: Equipment wear and tear", "Add", T, 0, None, {}),
+		],
+	),
+}
+
+# Documents sent with payment certificates (Msangazi final payment certificate cover)
+CERTIFICATE_DOCUMENT_TYPES = [
+	("Contractor Application Letter", 0, "All Certificates", "Letter applying for payment of this certificate."),
+	("Signed Measurement Sheets", 0, "All Certificates", "Measurement sheets signed by the contractor's and consultant's representatives."),
+	("Taking-Over Certificate", 1, "Substantial Completion and Final", "Issued by the engineer at substantial completion."),
+	("Retention Bank Guarantee", 0, "Substantial Completion and Final", "When retention is released against a bank guarantee."),
+	("Minutes of Final Joint Inspection", 1, "Final", "Joint inspection at the end of the defects liability period."),
+	("Final Account", 1, "Final", "Agreed final account of the contract."),
+]
+
+
+def ensure_certificate_document_types():
+	for name, mandatory, certificate_types, description in CERTIFICATE_DOCUMENT_TYPES:
+		if not frappe.db.exists("BF Document Type", name):
+			frappe.get_doc({"doctype": "BF Document Type", "document_name": name, "applies_to": "Payment Certificate",
+				"certificate_types": certificate_types, "is_mandatory": mandatory, "description": description}).insert(ignore_permissions=True)
+
+
 def ensure_certificate_templates():
-	for used_for, templates in (("Payment Certificate", PAYMENT_TEMPLATES), ("BOQ Summary", BOQ_TEMPLATES)):
+	ensure_certificate_document_types()
+	for used_for, templates in (("Payment Certificate", PAYMENT_TEMPLATES), ("BOQ Summary", BOQ_TEMPLATES), ("Budget Overheads", OVERHEAD_TEMPLATES)):
 		for name, (description, lines) in templates.items():
 			if frappe.db.exists("BF Certificate Template", name):
 				continue

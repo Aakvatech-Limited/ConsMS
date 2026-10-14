@@ -11,6 +11,8 @@ from consms.construction_management.progress import get_actual_cost, get_baselin
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	data, budget = get_data(filters.contract)
+	if filters.group_by_bill:
+		data = group_by_bill(data)
 	message = None if budget else _("This contract has no submitted Budget yet, so budget figures are empty.")
 	return get_columns(), data, message, get_chart(data), get_summary(data)
 
@@ -40,11 +42,12 @@ def get_data(contract):
 	actual = get_actual_cost(contract)
 	baseline = get_baseline_cost(contract)
 	data = []
-	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity"], order_by="idx"):
+	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity", "bill"], order_by="idx"):
 		pct = done.get(line.name, 0) / flt(line.quantity) * 100 if flt(line.quantity) else 0
 		row = make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0))
 		row["baseline"] = baseline.get(line.name, row["budget"])
 		row["budget_change"] = row["budget"] - row["baseline"]
+		row["bill"] = line.bill or _("General Items")
 		data.append(row)
 	unallocated = actual.get(None, 0) + actual.get("", 0)
 	if unallocated:
@@ -52,6 +55,23 @@ def get_data(contract):
 		row["status"] = _("Not linked to BOQ")
 		data.append(row)
 	return data, budget_name
+
+
+def group_by_bill(data):
+	"""One row per bill / structure (e.g. Tank 1500m3, Pump House), like a per-structure budget."""
+	groups = {}
+	for row in data:
+		key = row.get("bill") or row["description"]
+		g = groups.setdefault(key, {"budget": 0, "earned": 0, "actual": 0, "baseline": 0})
+		for k in g:
+			g[k] += row.get(k, 0)
+	out = []
+	for bill, g in groups.items():
+		row = make_row(bill, g["budget"], g["earned"] / g["budget"] * 100 if g["budget"] else 0, g["actual"])
+		row["baseline"] = g["baseline"]
+		row["budget_change"] = g["budget"] - g["baseline"]
+		out.append(row)
+	return out
 
 
 def make_row(description, budget, percent_done, actual):

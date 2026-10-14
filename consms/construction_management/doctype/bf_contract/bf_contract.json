@@ -23,6 +23,7 @@
   "cb_contract_totals",
   "contingency_amount",
   "total_contract_amount",
+  "contract_sum_incl_vat",
   "amended_from",
   "boq",
   "sb_period",
@@ -44,6 +45,8 @@
   "defects_cb",
   "defects_liability_months",
   "ld_rate_per_day",
+  "sb_currencies",
+  "payment_currencies",
   "sb_balances",
   "advance_recovered",
   "advance_balance",
@@ -135,8 +138,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "The agreed price for all the work in the BOQ. Filled in automatically from the BOQ total.",
-   "fetch_from": "boq.total_amount",
+   "description": "From the BOQ: the bid price without VAT when the BOQ has a tender summary, otherwise the total of bills.",
    "fieldname": "contract_amount",
    "fieldtype": "Currency",
    "label": "Contract Amount",
@@ -374,13 +376,34 @@
   {
    "fieldname": "defects_cb",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract_sum_incl_vat",
+   "fieldtype": "Currency",
+   "label": "Contract Sum (incl. VAT)",
+   "read_only": 1,
+   "description": "The BOQ bid price, as on the Form of Tender."
+  },
+  {
+   "fieldname": "sb_currencies",
+   "fieldtype": "Section Break",
+   "label": "Payment Currencies",
+   "collapsible": 1,
+   "description": "Only when the client pays in more than one currency, e.g. 15% TZS and 85% USD. The certificate shows the amount due in each."
+  },
+  {
+   "fieldname": "payment_currencies",
+   "fieldtype": "Table",
+   "label": "Payment Currencies",
+   "options": "BF Payment Currency",
+   "allow_on_submit": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 14:00:00.000000",
+ "modified": "2026-10-15 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

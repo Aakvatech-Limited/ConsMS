@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import flt, nowdate
 
 from consms.construction_management.budget import get_expense_account
+from consms.construction_management.ipc import build_lines, run_lines
 
 
 BUYING_DOCTYPES = (
@@ -101,6 +102,7 @@ class BFBudget(Document):
 				{
 					"boq_item": item.name,
 					"description": item.description,
+					"bill": item.bill,
 					"rate_analysis": chosen.get(item.name),
 					"boq_qty": item.quantity,
 					"boq_unit": item.uom,
@@ -147,8 +149,20 @@ class BFBudget(Document):
 
 		self.contract_value = sum(flt(line.boq_amount) for line in self.boq_lines)
 		self.total_budget_cost = sum(cost_per_line.values())
-		self.expected_margin = flt(self.contract_value) - self.total_budget_cost
+		self.calculate_overheads()
+		self.expected_margin = flt(self.contract_value) - (flt(self.total_with_overheads) or self.total_budget_cost)
 		self.margin_percent = self.expected_margin / self.contract_value * 100 if self.contract_value else 0
+
+	def calculate_overheads(self):
+		"""Contingency, supervision fee, wear and tear... from the Budget Overheads template."""
+		if not self.overhead_template:
+			self.set("overhead_lines", [])
+			self.total_with_overheads = self.total_budget_cost
+			return
+		if not self.overhead_lines or (not self.is_new() and self.has_value_changed("overhead_template")):
+			build_lines(self, "overhead_lines", self.overhead_template)
+		bases = {"Direct Cost": flt(self.total_budget_cost), "BOQ Value": flt(self.contract_value)}
+		self.total_with_overheads, _roles = run_lines(self.overhead_lines, bases, contract_value=flt(self.contract_value))
 
 
 @frappe.whitelist()

@@ -9,6 +9,7 @@
   "document_name",
   "description",
   "applies_to",
+  "certificate_types",
   "is_mandatory"
  ],
  "fields": [
@@ -33,7 +34,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Applies To",
-   "options": "Contract\nTender\nBoth"
+   "options": "Contract\nTender\nBoth\nPayment Certificate"
   },
   {
    "description": "Cannot be marked Not Applicable on a tender.",
@@ -41,11 +42,19 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Mandatory"
+  },
+  {
+   "fieldname": "certificate_types",
+   "fieldtype": "Select",
+   "label": "Certificate Types",
+   "options": "All Certificates\nSubstantial Completion and Final\nFinal",
+   "default": "All Certificates",
+   "depends_on": "eval:doc.applies_to == 'Payment Certificate'"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-14 02:00:00.000000",
+ "modified": "2026-10-15 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Document Type",

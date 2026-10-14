@@ -8,7 +8,7 @@
 			<tr>
 				<th rowspan="2" style="width:6%">{{ _("Bill No.") }}</th><th rowspan="2">{{ _("Description") }}</th>
 				<th colspan="2">{{ _("Contract Amount") }}</th><th colspan="3">{{ _("Certified Amount") }}</th>
-				<th rowspan="2" style="width:7%">{{ _("% Completed") }}</th>
+				<th rowspan="2" style="width:7%">{{ _("% Completed") }}</th><th rowspan="2">{{ _("Balance") }}</th>
 			</tr>
 			<tr><th>{{ _("Original") }}</th><th>{{ _("Revised") }}</th><th>{{ _("Previous") }}</th><th>{{ _("This IPC") }}</th><th>{{ _("Cumulative") }}</th></tr>
 		</thead>
@@ -20,6 +20,7 @@
 				<td class="num">{{ fmt(b.original, precision=2) }}</td><td class="num"></td>
 				<td class="num">{{ fmt(b.previous, precision=2) }}</td><td class="num">{{ fmt(b.this, precision=2) }}</td>
 				<td class="num">{{ fmt(b.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(b.percent) }}%</td>
+				<td class="num">{{ fmt(b.original - b.cumulative, precision=2) }}</td>
 			</tr>
 		{%- endfor %}
 			<tr class="total-row">
@@ -27,13 +28,30 @@
 				<td class="num">{{ fmt(s.original, precision=2) }}</td><td></td>
 				<td class="num">{{ fmt(s.previous, precision=2) }}</td><td class="num">{{ fmt(s.this, precision=2) }}</td>
 				<td class="num">{{ fmt(s.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(s.percent) }}%</td>
+				<td class="num">{{ fmt(s.original - s.cumulative, precision=2) }}</td>
 			</tr>
+			{% if ipc.boq_summary %}
+			{%- for r in ipc.boq_summary.rows[1:] %}
+			<tr{% if r.line_type == "Subtotal" %} class="total-row"{% endif %}>
+				<td></td><td>{{ r.label }}</td>
+				<td class="num">{{ fmt(r.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(r.previous, precision=2) }}</td><td class="num">{{ fmt(r.this, precision=2) }}</td>
+				<td class="num">{{ fmt(r.cumulative, precision=2) }}</td><td></td><td class="num">{{ fmt(r.balance, precision=2) }}</td>
+			</tr>
+			{%- endfor %}
+			<tr class="grand">
+				<td></td><td>{{ _("Gross Amount (Bid Price basis)") }}</td>
+				<td class="num">{{ fmt(ipc.boq_summary.totals.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(ipc.boq_summary.totals.previous, precision=2) }}</td><td class="num">{{ fmt(ipc.boq_summary.totals.this, precision=2) }}</td>
+				<td class="num">{{ fmt(ipc.boq_summary.totals.cumulative, precision=2) }}</td><td></td><td class="num">{{ fmt(ipc.boq_summary.totals.balance, precision=2) }}</td>
+			</tr>
+			{% else %}
 			{% if ipc.has_exempt %}
 			<tr>
 				<td></td><td>{{ _("Total (Excluding VAT-exempt items)") }}</td>
 				<td class="num">{{ fmt(s.taxable.original, precision=2) }}</td><td></td>
 				<td class="num">{{ fmt(s.taxable.previous, precision=2) }}</td><td class="num">{{ fmt(s.taxable.this, precision=2) }}</td>
-				<td class="num">{{ fmt(s.taxable.cumulative, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.taxable.cumulative, precision=2) }}</td><td></td><td></td>
 			</tr>
 			{% endif %}
 			{% if ipc.vat_line %}
@@ -41,7 +59,7 @@
 				<td></td><td>{{ ipc.vat_line.label }}</td>
 				<td class="num">{{ fmt(s.vat.original, precision=2) }}</td><td></td>
 				<td class="num">{{ fmt(s.vat.previous, precision=2) }}</td><td class="num">{{ fmt(s.vat.this, precision=2) }}</td>
-				<td class="num">{{ fmt(s.vat.cumulative, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.vat.cumulative, precision=2) }}</td><td></td><td></td>
 			</tr>
 			{% endif %}
 			{% if ipc.has_exempt %}
@@ -49,15 +67,16 @@
 				<td></td><td>{{ _("Add VAT-exempt items above") }}</td>
 				<td class="num">{{ fmt(s.exempt.original, precision=2) }}</td><td></td>
 				<td class="num">{{ fmt(s.exempt.previous, precision=2) }}</td><td class="num">{{ fmt(s.exempt.this, precision=2) }}</td>
-				<td class="num">{{ fmt(s.exempt.cumulative, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.exempt.cumulative, precision=2) }}</td><td></td><td></td>
 			</tr>
 			{% endif %}
 			<tr class="grand">
 				<td></td><td>{{ _("Grand Total") }}</td>
 				<td class="num">{{ fmt(s.grand.original, precision=2) }}</td><td></td>
 				<td class="num">{{ fmt(s.grand.previous, precision=2) }}</td><td class="num">{{ fmt(s.grand.this, precision=2) }}</td>
-				<td class="num">{{ fmt(s.grand.cumulative, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.grand.cumulative, precision=2) }}</td><td></td><td></td>
 			</tr>
+			{% endif %}
 		</tbody>
 	</table>
 	{% if doc.variations %}
