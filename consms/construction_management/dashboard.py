@@ -111,3 +111,22 @@ def expiring_documents(filters=None):
 		"route": ["List", "BF Contract"],
 		"route_options": {"name": ["in", list({r.contract for r in rows}) or [""]]},
 	}
+
+
+@frappe.whitelist()
+def open_works_execution_tasks(filters=None):
+	"""Tasks of any Works Execution (Mobilization, Construction...) that are not finished yet."""
+	names = frappe.db.sql_list(
+		"""
+		select distinct t.name from `tabBF Works Execution Task` row
+		join `tabBF Works Execution` wx on wx.name = row.parent and wx.docstatus < 2
+		join `tabTask` t on t.name = row.task
+		where t.status not in ('Completed', 'Cancelled')
+		"""
+	)
+	return {
+		"value": len(names),
+		"fieldtype": "Int",
+		"route": ["List", "Task"],
+		"route_options": {"name": ["in", names or [""]]},
+	}
