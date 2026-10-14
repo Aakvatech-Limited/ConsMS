@@ -5,13 +5,14 @@ import frappe
 EXTRA_UOMS = ["Lump Sum", "Bag"]
 
 STANDARD_MAPPINGS = {
-	"Meter": ["m", "lm", "metre", "meter", "rm"],
+	"Meter": ["m", "lm", "metre", "meter", "rm", "linear meter", "linear metre", "lin m"],
 	"Square Meter": ["m2", "m²", "sqm", "sq.m", "sq m"],
 	"Cubic Meter": ["m3", "m³", "cum", "cu.m", "cu m"],
-	"Kg": ["kg", "kgs"],
+	"Kg": ["kg", "kgs", "kilogram", "kilograms"],
 	"Tonne": ["t", "ton", "tons", "tonne"],
-	"Nos": ["nr", "no", "no.", "nos", "pcs", "pc", "each", "ea"],
-	"Lump Sum": ["ls", "l.s", "l.s.", "sum", "lump sum", "item"],
+	"Nos": ["nr", "no", "no.", "nos", "pcs", "pc", "each", "ea", "number", "numbers"],
+	"Lump Sum": ["ls", "l.s", "l.s.", "sum", "lump sum", "lumpsum", "item", "ps", "provisional sum"],
+	"Percent": ["%", "percent"],
 	"Litre": ["l", "ltr", "litre", "liter", "lts"],
 	"Day": ["day", "days"],
 	"Hour": ["hr", "hrs", "hour", "hours"],
