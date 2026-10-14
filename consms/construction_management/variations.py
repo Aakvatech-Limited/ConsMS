@@ -104,8 +104,9 @@ def make_variation_order_from_measurement(measurement_log):
 	vo.reason = _("Quantities measured on site ({0}) exceed the BOQ.").format(log.name)
 	for o in over:
 		vo.append("items", {"change_type": "Change to BOQ Line", "boq_item": o.boq_item, "quantity": o.excess})
-	vo.run_method("set_lines")
-	return vo
+	# saved straight away as a draft, so the prefilled lines are never lost on the way to the form
+	vo.insert()
+	return vo.name
 
 
 # ---------------------------------------------------------------- applying a Variation Order

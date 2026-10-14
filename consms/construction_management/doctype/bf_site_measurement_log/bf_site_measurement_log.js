@@ -29,10 +29,9 @@ frappe.ui.form.on("BF Site Measurement Log", {
 				frappe.call({
 					method: "consms.construction_management.variations.make_variation_order_from_measurement",
 					args: { measurement_log: frm.doc.name },
+					freeze: true,
 					callback: function(r) {
-						if (!r.message) return;
-						const doc = frappe.model.sync(r.message)[0];
-						frappe.set_route("Form", doc.doctype, doc.name);
+						if (r.message) frappe.set_route("Form", "BF Variation Order", r.message);
 					},
 				});
 			}, __("Actions"));
