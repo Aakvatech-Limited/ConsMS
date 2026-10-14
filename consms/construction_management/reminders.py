@@ -36,25 +36,25 @@ def send_expiry_reminders():
 			date=row.expiry_date,
 		)
 
-	for t in frappe.get_all(
-		"BF Tender",
-		filters=[
-			["bid_security_expiry_date", "is", "set"],
-			["bid_security_expiry_date", "<=", add_days(today(), BID_SECURITY_DAYS)],
-			["bid_security_status", "not in", ["Returned", "Forfeited"]],
-			["docstatus", "!=", 2],
-		],
-		fields=["name", "owner", "tender_name", "bid_security_expiry_date"],
+	for row in frappe.db.sql(
+		"""
+		select bs.name, bs.parent, bs.security_type, bs.guarantee_no, bs.expiry_date, t.owner, t.tender_name
+		from `tabBF Bid Security` bs
+		join `tabBF Tender` t on t.name = bs.parent
+		where t.docstatus < 2 and bs.status = 'Held by Client' and bs.expiry_date is not null and bs.expiry_date <= %(until)s
+		""",
+		{"until": add_days(today(), BID_SECURITY_DAYS)},
+		as_dict=True,
 	):
 		remind(
 			"BF Tender",
-			t.name,
-			t.owner,
-			key=f"bid-security:{t.name}:{t.bid_security_expiry_date}",
-			text=_("Bid security for tender {0} expires on {1}. Extend it or follow up its return.").format(
-				t.tender_name, formatdate(t.bid_security_expiry_date)
+			row.parent,
+			row.owner,
+			key=f"bid-security:{row.name}:{row.expiry_date}",
+			text=_("{0} {1} for tender {2} expires on {3}. Extend it or follow up its return.").format(
+				row.security_type, row.guarantee_no or "", row.tender_name, formatdate(row.expiry_date)
 			),
-			date=t.bid_security_expiry_date,
+			date=row.expiry_date,
 		)
 
 

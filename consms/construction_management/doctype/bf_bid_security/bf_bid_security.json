@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "creation": "2026-10-14 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "security_type",
+  "amount",
+  "guarantee_no",
+  "issued_by",
+  "issue_date",
+  "expiry_date",
+  "status",
+  "returned_on",
+  "attachment",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "columns": 2,
+   "fieldname": "security_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "BF Bid Security Type",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 2,
+   "fieldname": "guarantee_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Guarantee / Bond No."
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "issued_by",
+   "fieldtype": "Data",
+   "label": "Issued By (Bank / Insurer)"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 1,
+   "fieldname": "expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 1,
+   "default": "Held by Client",
+   "description": "Replaced: superseded by a renewal/extension (keep the old row for history).",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Held by Client\nReturned\nForfeited\nReplaced"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.status=='Returned'",
+   "fieldname": "returned_on",
+   "fieldtype": "Date",
+   "label": "Returned On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Copy of Guarantee"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-14 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Bid Security",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

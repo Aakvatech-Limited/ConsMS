@@ -16,15 +16,8 @@
   "sb_documents",
   "documents",
   "sb_bid_security",
-  "bid_security_type",
-  "bid_security_amount",
-  "bid_security_number",
-  "bid_security_issuer",
-  "cb_bs",
-  "bid_security_issue_date",
-  "bid_security_expiry_date",
-  "bid_security_status",
-  "bid_security_returned_on",
+  "bid_securities",
+  "total_bid_security",
   "sb_costs",
   "costs",
   "total_tender_cost",
@@ -90,63 +83,24 @@
    "collapsible": 1,
    "fieldname": "sb_bid_security",
    "fieldtype": "Section Break",
-   "label": "Bid Security"
+   "label": "Bid Securities"
   },
   {
-   "fieldname": "bid_security_type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "\nBank Guarantee\nInsurance Bond\nCash\nNot Required"
+   "allow_on_submit": 1,
+   "description": "One row per guarantee or bond (e.g. two banks, a JV partner, or a renewal). Add your own types in Bid Security Types.",
+   "fieldname": "bid_securities",
+   "fieldtype": "Table",
+   "label": "Bid Securities",
+   "options": "BF Bid Security"
   },
   {
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "fieldname": "bid_security_amount",
+   "allow_on_submit": 1,
+   "bold": 1,
+   "description": "Total of guarantees still held by the client (not returned, forfeited or replaced).",
+   "fieldname": "total_bid_security",
    "fieldtype": "Currency",
-   "label": "Amount"
-  },
-  {
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "fieldname": "bid_security_number",
-   "fieldtype": "Data",
-   "label": "Guarantee / Bond No."
-  },
-  {
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "fieldname": "bid_security_issuer",
-   "fieldtype": "Data",
-   "label": "Issued By (Bank / Insurer)"
-  },
-  {
-   "fieldname": "cb_bs",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "fieldname": "bid_security_issue_date",
-   "fieldtype": "Date",
-   "label": "Issue Date"
-  },
-  {
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "fieldname": "bid_security_expiry_date",
-   "fieldtype": "Date",
-   "label": "Expiry Date"
-  },
-  {
-   "allow_on_submit": 1,
-   "depends_on": "eval:doc.bid_security_type && doc.bid_security_type!='Not Required'",
-   "description": "Follow up the return of the security after award or loss.",
-   "fieldname": "bid_security_status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nHeld by Client\nReturned\nForfeited"
-  },
-  {
-   "allow_on_submit": 1,
-   "depends_on": "eval:doc.bid_security_status=='Returned'",
-   "fieldname": "bid_security_returned_on",
-   "fieldtype": "Date",
-   "label": "Returned On"
+   "label": "Total Bid Security",
+   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -191,7 +145,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 03:30:00.000000",
+ "modified": "2026-10-14 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Tender",

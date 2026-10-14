@@ -80,6 +80,7 @@ def after_migrate():
     ensure_standard_construction_types()
     ensure_standard_uom_mappings()
     ensure_tender_document_types()
+    ensure_bid_security_types()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:
@@ -121,3 +122,17 @@ def get_project_dashboard(data):
         {"label": "Commercial", "items": ["BF Variation Order", "BF Progress Claim", "BF Correspondence"]},
     ] + data["transactions"]
     return data
+
+
+BID_SECURITY_TYPES = [
+    ("Bank Guarantee", "Unconditional guarantee issued by a bank."),
+    ("Insurance Bond", "Bid bond issued by an insurance company."),
+    ("Cash Deposit", "Cash or banker's cheque deposited with the client."),
+    ("Bid Securing Declaration", "Signed declaration accepted instead of a guarantee (PPRA)."),
+]
+
+
+def ensure_bid_security_types():
+    for name, description in BID_SECURITY_TYPES:
+        if not frappe.db.exists("BF Bid Security Type", name):
+            frappe.get_doc({"doctype": "BF Bid Security Type", "security_type": name, "description": description}).insert(ignore_permissions=True)

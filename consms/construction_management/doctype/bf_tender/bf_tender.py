@@ -26,7 +26,7 @@ class BFTender(Document):
 				self.append("documents", {"document_type": doc_type, "status": "Pending"})
 
 	def validate(self):
-		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
+		self.set_totals()
 		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
 		for row in self.documents:
 			if row.status == "Not Applicable" and row.document_type in mandatory:
@@ -35,9 +35,14 @@ class BFTender(Document):
 				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
 
 	def before_update_after_submit(self):
+		self.set_totals()
+
+	def set_totals(self):
 		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
-		if self.bid_security_status == "Returned" and not self.bid_security_returned_on:
-			self.bid_security_returned_on = frappe.utils.today()
+		for row in self.bid_securities:
+			if row.status == "Returned" and not row.returned_on:
+				row.returned_on = frappe.utils.today()
+		self.total_bid_security = sum(flt(row.amount) for row in self.bid_securities if row.status == "Held by Client")
 
 	def before_submit(self):
 		pending = [row.document_type for row in self.documents if row.status == "Pending"]
