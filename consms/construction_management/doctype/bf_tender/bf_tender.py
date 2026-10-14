@@ -73,6 +73,37 @@ def set_status(tender_name, status):
 	return status
 
 
+def get_or_create_boq_pdf(tender):
+	"""One BOQ PDF per tender: a submitted BOQ cannot change, so reuse it and remove extra copies."""
+	file_name = f"BOQ {tender.boq}.pdf"
+	existing = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_name": ["like", f"BOQ {tender.boq}%.pdf"]},
+		pluck="name",
+		order_by="creation asc",
+	)
+	for extra in existing[1:]:
+		frappe.delete_doc("File", extra, ignore_permissions=True)
+	if existing:
+		return frappe.get_doc("File", existing[0])
+
+	try:
+		pdf = frappe.get_print("BF Bill of Quantities", tender.boq, print_format="BOQ Client Layout", as_pdf=True)
+		return frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": file_name,
+				"content": pdf,
+				"attached_to_doctype": "BF Tender",
+				"attached_to_name": tender.name,
+				"is_private": 1,
+			}
+		).insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(title=f"BOQ PDF for tender {tender.name}")
+		return None
+
+
 @frappe.whitelist()
 def get_tender_submission(tender_name):
 	"""Files and email details for sending the bid: tender documents + the BOQ as PDF."""
@@ -87,21 +118,8 @@ def get_tender_submission(tender_name):
 	if pending:
 		warnings.append(_("Still Pending: {0}").format(", ".join(pending)))
 
-	boq_pdf = None
-	try:
-		pdf = frappe.get_print("BF Bill of Quantities", tender.boq, print_format="BOQ Client Layout", as_pdf=True)
-		boq_pdf = frappe.get_doc(
-			{
-				"doctype": "File",
-				"file_name": f"BOQ {tender.boq}.pdf",
-				"content": pdf,
-				"attached_to_doctype": "BF Tender",
-				"attached_to_name": tender.name,
-				"is_private": 1,
-			}
-		).insert(ignore_permissions=True)
-	except Exception:
-		frappe.log_error(title=f"BOQ PDF for tender {tender.name}")
+	boq_pdf = get_or_create_boq_pdf(tender)
+	if not boq_pdf:
 		warnings.append(_("The BOQ PDF could not be generated; attach it manually."))
 
 	files = frappe.get_all(
