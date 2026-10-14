@@ -1,6 +1,7 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from consms.construction_management.certificate_templates import ensure_certificate_templates
 from consms.construction_management.tasks import ensure_mobilization_task_type
 from consms.construction_management.uom import ensure_standard_uom_mappings
 
@@ -81,6 +82,7 @@ def after_migrate():
     ensure_bid_security_types()
     ensure_activity_types()
     add_customer_types()
+    ensure_certificate_templates()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:

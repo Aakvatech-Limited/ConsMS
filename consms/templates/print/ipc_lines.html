@@ -1,0 +1,25 @@
+{%- set fmt = frappe.utils.fmt_money -%}
+{%- macro amt(line, v) -%}{% if line.line_type == "Less" and v %}({{ fmt(v, precision=2) }}){% else %}{{ fmt(v, precision=2) }}{% endif %}{%- endmacro -%}
+<table class="grid lines-table" style="margin-top:4px">
+	<thead>
+		<tr>
+			<th style="width:5%">#</th><th>{{ _("Description") }}</th>
+			<th style="width:18%">{{ _("Previous Certificates") }}</th><th style="width:18%">{{ _("This Certificate") }}</th><th style="width:18%">{{ _("To Date") }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{%- for line in doc.certificate_lines %}
+		<tr{% if line.line_type == "Subtotal" %} class="total-row"{% endif %}>
+			<td>{{ loop.index }}</td>
+			<td>{{ line.label }}{% if line.calculation == "Percentage" and line.base_amount %} <span class="muted small">({{ frappe.utils.flt(line.rate) }}% {{ _("of") }} {{ fmt(line.base_amount, precision=2) }})</span>{% endif %}</td>
+			<td class="num">{{ amt(line, line.previous_amount) }}</td>
+			<td class="num">{{ amt(line, line.amount) }}</td>
+			<td class="num">{{ amt(line, line.to_date_amount) }}</td>
+		</tr>
+	{%- endfor %}
+		{% if doc.vat_amount %}
+		<tr class="total-row"><td></td><td>{{ _("Amount Due (Excluding VAT)") }}</td><td></td><td class="num">{{ fmt(doc.net_amount_due, precision=2) }}</td><td></td></tr>
+		{% endif %}
+		<tr class="grand"><td></td><td>{{ _("Amount Due to Contractor") }}</td><td></td><td class="num">{{ fmt(doc.amount_due, precision=2) }}</td><td></td></tr>
+	</tbody>
+</table>

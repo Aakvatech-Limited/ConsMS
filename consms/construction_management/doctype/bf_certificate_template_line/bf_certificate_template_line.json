@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-15 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "name": "BF Certificate Template Line",
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Line",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "label": "Add / Less",
+   "options": "Add\nLess\nSubtotal",
+   "default": "Add",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "calculation",
+   "fieldtype": "Select",
+   "label": "Amount From",
+   "options": "Work This Certificate\nPercentage\nTyped Amount\nTotal of Bills\nProvisional Sums",
+   "default": "Typed Amount",
+   "depends_on": "eval:doc.line_type != 'Subtotal'",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate (%)",
+   "depends_on": "eval:doc.calculation == 'Percentage'",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "percentage_of",
+   "fieldtype": "Select",
+   "label": "% Of",
+   "options": "Work This Certificate\nWork This Certificate (excl. VAT-Exempt)\nWork to Date\nRunning Total\nTotal at Line\nRetention Held\nAdvance Balance\nContract Value\nTotal of Bills",
+   "depends_on": "eval:doc.calculation == 'Percentage'",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "line_no",
+   "fieldtype": "Int",
+   "label": "Line No.",
+   "depends_on": "eval:doc.percentage_of == 'Total at Line'",
+   "description": "The running total after this line number of the template is used."
+  },
+  {
+   "fieldname": "cb_rules",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deduct_previous",
+   "fieldtype": "Check",
+   "label": "Less Earlier Certificates",
+   "description": "Subtract what this line took on earlier certificates (use with 'Work to Date')."
+  },
+  {
+   "fieldname": "limit",
+   "fieldtype": "Select",
+   "label": "Limit",
+   "options": "\n% of Contract Value\nAdvance Payment\nRetention Held",
+   "description": "In total over all certificates, this line (or its role) never goes beyond the limit."
+  },
+  {
+   "fieldname": "limit_rate",
+   "fieldtype": "Percent",
+   "label": "Limit (%)",
+   "depends_on": "eval:doc.limit == '% of Contract Value'"
+  },
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "label": "Applies To",
+   "options": "All Certificates\nInterim Only\nSubstantial Completion\nFinal\nSubstantial Completion and Final",
+   "default": "All Certificates"
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Select",
+   "label": "Role",
+   "options": "\nWork\nMaterials on Site\nRetention\nRetention Release\nAdvance Payment\nAdvance Recovery\nVAT\nLiquidated Damages",
+   "description": "Tells the system what the line is: retention and advance balances on the contract, VAT on the invoice, reports."
+  },
+  {
+   "fieldname": "calculation_only",
+   "fieldtype": "Check",
+   "label": "For Calculation Only",
+   "description": "Changes the running total for the lines below, but is left out of the final total."
+  }
+ ],
+ "field_order": [
+  "label",
+  "line_type",
+  "calculation",
+  "rate",
+  "percentage_of",
+  "line_no",
+  "cb_rules",
+  "deduct_previous",
+  "limit",
+  "limit_rate",
+  "applies_to",
+  "role",
+  "calculation_only"
+ ]
+}

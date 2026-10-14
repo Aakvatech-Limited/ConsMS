@@ -7,7 +7,7 @@ from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
 from frappe.utils import flt, getdate
 
-from consms.construction_management.ipc import calculate, suggest_liquidated_damages, update_contract_balances
+from consms.construction_management.ipc import calculate, set_liquidated_damages, update_contract_balances
 
 class BFProgressClaim(Document):
 	def validate(self):
@@ -38,6 +38,13 @@ class BFProgressClaim(Document):
 
 	def calculate_totals(self):
 		calculate(self)
+
+	def before_update_after_submit(self):
+		# certificate lines share a child doctype with BOQ summaries (editable after submit there), not here
+		before = self.get_doc_before_save()
+		old = [(l.label, flt(l.amount)) for l in before.certificate_lines] if before else []
+		if old != [(l.label, flt(l.amount)) for l in self.certificate_lines]:
+			frappe.throw(_("The lines of a submitted certificate cannot be changed. Cancel and amend it instead."))
 
 	def on_submit(self):
 		update_contract_balances(self.contract)
@@ -121,7 +128,9 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 			})
 
 	doc.period_from, doc.period_to = period_from or doc.period_from, period_to or doc.period_to
-	doc.liquidated_damages = suggest_liquidated_damages(doc)
+	if not doc.certificate_lines:
+		calculate(doc)
+	set_liquidated_damages(doc)
 	doc.save()
 
 	return {"status": "success", "count": len(doc.claim_items)}
@@ -151,7 +160,9 @@ def set_claim_vat(invoice, claim, template_doctype):
 	row = {
 		"charge_type": "Actual",
 		"account_head": accounts[0],
-		"description": _("VAT {0}% on work certified (excl. VAT-exempt items) - {1}").format(flt(claim.vat_percentage), claim.name),
+		"description": "{0} - {1}".format(
+			", ".join(line.label for line in claim.certificate_lines if line.role == "VAT") or _("VAT"), claim.name
+		),
 		"tax_amount": claim.vat_amount,
 	}
 	if template_doctype == "Purchase Taxes and Charges Template":

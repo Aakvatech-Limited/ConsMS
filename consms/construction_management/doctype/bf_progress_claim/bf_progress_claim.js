@@ -34,16 +34,6 @@ frappe.ui.form.on("BF Progress Claim", {
 				});
 			}, __("Actions"));
 
-			frm.add_custom_button(__("Release Retention"), function() {
-				const held = flt(frm.doc.retention_held_to_date) + flt(frm.doc.retention_release) - flt(frm.doc.retention_deduction);
-				frappe.prompt([
-					{ fieldname: "percent", fieldtype: "Percent", label: __("Release (% of retention held)"), default: 50, reqd: 1,
-						description: __("Retention held before this certificate: {0}", [format_currency(held)]) },
-				], (values) => {
-					frm.set_value("retention_release", flt(held * values.percent / 100, 2));
-					frm.save();
-				}, __("Release Retention"), __("Release"));
-			}, __("Actions"));
 		}
 
 		if (frm.doc.docstatus === 1) {
@@ -65,14 +55,15 @@ frappe.ui.form.on("BF Progress Claim", {
 		}
 	},
 	
-	// The certificate is calculated on the server (retention and advance limits, VAT base): save to see the figures
-	materials_on_site: function(frm) {
+	// The certificate lines come from the template and are worked out on the server: save to see the figures
+	certificate_type: function(frm) {
+		frm.clear_table("certificate_lines");
+		frm.refresh_field("certificate_lines");
 		frm.trigger("show_save_hint");
 	},
-	retention_release: function(frm) {
-		frm.trigger("show_save_hint");
-	},
-	liquidated_damages: function(frm) {
+	certificate_template: function(frm) {
+		frm.clear_table("certificate_lines");
+		frm.refresh_field("certificate_lines");
 		frm.trigger("show_save_hint");
 	},
 	show_save_hint: function(frm) {
@@ -94,4 +85,10 @@ frappe.ui.form.on("BF Progress Claim Variation", {
 	variations_remove: function(frm) {
 		frm.trigger("show_save_hint");
 	}
+});
+
+frappe.ui.form.on("BF Certificate Line", {
+	amount: function(frm) {
+		frm.trigger("show_save_hint");
+	},
 });

@@ -17,6 +17,8 @@
   "supplier",
   "boq",
   "claim_title",
+  "certificate_type",
+  "certificate_template",
   "cb_dates",
   "posting_date",
   "period_from",
@@ -27,20 +29,18 @@
   "variations",
   "summary_sb",
   "this_period_work",
-  "materials_on_site",
-  "retention_release",
   "cb_deductions",
-  "retention_percentage",
-  "retention_deduction",
-  "advance_recovery_percentage",
-  "advance_payment_recovery",
-  "liquidated_damages",
-  "cb_totals",
   "net_amount_due",
-  "vat_percentage",
-  "vat_base",
   "vat_amount",
   "amount_due",
+  "sb_lines",
+  "certificate_lines",
+  "materials_on_site",
+  "retention_deduction",
+  "advance_payment_recovery",
+  "retention_release",
+  "liquidated_damages",
+  "vat_base",
   "sb_to_date",
   "total_work_executed",
   "approved_variations",
@@ -174,7 +174,7 @@
   {
    "fieldname": "summary_sb",
    "fieldtype": "Section Break",
-   "label": "Payment Certificate (This IPC)"
+   "label": "Payment Certificate"
   },
   {
    "bold": 1,
@@ -195,7 +195,9 @@
    "description": "Optional. Value of materials delivered to site but not yet used, if the contract allows paying for them.",
    "fieldname": "materials_on_site",
    "fieldtype": "Currency",
-   "label": "Add: Materials on Site"
+   "label": "Add: Materials on Site",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "bold": 1,
@@ -210,26 +212,20 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Taken from the contract. The share held back until the work is finished and defects are fixed.",
-   "fetch_from": "contract.retention_percentage",
-   "fieldname": "retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention (%)",
-   "read_only": 1
-  },
-  {
    "description": "This certificate, up to the contract's retention limit.",
    "fieldname": "retention_deduction",
    "fieldtype": "Currency",
    "label": "Less: Retention",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "description": "This certificate, until the advance is fully recovered.",
    "fieldname": "advance_payment_recovery",
    "fieldtype": "Currency",
    "label": "Less: Advance Recovery",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "description": "Sum of the earlier certificates' Amount Due. For information; not deducted.",
@@ -240,7 +236,7 @@
   },
   {
    "bold": 1,
-   "description": "Work this certificate + materials + retention released - retention - advance recovery - liquidated damages.",
+   "description": "Amount due without the VAT lines.",
    "fieldname": "net_amount_due",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -276,49 +272,40 @@
    "description": "Work this period + variations claimed this period."
   },
   {
-   "fieldname": "advance_recovery_percentage",
-   "fieldtype": "Percent",
-   "label": "Advance Recovery (%)",
-   "read_only": 1,
-   "fetch_from": "contract.advance_recovery_percentage"
-  },
-  {
    "fieldname": "retention_release",
    "fieldtype": "Currency",
    "label": "Add: Retention Released",
-   "description": "Part of the retention held that is paid back (e.g. 50% at completion, 50% after the defects period)."
+   "description": "Part of the retention held that is paid back (e.g. 50% at completion, 50% after the defects period).",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "liquidated_damages",
    "fieldtype": "Currency",
    "label": "Less: Liquidated Damages",
-   "description": "Suggested from the contract's rate per day when the period runs past the revised completion date."
-  },
-  {
-   "fieldname": "vat_percentage",
-   "fieldtype": "Percent",
-   "label": "VAT (%)",
+   "description": "Suggested from the contract's rate per day when the period runs past the revised completion date.",
    "read_only": 1,
-   "fetch_from": "contract.vat_percentage"
+   "hidden": 1
   },
   {
    "fieldname": "vat_base",
    "fieldtype": "Currency",
    "label": "VAT Base",
    "read_only": 1,
-   "description": "Work this certificate excluding VAT-exempt BOQ lines."
+   "description": "Work this certificate excluding VAT-exempt BOQ lines.",
+   "hidden": 1
   },
   {
    "fieldname": "vat_amount",
    "fieldtype": "Currency",
-   "label": "Add: VAT",
+   "label": "VAT",
    "read_only": 1,
-   "description": "Charged on the Sales Invoice exactly as shown here."
+   "description": "Total of the VAT lines; charged on the Sales Invoice exactly as shown."
   },
   {
    "fieldname": "amount_due",
    "fieldtype": "Currency",
-   "label": "Amount Due to Contractor (Incl. VAT)",
+   "label": "Amount Due",
    "read_only": 1,
    "bold": 1
   },
@@ -351,15 +338,41 @@
    "read_only": 1
   },
   {
-   "fieldname": "cb_totals",
-   "fieldtype": "Column Break"
+   "fieldname": "certificate_type",
+   "fieldtype": "Select",
+   "label": "Certificate Type",
+   "options": "Interim\nSubstantial Completion\nFinal",
+   "default": "Interim",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Substantial Completion and Final certificates use the template's release / recovery lines."
+  },
+  {
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "BF Certificate Template",
+   "fetch_from": "contract.certificate_template",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "sb_lines",
+   "fieldtype": "Section Break",
+   "label": "Certificate Lines",
+   "description": "From the Certificate Template. Type amounts on 'Typed Amount' lines (e.g. materials on site, interest, liquidated damages), then Save."
+  },
+  {
+   "fieldname": "certificate_lines",
+   "fieldtype": "Table",
+   "label": "Certificate Lines",
+   "options": "BF Certificate Line"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 12:00:00.000000",
+ "modified": "2026-10-15 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim",

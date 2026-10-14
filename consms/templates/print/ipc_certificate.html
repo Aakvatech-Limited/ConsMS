@@ -1,7 +1,7 @@
 {%- set c = ipc.contract -%}
 {%- set fmt = frappe.utils.fmt_money -%}
 <div class="ipc">
-	<h1>{{ _("Interim Payment Certificate") }} {{ doc.claim_title or doc.name }}</h1>
+	<h1>{{ ipc.title }} {{ doc.claim_title or doc.name }}</h1>
 	{% include "consms/templates/print/ipc_header.html" %}
 	<table class="meta" style="margin-top:6px">
 		<tr>
@@ -21,17 +21,7 @@
 	</table>
 
 	<p style="margin:10px 0 4px">{{ _("Now this Payment Certificate reads as hereunder stated:") }}</p>
-	<table class="lines">
-		<tr><td style="width:6%">1.</td><td>{{ _("Completed execution of the Contract works as itemised in the Valuation Sheet (this certificate)") }}</td><td class="num" style="width:24%">{{ fmt(doc.this_period_work, precision=2) }}</td></tr>
-		<tr><td>2.</td><td>{{ _("Add: Value of Materials on Site") }}</td><td class="num">{{ fmt(doc.materials_on_site, precision=2) }}</td></tr>
-		<tr><td>3.</td><td>{{ _("Less: Retention {0}%").format(frappe.utils.flt(doc.retention_percentage)) }}{% if c and c.retention_limit_percentage %}{{ _(", to the maximum of {0}% of the Contract Sum").format(frappe.utils.flt(c.retention_limit_percentage)) }}{% endif %}</td><td class="num">({{ fmt(doc.retention_deduction, precision=2) }})</td></tr>
-		<tr><td>4.</td><td>{{ _("Less: Advance Recovery {0}%").format(frappe.utils.flt(doc.advance_recovery_percentage)) }}</td><td class="num">({{ fmt(doc.advance_payment_recovery, precision=2) }})</td></tr>
-		<tr><td>5.</td><td>{{ _("Add: Retention Released") }}</td><td class="num">{{ fmt(doc.retention_release, precision=2) }}</td></tr>
-		<tr><td>6.</td><td>{{ _("Less: Liquidated Damages") }}</td><td class="num">({{ fmt(doc.liquidated_damages, precision=2) }})</td></tr>
-		<tr class="sub"><td></td><td>{{ _("Amount Due (Excluding VAT)") }}</td><td class="num">{{ fmt(doc.net_amount_due, precision=2) }}</td></tr>
-		<tr><td>7.</td><td>{{ _("Add: {0}% VAT").format(frappe.utils.flt(doc.vat_percentage)) }}{% if ipc.has_exempt %} {{ _("(Excluding VAT-exempt items, e.g. P&G)") }}{% endif %} {{ _("on") }} {{ fmt(doc.vat_base, precision=2) }}</td><td class="num">{{ fmt(doc.vat_amount, precision=2) }}</td></tr>
-		<tr class="due"><td></td><td>{{ _("Amount Due to Contractor") }}</td><td class="num">{{ fmt(doc.amount_due, precision=2) }}</td></tr>
-	</table>
+	{% include "consms/templates/print/ipc_lines.html" %}
 	<p style="margin:6px 0"><b>{{ _("Amount in Words") }}:</b> {{ ipc.amount_in_words }}</p>
 
 	<table class="grid small" style="margin-top:6px">

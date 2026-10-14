@@ -16,7 +16,8 @@
   "erp_uom",
   "unit_rate",
   "amount",
-  "vat_exempt"
+  "vat_exempt",
+  "is_provisional_sum"
  ],
  "fields": [
   {
@@ -98,13 +99,20 @@
    "default": "0",
    "allow_on_submit": 1,
    "description": "No VAT on this line in Progress Claims, e.g. Preliminaries & General."
+  },
+  {
+   "fieldname": "is_provisional_sum",
+   "fieldtype": "Check",
+   "label": "Provisional Sum",
+   "allow_on_submit": 1,
+   "description": "Ticked automatically for unit PS. Used by 'Provisional Sums' summary lines."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-15 09:00:00.000000",
+ "modified": "2026-10-15 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF BOQ Item",

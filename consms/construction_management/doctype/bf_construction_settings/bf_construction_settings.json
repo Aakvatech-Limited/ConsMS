@@ -11,7 +11,10 @@
   "sb_defaults",
   "default_retention_percentage",
   "sb_costing",
-  "track_costs_per_task"
+  "track_costs_per_task",
+  "sb_templates",
+  "default_certificate_template",
+  "default_boq_summary_template"
  ],
  "fields": [
   {
@@ -37,13 +40,30 @@
    "fieldname": "track_costs_per_task",
    "fieldtype": "Check",
    "label": "Track Costs per Task"
+  },
+  {
+   "fieldname": "sb_templates",
+   "fieldtype": "Section Break",
+   "label": "Templates"
+  },
+  {
+   "fieldname": "default_certificate_template",
+   "fieldtype": "Link",
+   "label": "Default Certificate Template",
+   "options": "BF Certificate Template"
+  },
+  {
+   "fieldname": "default_boq_summary_template",
+   "fieldtype": "Link",
+   "label": "Default BOQ Summary Template",
+   "options": "BF Certificate Template"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-12 10:00:00.000000",
+ "modified": "2026-10-15 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

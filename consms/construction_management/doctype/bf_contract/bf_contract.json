@@ -20,7 +20,6 @@
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
-  "retention_percentage",
   "cb_contract_totals",
   "contingency_amount",
   "total_contract_amount",
@@ -35,20 +34,16 @@
   "revised_completion_date",
   "actual_completion_date",
   "sb_payment_terms",
+  "certificate_template",
   "advance_payment_percentage",
   "advance_payment_amount",
-  "advance_recovery_percentage",
   "cb_advance",
   "advance_guarantee_no",
   "advance_guarantee_bank",
   "advance_guarantee_expiry",
-  "sb_retention_terms",
-  "retention_limit_percentage",
+  "defects_cb",
   "defects_liability_months",
-  "vat_percentage",
-  "cb_ld",
   "ld_rate_per_day",
-  "ld_limit_percentage",
   "sb_balances",
   "advance_recovered",
   "advance_balance",
@@ -153,14 +148,6 @@
    "fieldname": "contingency_percentage",
    "fieldtype": "Percent",
    "label": "Contingency (%)"
-  },
-  {
-   "default": "5",
-   "description": "Part of each payment that the client holds back until the work is finished and any defects are fixed. It is paid out at the end. Usually 5–10%.",
-   "fieldname": "retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention per IPC (%)",
-   "allow_on_submit": 1
   },
   {
    "fieldname": "cb_contract_totals",
@@ -273,7 +260,7 @@
    "fieldtype": "Section Break",
    "label": "Payment Terms",
    "collapsible": 0,
-   "description": "Used on every Progress Claim (IPC): advance recovery, retention, VAT and liquidated damages."
+   "description": "How each payment certificate is worked out comes from the Certificate Template (retention, advance recovery, VAT, releases...)."
   },
   {
    "fieldname": "advance_payment_percentage",
@@ -287,14 +274,6 @@
    "fieldtype": "Currency",
    "label": "Advance Payment Amount",
    "allow_on_submit": 1
-  },
-  {
-   "fieldname": "advance_recovery_percentage",
-   "fieldtype": "Percent",
-   "label": "Advance Recovery per IPC (%)",
-   "default": "20",
-   "allow_on_submit": 1,
-   "description": "Deducted from the work of each certificate until the advance is fully recovered."
   },
   {
    "fieldname": "cb_advance",
@@ -320,18 +299,6 @@
    "description": "A reminder is sent 30 days before expiry."
   },
   {
-   "fieldname": "sb_retention_terms",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "retention_limit_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention Limit (% of Contract Value)",
-   "default": "5",
-   "allow_on_submit": 1,
-   "description": "Retention stops once this much of the Total Contract Value is held."
-  },
-  {
    "fieldname": "defects_liability_months",
    "fieldtype": "Int",
    "label": "Defects Liability Period (Months)",
@@ -339,29 +306,11 @@
    "allow_on_submit": 1
   },
   {
-   "fieldname": "vat_percentage",
-   "fieldtype": "Percent",
-   "label": "VAT (%)",
-   "default": "18",
-   "allow_on_submit": 1,
-   "description": "Charged on the work of each certificate, excluding BOQ lines marked VAT Exempt (e.g. Preliminaries & General)."
-  },
-  {
-   "fieldname": "cb_ld",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "ld_rate_per_day",
    "fieldtype": "Currency",
    "label": "Liquidated Damages per Day",
-   "allow_on_submit": 1
-  },
-  {
-   "fieldname": "ld_limit_percentage",
-   "fieldtype": "Percent",
-   "label": "Liquidated Damages Limit (% of Contract Value)",
-   "default": "10",
-   "allow_on_submit": 1
+   "allow_on_submit": 1,
+   "description": "Used to suggest Liquidated Damages on certificates for periods after the revised completion date."
   },
   {
    "fieldname": "sb_balances",
@@ -413,13 +362,25 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "BF Certificate Template",
+   "allow_on_submit": 1,
+   "description": "The client's rules, e.g. Ministry of Water (SEUWASA) or TANROADS. Used by every Progress Claim of this contract."
+  },
+  {
+   "fieldname": "defects_cb",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 09:00:00.000000",
+ "modified": "2026-10-15 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

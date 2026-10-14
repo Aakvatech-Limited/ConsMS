@@ -38,16 +38,14 @@ class BFContract(Document):
 		self.set_payment_terms()
 
 	def set_payment_terms(self):
-		for field in ("advance_payment_percentage", "advance_recovery_percentage", "retention_percentage",
-				"retention_limit_percentage", "vat_percentage", "ld_limit_percentage"):
-			if not 0 <= flt(self.get(field)) <= 100:
-				frappe.throw(_("{0} must be between 0 and 100.").format(_(self.meta.get_label(field))))
+		if not self.certificate_template:
+			self.certificate_template = frappe.db.get_single_value("BF Construction Settings", "default_certificate_template")
+		if not 0 <= flt(self.advance_payment_percentage) <= 100:
+			frappe.throw(_("Advance Payment (%) must be between 0 and 100."))
 		if flt(self.advance_payment_percentage):
 			self.advance_payment_amount = flt(
 				flt(self.total_contract_amount) * flt(self.advance_payment_percentage) / 100, 2
 			)
-		if flt(self.advance_payment_amount) and not flt(self.advance_recovery_percentage):
-			frappe.throw(_("Set the Advance Recovery per IPC (%), so the advance is recovered from the certificates."))
 		self.advance_balance = flt(self.advance_payment_amount) - flt(self.advance_recovered)
 
 	def lock_original_dates(self):

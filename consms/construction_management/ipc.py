@@ -1,25 +1,35 @@
-"""Interim Payment Certificates (IPC) the way Tanzanian clients certify them.
+"""Payment certificates (IPC / Substantial Completion / Final) and BOQ tender summaries.
 
-Each certificate pays the work of its own period:
+The rules are not in the code: they come from a Certificate Template, a list of lines
+worked out from top to bottom. Each line adds to or takes from a running total:
 
-	work this certificate (+ variations this period)
-	+ materials on site
-	- retention        (retention % of the work, until the contract's retention limit is held)
-	- advance recovery (recovery % of the work, until the advance is recovered)
-	+ retention released
-	- liquidated damages
-	= amount due (excl. VAT)
-	+ VAT              (VAT % of the work, excluding VAT-exempt BOQ lines such as P&G)
-	= amount due to contractor
+	Work this certificate                  Work This Certificate
+	Less: Retention 10%                    10% of Work This Certificate, limit 5% of contract value
+	Less: Advance recovery 30%             30% of Work to Date, less earlier certificates
+	Add: Release of 50% retention          50% of Retention Held (Substantial Completion only)
+	Add: VAT 18%                           18% of Work This Certificate (excl. VAT-Exempt)
 
-Previous and cumulative values are kept on the claim lines for the valuation sheet.
+The last running total is the amount due (or the bid price on a BOQ). A line's role
+(Retention, Advance Recovery, VAT...) tells the rest of the system what it is, so the
+contract balances, the invoice VAT and the reports keep working whatever the template.
 """
 
+from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, date_diff, flt, getdate, money_in_words
+from frappe.utils import add_days, cint, date_diff, flt, getdate, money_in_words
+
+LINE_FIELDS = (
+	"label", "line_type", "calculation", "rate", "percentage_of", "line_no", "deduct_previous",
+	"limit", "limit_rate", "applies_to", "role", "calculation_only",
+)
+CERTIFICATE_TITLES = {
+	"Interim": "Interim Payment Certificate",
+	"Substantial Completion": "Substantial Completion Payment Certificate",
+	"Final": "Final Payment Certificate",
+}
 
 
 def money(value):
@@ -27,29 +37,145 @@ def money(value):
 	return float(Decimal(repr(round(flt(value), 6))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
+# ---------------------------------------------------------------- template lines
+
+def applies(row, certificate_type):
+	scope = row.applies_to or "All Certificates"
+	kind = certificate_type or "Interim"
+	return (
+		scope == "All Certificates"
+		or (scope == "Interim Only" and kind == "Interim")
+		or (scope == "Substantial Completion" and kind == "Substantial Completion")
+		or (scope == "Final" and kind == "Final")
+		or (scope == "Substantial Completion and Final" and kind in ("Substantial Completion", "Final"))
+	)
+
+
+def build_lines(doc, table, template, certificate_type=None):
+	"""Copy the template's lines onto the document, keeping amounts already typed on 'Typed Amount' lines."""
+	typed = {row.label: flt(row.amount) for row in doc.get(table) or [] if row.calculation == "Typed Amount"}
+	doc.set(table, [])
+	if not template:
+		return
+	for row in frappe.get_doc("BF Certificate Template", template).lines:
+		if certificate_type is not None and not applies(row, certificate_type):
+			continue
+		line = {field: row.get(field) for field in LINE_FIELDS}
+		line["template_line_no"] = row.idx
+		if row.calculation == "Typed Amount":
+			line["amount"] = typed.get(row.label, 0)
+		doc.append(table, line)
+
+
+def run_lines(lines, bases, previous_by_label=None, previous_by_role=None, contract_value=0, advance=0):
+	"""Work the lines out top to bottom. Returns (final total, amount per role)."""
+	previous_by_label = previous_by_label or {}
+	previous_by_role = previous_by_role or {}
+	this_role = defaultdict(float)
+	at_line = {}
+	running = final = 0.0
+
+	def retention_held():
+		return (previous_by_role.get("Retention", 0) - previous_by_role.get("Retention Release", 0)
+			+ this_role["Retention"] - this_role["Retention Release"])
+
+	def advance_balance():
+		return flt(advance) - previous_by_role.get("Advance Recovery", 0) - this_role["Advance Recovery"]
+
+	for line in lines:
+		line.base_amount = 0
+		if line.line_type == "Subtotal":
+			line.amount = money(running)
+		else:
+			if line.calculation == "Typed Amount":
+				if flt(line.amount) < 0:
+					frappe.throw(_("{0}: enter a positive amount; the line itself says whether it is added or taken off.").format(line.label))
+				amount = flt(line.amount)
+			elif line.calculation == "Percentage":
+				base = {
+					"Running Total": lambda: running,
+					"Total at Line": lambda: at_line.get(cint(line.line_no), 0),
+					"Retention Held": retention_held,
+					"Advance Balance": advance_balance,
+					"Contract Value": lambda: flt(contract_value),
+				}.get(line.percentage_of, lambda: flt(bases.get(line.percentage_of)))()
+				line.base_amount = money(base)
+				amount = flt(line.rate) / 100 * base
+			else:
+				amount = flt(bases.get(line.calculation))
+
+			if line.deduct_previous:
+				amount -= previous_by_label.get(line.label, 0)
+
+			if line.limit and amount > 0:
+				if line.limit == "% of Contract Value":
+					used = (previous_by_role.get(line.role, 0) + this_role[line.role]) if line.role else previous_by_label.get(line.label, 0)
+					room = flt(line.limit_rate) / 100 * flt(contract_value) - used
+				elif line.limit == "Advance Payment":
+					room = advance_balance()
+				else:
+					room = retention_held()
+				amount = min(amount, max(room, 0))
+
+			line.amount = money(amount)
+			sign = -1 if line.line_type == "Less" else 1
+			running += sign * line.amount
+			if not line.calculation_only:
+				final += sign * line.amount
+			if line.role:
+				this_role[line.role] += line.amount
+
+		line.running_total = money(running)
+		line.previous_amount = money(previous_by_label.get(line.label, 0))
+		line.to_date_amount = money(line.previous_amount + line.amount)
+		at_line[cint(line.template_line_no) or line.idx] = running
+
+	return money(final), this_role
+
+
+def validate_template(template):
+	allowed_calculations, blocked_bases = {
+		"Payment Certificate": ({"Work This Certificate", "Percentage", "Typed Amount"}, {"Total of Bills"}),
+		"BOQ Summary": ({"Total of Bills", "Provisional Sums", "Percentage", "Typed Amount"},
+			{"Work This Certificate", "Work This Certificate (excl. VAT-Exempt)", "Work to Date", "Retention Held", "Advance Balance"}),
+	}[template.used_for]
+	for row in template.lines:
+		if row.line_type == "Subtotal":
+			continue
+		if row.calculation not in allowed_calculations:
+			frappe.throw(_("Line {0}: '{1}' cannot be used on a {2} template.").format(row.idx, row.calculation, _(template.used_for)))
+		if row.calculation == "Percentage":
+			if not row.percentage_of:
+				frappe.throw(_("Line {0}: choose what the percentage is of.").format(row.idx))
+			if row.percentage_of in blocked_bases:
+				frappe.throw(_("Line {0}: '{1}' cannot be used on a {2} template.").format(row.idx, row.percentage_of, _(template.used_for)))
+			if row.percentage_of == "Total at Line" and not 0 < cint(row.line_no) < row.idx:
+				frappe.throw(_("Line {0}: Line No. must be one of the lines above.").format(row.idx))
+		if row.limit == "% of Contract Value" and not flt(row.limit_rate):
+			frappe.throw(_("Line {0}: enter the Limit (%).").format(row.idx))
+
+
+# ---------------------------------------------------------------- payment certificates
+
 def get_contract_terms(contract):
 	return frappe.db.get_value(
 		"BF Contract",
 		contract,
-		[
-			"total_contract_amount",
-			"contract_amount",
-			"retention_percentage",
-			"retention_limit_percentage",
-			"advance_payment_amount",
-			"advance_recovery_percentage",
-			"vat_percentage",
-			"ld_rate_per_day",
-			"ld_limit_percentage",
-			"original_completion_date",
-			"revised_completion_date",
-		],
+		["total_contract_amount", "contract_amount", "advance_payment_amount", "certificate_template",
+			"ld_rate_per_day", "original_completion_date", "revised_completion_date"],
 		as_dict=True,
 	) or frappe._dict()
 
 
 def contract_value(terms):
 	return flt(terms.total_contract_amount) or flt(terms.contract_amount)
+
+
+def default_certificate_template(contract=None):
+	return (
+		(frappe.db.get_value("BF Contract", contract, "certificate_template") if contract else None)
+		or frappe.db.get_single_value("BF Construction Settings", "default_certificate_template")
+	)
 
 
 def get_previous_totals(claim):
@@ -61,6 +187,8 @@ def get_previous_totals(claim):
 			coalesce(sum(retention_release), 0) as released,
 			coalesce(sum(advance_payment_recovery), 0) as advance,
 			coalesce(sum(liquidated_damages), 0) as liquidated_damages,
+			coalesce(sum(materials_on_site), 0) as materials,
+			coalesce(sum(vat_amount), 0) as vat,
 			coalesce(sum(net_amount_due), 0) as net
 		from `tabBF Progress Claim`
 		where contract = %s and claim_type = %s and docstatus = 1 and name != %s
@@ -71,11 +199,27 @@ def get_previous_totals(claim):
 	return frappe._dict({k: flt(v) for k, v in totals.items()})
 
 
+def get_previous_by_label(claim):
+	rows = frappe.db.sql(
+		"""
+		select line.label, sum(line.amount) as amount
+		from `tabBF Certificate Line` line
+		join `tabBF Progress Claim` claim on claim.name = line.parent
+		where line.parenttype = 'BF Progress Claim' and claim.contract = %s and claim.claim_type = %s
+			and claim.docstatus = 1 and claim.name != %s
+		group by line.label
+		""",
+		(claim.contract, claim.claim_type or "Client Claim", claim.name or ""),
+		as_dict=True,
+	)
+	return {r.label: flt(r.amount) for r in rows}
+
+
 def calculate(claim):
 	terms = get_contract_terms(claim.contract) if claim.contract else frappe._dict()
 	value = contract_value(terms)
 
-	work_to_date = this_work = vat_base = 0.0
+	work_to_date = this_work = taxable_work = 0.0
 	for item in claim.claim_items:
 		item.previous_value = money(flt(item.previous_qty) * flt(item.unit_rate))
 		item.this_period_value = money(flt(item.this_period_qty) * flt(item.unit_rate))
@@ -84,7 +228,7 @@ def calculate(claim):
 		work_to_date += item.cumulative_value
 		this_work += item.this_period_value
 		if not item.vat_exempt:
-			vat_base += item.this_period_value
+			taxable_work += item.this_period_value
 
 	variations_to_date = this_variations = 0.0
 	for row in claim.get("variations") or []:
@@ -97,62 +241,47 @@ def calculate(claim):
 	claim.gross_valuation = money(work_to_date + variations_to_date)
 	claim.this_period_work = money(this_work + this_variations)
 
-	previous = get_previous_totals(claim)
-	base = claim.this_period_work
-
-	# Retention: % of this certificate's work, never more than the limit in total
-	retention = flt(claim.retention_percentage) / 100 * base
-	if flt(terms.retention_limit_percentage) and value:
-		room = flt(terms.retention_limit_percentage) / 100 * value - previous.retention
-		retention = min(retention, max(room, 0))
-	claim.retention_deduction = money(retention)
-
-	# Advance: % of this certificate's work, until the advance is recovered
-	advance = flt(terms.advance_payment_amount)
-	recovery = 0.0
-	if advance:
-		claim.advance_recovery_percentage = flt(terms.advance_recovery_percentage)
-		recovery = flt(terms.advance_recovery_percentage) / 100 * base
-		recovery = max(min(recovery, advance - previous.advance), -previous.advance)
-	claim.advance_payment_recovery = money(recovery)
-
-	held_before = previous.retention - previous.released
-	if flt(claim.retention_release) < 0:
-		frappe.throw(_("Retention Released cannot be negative."))
-	if money(claim.retention_release) > money(held_before + claim.retention_deduction):
-		frappe.throw(
-			_("Retention Released ({0}) is more than the retention held ({1}).").format(
-				frappe.format_value(claim.retention_release, "Currency"),
-				frappe.format_value(held_before + claim.retention_deduction, "Currency"),
-			)
-		)
-
-	if flt(claim.liquidated_damages) < 0:
-		frappe.throw(_("Liquidated Damages cannot be negative."))
-	if flt(terms.ld_limit_percentage) and value:
-		ld_room = flt(terms.ld_limit_percentage) / 100 * value - previous.liquidated_damages
-		if money(claim.liquidated_damages) > money(max(ld_room, 0)):
-			frappe.throw(
-				_("Liquidated Damages are limited to {0}% of the contract value; at most {1} can still be deducted.").format(
-					flt(terms.ld_limit_percentage), frappe.format_value(max(ld_room, 0), "Currency")
-				)
-			)
-
-	claim.vat_base = money(vat_base + this_variations)
-	claim.vat_amount = money(flt(claim.vat_percentage) / 100 * claim.vat_base)
-
-	claim.net_amount_due = money(
-		claim.this_period_work
-		+ money(claim.materials_on_site)
-		- claim.retention_deduction
-		- claim.advance_payment_recovery
-		+ money(claim.retention_release)
-		- money(claim.liquidated_damages)
+	if not claim.certificate_template:
+		claim.certificate_template = default_certificate_template(claim.contract)
+	rebuild = not claim.get("certificate_lines") or (
+		not claim.is_new() and (claim.has_value_changed("certificate_template") or claim.has_value_changed("certificate_type"))
 	)
-	claim.amount_due = money(claim.net_amount_due + claim.vat_amount)
+	if rebuild:
+		build_lines(claim, "certificate_lines", claim.certificate_template, claim.certificate_type or "Interim")
+
+	previous = get_previous_totals(claim)
+	advance = flt(terms.advance_payment_amount)
+	bases = {
+		"Work This Certificate": claim.this_period_work,
+		"Work This Certificate (excl. VAT-Exempt)": money(taxable_work + this_variations),
+		"Work to Date": claim.gross_valuation,
+	}
+	previous_by_role = {
+		"Retention": previous.retention,
+		"Retention Release": previous.released,
+		"Advance Recovery": previous.advance,
+		"Liquidated Damages": previous.liquidated_damages,
+		"Materials on Site": previous.materials,
+		"VAT": previous.vat,
+	}
+
+	if claim.certificate_lines:
+		total, roles = run_lines(claim.certificate_lines, bases, get_previous_by_label(claim), previous_by_role, value, advance)
+	else:
+		total, roles = claim.this_period_work, defaultdict(float)
+
+	claim.materials_on_site = money(roles["Materials on Site"])
+	claim.retention_deduction = money(roles["Retention"])
+	claim.retention_release = money(roles["Retention Release"])
+	claim.advance_payment_recovery = money(roles["Advance Recovery"])
+	claim.liquidated_damages = money(roles["Liquidated Damages"])
+	claim.vat_amount = money(roles["VAT"])
+	claim.vat_base = money(sum(flt(line.base_amount) for line in claim.certificate_lines if line.role == "VAT"))
+	claim.amount_due = total
+	claim.net_amount_due = money(total - claim.vat_amount)
 	claim.previous_certified_amount = money(previous.net)
 
-	claim.retention_held_to_date = money(held_before + claim.retention_deduction - flt(claim.retention_release))
+	claim.retention_held_to_date = money(previous.retention - previous.released + claim.retention_deduction - claim.retention_release)
 	claim.advance_recovered_to_date = money(previous.advance + claim.advance_payment_recovery)
 	claim.advance_balance = money(advance - claim.advance_recovered_to_date) if advance else 0
 
@@ -169,6 +298,15 @@ def suggest_liquidated_damages(claim):
 		late_from = claim.period_from
 	days = date_diff(claim.period_to, late_from) + 1
 	return money(days * flt(terms.ld_rate_per_day)) if days > 0 else 0
+
+
+def set_liquidated_damages(claim):
+	"""Put the suggested amount on the template's typed Liquidated Damages line, if it has one."""
+	suggestion = suggest_liquidated_damages(claim)
+	for line in claim.certificate_lines:
+		if line.role == "Liquidated Damages" and line.calculation == "Typed Amount":
+			line.amount = suggestion
+			return
 
 
 def update_contract_balances(contract):
@@ -201,8 +339,27 @@ def update_contract_balances(contract):
 	)
 
 
+# ---------------------------------------------------------------- BOQ tender summary
+
+def calculate_boq_summary(boq):
+	"""Bid price from the BOQ Summary template: total of bills, provisional sums, contingency, VAT..."""
+	if not boq.summary_template:
+		boq.set("summary_lines", [])
+		boq.bid_price = boq.total_amount
+		return
+	if not boq.summary_lines or (not boq.is_new() and boq.has_value_changed("summary_template")):
+		build_lines(boq, "summary_lines", boq.summary_template)
+	bases = {
+		"Total of Bills": flt(boq.total_amount),
+		"Provisional Sums": sum(flt(row.amount) for row in boq.items if row.is_provisional_sum),
+	}
+	boq.bid_price, _roles = run_lines(boq.summary_lines, bases, contract_value=flt(boq.total_amount))
+
+
+# ---------------------------------------------------------------- printing
+
 def get_ipc_print_data(claim):
-	"""Everything the IPC print formats need: valuation per bill, summary per bill, contract details."""
+	"""Everything the IPC print formats need: certificate lines, valuation per bill, summary per bill."""
 	contract = frappe.get_doc("BF Contract", claim.contract) if claim.contract else None
 	rows_by_item = {row.boq_item: row for row in claim.claim_items}
 
@@ -252,7 +409,11 @@ def get_ipc_print_data(claim):
 	def total(key, exempt=None):
 		return sum(g[key] for g in bills if exempt is None or g.vat_exempt == exempt)
 
-	vat_rate = flt(claim.vat_percentage) / 100
+	# VAT rows on the summary only when the template charges VAT on the work excluding exempt bills
+	vat_line = next(
+		(l for l in claim.certificate_lines if l.role == "VAT" and l.percentage_of == "Work This Certificate (excl. VAT-Exempt)"), None
+	)
+	vat_rate = flt(vat_line.rate) / 100 if vat_line else 0
 	summary = frappe._dict(
 		original=total("original"),
 		previous=total("previous"),
@@ -275,6 +436,7 @@ def get_ipc_print_data(claim):
 	currency = frappe.get_cached_value("Company", company, "default_currency") if company else None
 
 	return frappe._dict(
+		title=_(CERTIFICATE_TITLES.get(claim.certificate_type or "Interim")),
 		contract=contract,
 		project_name=frappe.db.get_value("Project", claim.project, "project_name") if claim.project else "",
 		company=company,
@@ -283,6 +445,7 @@ def get_ipc_print_data(claim):
 		revised_value=(contract_value(contract) + variations) if contract and variations else None,
 		bills=bills,
 		summary=summary,
-		has_exempt=any(g.vat_exempt for g in bills),
+		vat_line=vat_line,
+		has_exempt=bool(vat_line) and any(g.vat_exempt for g in bills),
 		amount_in_words=money_in_words(claim.amount_due, currency),
 	)

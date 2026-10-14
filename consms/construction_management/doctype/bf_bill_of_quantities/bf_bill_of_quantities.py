@@ -8,7 +8,10 @@ from frappe.model.mapper import get_mapped_doc
 
 from frappe.utils import add_days, flt, nowdate
 
-from consms.construction_management.uom import get_uom_map, resolve_uom
+from consms.construction_management.ipc import calculate_boq_summary
+from consms.construction_management.uom import get_uom_map, normalize, resolve_uom
+
+PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
 
 class BFBillofQuantities(Document):
 	def after_insert(self):
@@ -23,7 +26,20 @@ class BFBillofQuantities(Document):
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)
 			total += item.amount
+		self.set_provisional_sums()
 		self.total_amount = total
+		if self.is_new() and not self.summary_template:
+			self.summary_template = frappe.db.get_single_value("BF Construction Settings", "default_boq_summary_template")
+		calculate_boq_summary(self)
+
+	def before_update_after_submit(self):
+		self.set_provisional_sums()
+		calculate_boq_summary(self)
+
+	def set_provisional_sums(self):
+		for item in self.items:
+			if normalize(item.uom) in PROVISIONAL_SUM_UNITS:
+				item.is_provisional_sum = 1
 
 	def before_submit(self):
 		unmapped = sorted({row.uom or _("(blank)") for row in self.items if not row.erp_uom})
