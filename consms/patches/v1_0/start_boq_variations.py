@@ -5,7 +5,6 @@ stay lump sums (claimed by amount); new ones change BOQ quantities and are paid 
 """
 
 import frappe
-from frappe.utils import flt
 
 from consms.construction_management.variations import update_contract_variations
 
