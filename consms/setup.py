@@ -82,6 +82,7 @@ def after_migrate():
     ensure_tender_document_types()
     ensure_bid_security_types()
     ensure_activity_types()
+    add_customer_types()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:
@@ -154,3 +155,17 @@ def ensure_activity_types():
             frappe.get_doc({"doctype": "BF Activity Type", "activity_type": name, "is_mobilization": is_mobilization,
                 "default_project_template": template if template and frappe.db.exists("Project Template", template) else None,
                 "description": description}).insert(ignore_permissions=True)
+
+
+CUSTOMER_TYPES = ["Government Institution"]
+
+
+def add_customer_types():
+    """Clients such as RUWASA or TANROADS are government institutions, not companies."""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    options = (frappe.get_meta("Customer").get_field("customer_type").options or "").split("\n")
+    missing = [t for t in CUSTOMER_TYPES if t not in options]
+    if missing:
+        make_property_setter("Customer", "customer_type", "options", "\n".join(options + missing), "Text",
+            validate_fields_for_doctype=False)
