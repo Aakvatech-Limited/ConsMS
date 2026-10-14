@@ -153,7 +153,7 @@ doc_events = {
 		"on_cancel": "consms.material_request.update_budget_requested_qty",
 	},
 	"Task": {
-		"on_update": "consms.construction_management.tasks.update_mobilization_from_task",
+		"on_update": "consms.construction_management.tasks.update_works_execution_from_task",
 	},
 }
 

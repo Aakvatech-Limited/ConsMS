@@ -7,18 +7,20 @@ from frappe.model.document import Document
 
 from consms.construction_management.tasks import (
 	create_task_from_template,
-	get_mobilization_status,
+	get_execution_status,
 	set_task_status,
 )
 
 
-class BFSiteMobilization(Document):
+class BFWorksExecution(Document):
 	def validate(self):
+		if self.planned_start_date and self.planned_end_date and self.planned_end_date < self.planned_start_date:
+			frappe.throw(_("Planned Finish cannot be before Planned Start."))
 		self.create_tasks_from_template()
 		self.validate_task_projects()
 		self.sync_task_statuses()
 		self.validate_resources()
-		self.mobilization_status = get_mobilization_status([row.status for row in self.mobilization_checklist])
+		self.status = get_execution_status([row.status for row in self.tasks])
 
 	def validate_resources(self):
 		for row in self.resources:
@@ -30,25 +32,25 @@ class BFSiteMobilization(Document):
 				row.quantity = 1
 
 	def before_submit(self):
-		if self.mobilization_status != "Completed":
-			frappe.throw(_("Mobilization can only be submitted when all tasks are 'Completed'."))
+		if self.status != "Completed":
+			frappe.throw(_("{0} can only be submitted when all tasks are 'Completed'.").format(self.activity_type))
 
 	def create_tasks_from_template(self):
-		"""First save with a template and an empty checklist: create the project's Tasks."""
-		if not self.mobilization_template or self.mobilization_checklist:
+		"""First save with a template and no tasks: create the project's Tasks."""
+		if not self.project_template or self.tasks:
 			return
 
-		template = frappe.get_doc("Project Template", self.mobilization_template)
+		template = frappe.get_doc("Project Template", self.project_template)
 		for row in template.tasks:
-			task = create_task_from_template(row.task, self.project)
-			self.append("mobilization_checklist", {
+			task = create_task_from_template(row.task, self.project, self.activity_type)
+			self.append("tasks", {
 				"task": task,
 				"subject": frappe.db.get_value("Task", task, "subject"),
 				"status": "Pending",
 			})
 
 	def validate_task_projects(self):
-		for row in self.mobilization_checklist:
+		for row in self.tasks:
 			task_project = frappe.db.get_value("Task", row.task, "project")
 			if task_project != self.project:
 				frappe.throw(
@@ -58,6 +60,22 @@ class BFSiteMobilization(Document):
 				)
 
 	def sync_task_statuses(self):
-		for row in self.mobilization_checklist:
+		for row in self.tasks:
 			if row.task:
 				set_task_status(row.task, row.status)
+
+
+@frappe.whitelist()
+def is_mobilized(contract):
+	"""True once a Mobilization-type Works Execution is submitted for the contract."""
+	return bool(
+		frappe.db.sql(
+			"""
+			select 1 from `tabBF Works Execution` wx
+			join `tabBF Activity Type` act on act.name = wx.activity_type
+			where wx.contract = %s and wx.docstatus = 1 and act.is_mobilization = 1
+			limit 1
+			""",
+			contract,
+		)
+	)

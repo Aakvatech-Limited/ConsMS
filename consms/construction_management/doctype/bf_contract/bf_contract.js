@@ -42,15 +42,17 @@ frappe.ui.form.on("BF Contract", {
 				});
 			}, __("Create"));
 
-			frm.add_custom_button(__("Site Mobilization"), function() {
+			frm.add_custom_button(__("Works Execution"), function() {
 				frappe.model.open_mapped_doc({
-					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_mobilization",
+					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_works_execution",
 					frm: frm
 				});
 			}, __("Create"));
 
-			frappe.db.get_value("BF Site Mobilization", { contract: frm.doc.name, docstatus: 1 }, "name").then((r) => {
-				if (!r.message || !r.message.name) return;
+			frappe.xcall("consms.construction_management.doctype.bf_works_execution.bf_works_execution.is_mobilized", {
+				contract: frm.doc.name,
+			}).then((mobilized) => {
+				if (!mobilized) return;
 				frm.add_custom_button(__("Site Daily Report"), function() {
 					frappe.model.open_mapped_doc({
 						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_daily_report",

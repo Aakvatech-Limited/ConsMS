@@ -4,5 +4,5 @@
 from frappe.model.document import Document
 
 
-class BFMobilizationResource(Document):
+class BFWorksExecutionResource(Document):
 	pass

@@ -1,20 +1,23 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:BF-MOB-{YYYY}-{####}",
- "creation": "2026-06-26 17:47:18.267850",
+ "autoname": "format:BF-WX-{YYYY}-{####}",
+ "creation": "2026-10-14 20:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "mobilization_info",
+  "details_section",
+  "activity_type",
   "project",
   "contract",
-  "cb_mobilization_info",
-  "mobilization_status",
-  "mobilization_template",
-  "checklist_section",
-  "mobilization_checklist",
+  "cb_details",
+  "status",
+  "project_template",
+  "planned_start_date",
+  "planned_end_date",
+  "tasks_section",
+  "tasks",
   "sb_resources",
   "resources",
   "amended_from",
@@ -22,9 +25,19 @@
  ],
  "fields": [
   {
-   "fieldname": "mobilization_info",
+   "fieldname": "details_section",
    "fieldtype": "Section Break",
-   "label": "Mobilization Info"
+   "label": "Details"
+  },
+  {
+   "fieldname": "activity_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Activity Type",
+   "options": "BF Activity Type",
+   "reqd": 1,
+   "description": "What this stage of the works is, e.g. Mobilization, Construction, Demobilization."
   },
   {
    "fieldname": "project",
@@ -42,41 +55,52 @@
    "options": "BF Contract"
   },
   {
-   "fieldname": "cb_mobilization_info",
+   "fieldname": "cb_details",
    "fieldtype": "Column Break"
   },
   {
    "default": "Not Started",
-   "fieldname": "mobilization_status",
+   "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
    "options": "Not Started\nIn Progress\nCompleted",
-   "read_only": 1
+   "read_only": 1,
+   "in_standard_filter": 1
   },
   {
-   "description": "Pick a Project Template, e.g. Standard Mobilization. On save, its tasks are created in this project.",
-   "fieldname": "mobilization_template",
+   "description": "Pick a Project Template. On save, its tasks are created in this project.",
+   "fieldname": "project_template",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Project Template",
    "options": "Project Template"
   },
   {
-   "fieldname": "checklist_section",
-   "fieldtype": "Section Break",
-   "label": "Mobilization Tasks"
+   "fieldname": "planned_start_date",
+   "fieldtype": "Date",
+   "label": "Planned Start"
   },
   {
-   "fieldname": "mobilization_checklist",
+   "fieldname": "planned_end_date",
+   "fieldtype": "Date",
+   "label": "Planned Finish"
+  },
+  {
+   "fieldname": "tasks_section",
+   "fieldtype": "Section Break",
+   "label": "Tasks"
+  },
+  {
+   "fieldname": "tasks",
    "fieldtype": "Table",
-   "label": "Mobilization Checklist",
-   "options": "BF Site Mobilization Item"
+   "label": "Tasks",
+   "options": "BF Works Execution Task"
   },
   {
    "fieldname": "sb_resources",
    "fieldtype": "Section Break",
-   "label": "Labour & Equipment to Site"
+   "label": "Labour & Equipment"
   },
   {
    "allow_on_submit": 1,
@@ -84,14 +108,14 @@
    "fieldname": "resources",
    "fieldtype": "Table",
    "label": "Labour & Equipment",
-   "options": "BF Mobilization Resource"
+   "options": "BF Works Execution Resource"
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "BF Site Mobilization",
+   "options": "BF Works Execution",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -107,10 +131,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
- "name": "BF Site Mobilization",
+ "name": "BF Works Execution",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
@@ -135,5 +159,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "activity_type",
+ "show_title_field_in_link": 0
 }

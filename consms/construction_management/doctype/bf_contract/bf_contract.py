@@ -7,6 +7,8 @@ from frappe.model.document import Document
 from frappe.utils import add_days, cint, date_diff, flt, getdate
 from frappe.model.mapper import get_mapped_doc
 
+from consms.construction_management.doctype.bf_works_execution.bf_works_execution import is_mobilized
+
 class BFContract(Document):
 	def validate(self):
 		if flt(self.contingency_percentage) > 15:
@@ -98,23 +100,36 @@ def get_or_create_site_store(project, company):
 	return name
 
 @frappe.whitelist()
-def make_site_mobilization(source_name, target_doc=None):
-	doc = get_mapped_doc("BF Contract", source_name, {
+def make_works_execution(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		# Start with Mobilization until the site is mobilized
+		if not is_mobilized(source.name):
+			target.activity_type = frappe.db.get_value("BF Activity Type", {"is_mobilization": 1}, "name")
+		if target.activity_type:
+			target.project_template = frappe.db.get_value(
+				"BF Activity Type", target.activity_type, "default_project_template"
+			)
+
+	return get_mapped_doc("BF Contract", source_name, {
 		"BF Contract": {
-			"doctype": "BF Site Mobilization",
+			"doctype": "BF Works Execution",
 			"field_map": {
 				"project": "project",
 				"name": "contract"
 			}
 		}
-	}, target_doc)
+	}, target_doc, set_missing_values)
 
-	return doc
+
+def validate_mobilized(contract, what):
+	if not is_mobilized(contract):
+		frappe.throw(
+			_("Submit a Works Execution of type Mobilization for this contract before recording {0}.").format(what)
+		)
 
 @frappe.whitelist()
 def make_site_measurement_log(source_name, target_doc=None):
-	if not frappe.db.exists("BF Site Mobilization", {"contract": source_name, "docstatus": 1}):
-		frappe.throw(_("Submit the Site Mobilization for this contract before recording measurements."))
+	validate_mobilized(source_name, _("measurements"))
 
 	def set_missing_values(source, target):
 		target.date = frappe.utils.today()
@@ -133,8 +148,7 @@ def make_site_measurement_log(source_name, target_doc=None):
 
 @frappe.whitelist()
 def make_site_daily_report(source_name, target_doc=None):
-	if not frappe.db.exists("BF Site Mobilization", {"contract": source_name, "docstatus": 1}):
-		frappe.throw(_("Submit the Site Mobilization for this contract before recording daily reports."))
+	validate_mobilized(source_name, _("daily reports"))
 
 	def set_missing_values(source, target):
 		target.date = frappe.utils.today()

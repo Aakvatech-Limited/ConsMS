@@ -205,57 +205,41 @@ If contingency exceeds 15%, the application displays a warning for review.
 
 From a Contract, users can create:
 
-- Site Mobilization
+- Works Execution (Mobilization, Construction, ...)
 - Variation Order
 - Progress Claim
 
 ---
 
-# Site Mobilization
+# Works Execution
 
-## BF Site Mobilization
+## BF Works Execution
 
-Site mobilization provides a checklist-based mechanism for ensuring the project is ready for execution.
+Works Execution tracks each stage of the works for a Contract. The stage is set by its **Activity Type**:
 
-The application supports mobilization statuses such as:
+- Mobilization
+- Construction
+- Testing & Commissioning
+- Demobilization
+- Handover
 
-- Not Started
-- In Progress
-- Completed
+Activity Types (`BF Activity Type`) are configurable. Each type can set a default Project Template, and the
+**Is Mobilization** box marks the type that opens the site: Site Daily Reports and Site Measurement Logs can only be
+created after a Works Execution of that type is submitted for the contract.
 
-The status is calculated from checklist items.
+Each Works Execution has:
+
+- tasks, created from a Project Template as ERPNext Tasks (typed with the activity type); Task and row statuses stay in step
+- Labour & Equipment: trades or named employees, machines or assets, with arrival and release dates
+- planned start and finish dates
+- status Not Started / In Progress / Completed, calculated from the tasks
 
 ### Submission control
 
-A Site Mobilization document cannot be submitted until **all mobilization tasks are completed**.
+A Works Execution cannot be submitted until **all its tasks are completed**.
 
-This provides a business control preventing formal mobilization closure while outstanding tasks remain.
-
----
-
-## Mobilization Templates
-
-**DocTypes:**
-
-- `BF Mobilization Template`
-- `BF Mobilization Template Task`
-- `BF Mobilization Task`
-
-Templates allow organizations to standardize recurring mobilization requirements.
-
-Typical business uses may include:
-
-- site possession
-- insurance documentation
-- permits
-- temporary utilities
-- site offices
-- safety setup
-- equipment mobilization
-- statutory documents
-- staff deployment
-
-Actual template content is configurable by the organization.
+Typical Mobilization tasks: site possession, insurance, permits, temporary utilities, site offices, safety setup,
+equipment and staff deployment. Template content is configurable by the organization.
 
 ---
 
@@ -687,11 +671,10 @@ Review Construction Settings during implementation before users begin generating
 | BF Contract | Main Contract or Subcontract |
 | BF Contract Submittal | Required contract documents |
 | BF Document Type | Configurable submittal/document categories |
-| BF Site Mobilization | Mobilization checklist and completion control |
-| BF Site Mobilization Item | Mobilization detail |
-| BF Mobilization Template | Standard mobilization template |
-| BF Mobilization Template Task | Template detail |
-| BF Mobilization Task | Mobilization task definition |
+| BF Works Execution | Stage of the works (Mobilization, Construction, ...) with tasks and completion control |
+| BF Works Execution Task | Task row linked to an ERPNext Task |
+| BF Works Execution Resource | Labour and equipment on site |
+| BF Activity Type | Configurable Works Execution stages |
 | BF Site Measurement Log | Site measurement transaction |
 | BF Measurement Item | BOQ measurement row |
 | BF Progress Claim | Interim progress claim / IPC |
@@ -832,7 +815,8 @@ Then assign create, write, submit, cancel and amend privileges according to segr
 The current code includes several useful business controls:
 
 - One active Contract per Tender
-- Site Mobilization cannot submit until all tasks are completed
+- Works Execution cannot submit until all tasks are completed
+- Site Daily Reports and Measurement Logs need a submitted Mobilization
 - Progress Claim periods cannot overlap for the same Contract
 - Progress Claim date ranges must be valid
 - Variation claims cannot exceed approved variation values
@@ -868,7 +852,7 @@ The application exposes whitelisted server-side methods supporting mapped-docume
 - BOQ → Material Request
 - BOQ → Tender
 - Tender → Contract
-- Contract → Site Mobilization
+- Contract → Works Execution
 - Contract → Variation Order
 - Contract → Progress Claim
 - Progress Claim measurement retrieval
@@ -999,11 +983,10 @@ ConsMS/
 │       │   ├── bf_contract/
 │       │   ├── bf_contract_submittal/
 │       │   ├── bf_document_type/
-│       │   ├── bf_site_mobilization/
-│       │   ├── bf_site_mobilization_item/
-│       │   ├── bf_mobilization_template/
-│       │   ├── bf_mobilization_template_task/
-│       │   ├── bf_mobilization_task/
+│       │   ├── bf_works_execution/
+│       │   ├── bf_works_execution_task/
+│       │   ├── bf_works_execution_resource/
+│       │   ├── bf_activity_type/
 │       │   ├── bf_site_measurement_log/
 │       │   ├── bf_measurement_item/
 │       │   ├── bf_progress_claim/
@@ -1052,10 +1035,10 @@ ConsMS/
 
 ### Mobilization
 
-7. Create Site Mobilization from Contract.
-8. Load mobilization checklist.
-9. Complete all mobilization tasks.
-10. Submit Mobilization.
+7. Create Works Execution from Contract (Activity Type: Mobilization).
+8. Pick the Project Template; its tasks are created on save.
+9. Complete all tasks.
+10. Submit the Works Execution.
 
 ### Procurement
 
@@ -1256,9 +1239,9 @@ Verify:
 - measurement dates fall within the claim period
 - measurement items reference the correct BOQ lines
 
-## Site Mobilization cannot submit
+## Works Execution cannot submit
 
-Every checklist row must have status `Completed`.
+Every task row must have status `Completed`.
 
 ## Contract cannot be created from Tender
 

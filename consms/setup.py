@@ -81,6 +81,7 @@ def after_migrate():
     ensure_standard_uom_mappings()
     ensure_tender_document_types()
     ensure_bid_security_types()
+    ensure_activity_types()
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:
@@ -118,7 +119,7 @@ def get_project_dashboard(data):
     """Project Connections: the construction documents first, then ERPNext's own."""
     data["transactions"] = [
         {"label": "Construction", "items": ["BF Tender", "BF Bill of Quantities", "BF Contract"]},
-        {"label": "Site & Budget", "items": ["BF Budget", "BF Site Mobilization", "BF Site Daily Report", "BF Site Measurement Log"]},
+        {"label": "Site & Budget", "items": ["BF Budget", "BF Works Execution", "BF Site Daily Report", "BF Site Measurement Log"]},
         {"label": "Commercial", "items": ["BF Variation Order", "BF Extension of Time", "BF Progress Claim", "BF Correspondence"]},
     ] + data["transactions"]
     return data
@@ -136,3 +137,20 @@ def ensure_bid_security_types():
     for name, description in BID_SECURITY_TYPES:
         if not frappe.db.exists("BF Bid Security Type", name):
             frappe.get_doc({"doctype": "BF Bid Security Type", "security_type": name, "description": description}).insert(ignore_permissions=True)
+
+
+ACTIVITY_TYPES = [
+    ("Mobilization", 1, "Standard Mobilization", "Site setup: camp, offices, crews and machines to site."),
+    ("Construction", 0, None, "The main works, e.g. per bill or section of the BOQ."),
+    ("Testing & Commissioning", 0, None, "Tests, trial runs and commissioning before handover."),
+    ("Demobilization", 0, None, "Crews and machines leave; site cleared and reinstated."),
+    ("Handover", 0, None, "Inspections, snag list and handover to the client."),
+]
+
+
+def ensure_activity_types():
+    for name, is_mobilization, template, description in ACTIVITY_TYPES:
+        if not frappe.db.exists("BF Activity Type", name):
+            frappe.get_doc({"doctype": "BF Activity Type", "activity_type": name, "is_mobilization": is_mobilization,
+                "default_project_template": template if template and frappe.db.exists("Project Template", template) else None,
+                "description": description}).insert(ignore_permissions=True)

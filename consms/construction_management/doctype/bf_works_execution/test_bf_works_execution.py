@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestBFSiteMobilization(FrappeTestCase):
+class TestBFWorksExecution(FrappeTestCase):
 	pass

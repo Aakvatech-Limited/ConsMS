@@ -3,11 +3,11 @@ from frappe import _
 
 def get_data():
 	return {
-		"fieldname": "site_mobilization",
+		"fieldname": "works_execution",
 		"internal_links": {
 			"BF Contract": "contract",
-			"Project Template": "mobilization_template",
-			"Task": ["mobilization_checklist", "task"],
+			"Project Template": "project_template",
+			"Task": ["tasks", "task"],
 		},
 		"transactions": [
 			{"label": _("Contract"), "items": ["BF Contract"]},
