@@ -44,7 +44,8 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-	"Material Request": "public/js/material_request.js"
+	"Material Request": "public/js/material_request.js",
+	"Project": "public/js/project.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -271,5 +272,6 @@ scheduler_events = {
 
 
 override_doctype_dashboards = {
+	"Project": "consms.setup.get_project_dashboard",
 	"Material Request": "consms.setup.get_material_request_dashboard"
 }

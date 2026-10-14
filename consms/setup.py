@@ -111,3 +111,13 @@ def ensure_tender_document_types():
         if not frappe.db.exists("BF Document Type", name):
             frappe.get_doc({"doctype": "BF Document Type", "document_name": name, "applies_to": "Tender",
                 "is_mandatory": mandatory, "description": description}).insert(ignore_permissions=True)
+
+
+def get_project_dashboard(data):
+    """Project Connections: the construction documents first, then ERPNext's own."""
+    data["transactions"] = [
+        {"label": "Construction", "items": ["BF Tender", "BF Bill of Quantities", "BF Contract"]},
+        {"label": "Site & Budget", "items": ["BF Budget", "BF Site Mobilization", "BF Site Daily Report", "BF Site Measurement Log"]},
+        {"label": "Commercial", "items": ["BF Variation Order", "BF Progress Claim", "BF Correspondence"]},
+    ] + data["transactions"]
+    return data
