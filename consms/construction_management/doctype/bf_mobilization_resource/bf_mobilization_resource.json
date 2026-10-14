@@ -31,14 +31,18 @@
    "in_list_view": 1,
    "label": "Trade / Machine",
    "options": "Item",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Labour trade (e.g. Mason) or machine type, used for costing."
   },
   {
    "depends_on": "eval:doc.resource_type=='Labour'",
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Employee",
-   "options": "Employee"
+   "options": "Employee",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Optional: a named employee. Headcount is then 1."
   },
   {
    "depends_on": "eval:doc.resource_type=='Plant'",
@@ -53,17 +57,18 @@
    "fieldname": "quantity",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Headcount / Units"
+   "label": "Headcount / Units",
+   "read_only_depends_on": "eval:doc.employee"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "arrival_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Arrival on Site"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "release_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -83,7 +88,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Mobilization Resource",

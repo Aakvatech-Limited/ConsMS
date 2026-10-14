@@ -6,6 +6,11 @@ frappe.ui.form.on("BF Site Mobilization", {
 		frm.set_query("task", "mobilization_checklist", () => ({
 			filters: { project: frm.doc.project, is_template: 0 },
 		}));
+		// Labour rows pick trades, Plant rows pick machines
+		frm.set_query("item_code", "resources", (doc, cdt, cdn) => ({
+			filters: { item_group: RESOURCE_ITEM_GROUP[locals[cdt][cdn].resource_type], disabled: 0 },
+		}));
+		frm.set_query("employee", "resources", () => ({ filters: { status: "Active" } }));
 	},
 
 	refresh(frm) {
@@ -27,6 +32,17 @@ frappe.ui.form.on("BF Site Mobilization", {
 			message: __("The template's tasks will be created in project {0} when you save.", [frm.doc.project || ""]),
 			indicator: "blue",
 		});
+	},
+});
+
+const RESOURCE_ITEM_GROUP = { Labour: "Labour", Plant: "Plant & Equipment" };
+
+frappe.ui.form.on("BF Mobilization Resource", {
+	resource_type(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, { item_code: "", employee: "", asset: "" });
+	},
+	employee(frm, cdt, cdn) {
+		if (locals[cdt][cdn].employee) frappe.model.set_value(cdt, cdn, "quantity", 1);
 	},
 });
 
