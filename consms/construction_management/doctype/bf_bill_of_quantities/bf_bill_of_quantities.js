@@ -9,6 +9,9 @@ frappe.ui.form.on("BF Bill of Quantities", {
 	},
 
 	refresh(frm) {
+		if (!frm.is_new() && frm.doc.docstatus < 2 && (frm.doc.items || []).length) {
+			frm.add_custom_button(__("VAT Exempt Bills"), () => set_vat_exempt_bills(frm), __("Actions"));
+		}
 		if (frm.doc.docstatus === 1) {
 			frappe.call({
 				method: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_awarded_tender",
@@ -68,4 +71,31 @@ function calculate_total(frm) {
 		});
 	}
 	frm.set_value("total_amount", total);
+}
+
+// Bills such as Preliminaries & General carry no VAT on the payment certificates
+function set_vat_exempt_bills(frm) {
+	const bills = [...new Set((frm.doc.items || []).map((row) => row.bill || ""))].filter((b) => b);
+	const exempt = new Set((frm.doc.items || []).filter((row) => row.vat_exempt).map((row) => row.bill));
+	const dialog = new frappe.ui.Dialog({
+		title: __("VAT Exempt Bills"),
+		fields: [{
+			fieldname: "bills",
+			fieldtype: "MultiCheck",
+			label: __("Bills with no VAT on Progress Claims"),
+			options: bills.map((b) => ({ label: b, value: b, checked: exempt.has(b) })),
+		}],
+		primary_action_label: __("Save"),
+		primary_action(values) {
+			frappe.call({
+				method: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.set_vat_exempt_bills",
+				args: { boq: frm.doc.name, bills: values.bills || [] },
+				callback() {
+					dialog.hide();
+					frm.reload_doc();
+				},
+			});
+		},
+	});
+	dialog.show();
 }

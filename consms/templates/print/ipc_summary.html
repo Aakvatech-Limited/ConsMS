@@ -1,0 +1,64 @@
+{%- set fmt = frappe.utils.fmt_money -%}
+{%- set s = ipc.summary -%}
+<div class="ipc">
+	<h1>{{ _("Summary of Valuation") }} - {{ doc.claim_title or doc.name }}</h1>
+	{% include "consms/templates/print/ipc_header.html" %}
+	<table class="grid" style="margin-top:6px">
+		<thead>
+			<tr>
+				<th rowspan="2" style="width:6%">{{ _("Bill No.") }}</th><th rowspan="2">{{ _("Description") }}</th>
+				<th colspan="2">{{ _("Contract Amount") }}</th><th colspan="3">{{ _("Certified Amount") }}</th>
+				<th rowspan="2" style="width:7%">{{ _("% Completed") }}</th>
+			</tr>
+			<tr><th>{{ _("Original") }}</th><th>{{ _("Revised") }}</th><th>{{ _("Previous") }}</th><th>{{ _("This IPC") }}</th><th>{{ _("Cumulative") }}</th></tr>
+		</thead>
+		<tbody>
+		{%- for b in ipc.bills %}
+			<tr>
+				<td>{{ loop.index }}</td>
+				<td>{{ b.name }}{% if b.vat_exempt %} <i class="muted">({{ _("VAT exempt") }})</i>{% endif %}</td>
+				<td class="num">{{ fmt(b.original, precision=2) }}</td><td class="num"></td>
+				<td class="num">{{ fmt(b.previous, precision=2) }}</td><td class="num">{{ fmt(b.this, precision=2) }}</td>
+				<td class="num">{{ fmt(b.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(b.percent) }}%</td>
+			</tr>
+		{%- endfor %}
+			<tr class="total-row">
+				<td></td><td>{{ _("Total") }}</td>
+				<td class="num">{{ fmt(s.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.previous, precision=2) }}</td><td class="num">{{ fmt(s.this, precision=2) }}</td>
+				<td class="num">{{ fmt(s.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(s.percent) }}%</td>
+			</tr>
+			{% if ipc.has_exempt %}
+			<tr>
+				<td></td><td>{{ _("Total (Excluding VAT-exempt items)") }}</td>
+				<td class="num">{{ fmt(s.taxable.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.taxable.previous, precision=2) }}</td><td class="num">{{ fmt(s.taxable.this, precision=2) }}</td>
+				<td class="num">{{ fmt(s.taxable.cumulative, precision=2) }}</td><td></td>
+			</tr>
+			{% endif %}
+			<tr>
+				<td></td><td>{{ _("VAT {0}%").format(frappe.utils.flt(doc.vat_percentage)) }}{% if ipc.has_exempt %} {{ _("(Excluding VAT-exempt items)") }}{% endif %}</td>
+				<td class="num">{{ fmt(s.vat.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.vat.previous, precision=2) }}</td><td class="num">{{ fmt(s.vat.this, precision=2) }}</td>
+				<td class="num">{{ fmt(s.vat.cumulative, precision=2) }}</td><td></td>
+			</tr>
+			{% if ipc.has_exempt %}
+			<tr>
+				<td></td><td>{{ _("Add VAT-exempt items above") }}</td>
+				<td class="num">{{ fmt(s.exempt.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.exempt.previous, precision=2) }}</td><td class="num">{{ fmt(s.exempt.this, precision=2) }}</td>
+				<td class="num">{{ fmt(s.exempt.cumulative, precision=2) }}</td><td></td>
+			</tr>
+			{% endif %}
+			<tr class="grand">
+				<td></td><td>{{ _("Grand Total") }}</td>
+				<td class="num">{{ fmt(s.grand.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.grand.previous, precision=2) }}</td><td class="num">{{ fmt(s.grand.this, precision=2) }}</td>
+				<td class="num">{{ fmt(s.grand.cumulative, precision=2) }}</td><td></td>
+			</tr>
+		</tbody>
+	</table>
+	{% if doc.variations %}
+	<p class="small muted" style="margin-top:6px">{{ _("Variations claimed this certificate") }}: {{ fmt(doc.this_period_work - s.this, precision=2) }}</p>
+	{% endif %}
+</div>

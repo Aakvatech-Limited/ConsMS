@@ -10,15 +10,55 @@ from consms.construction_management.measurement import update_task_progress
 
 
 class BFSiteMeasurementLog(Document):
+	def validate(self):
+		for row in self.measurements:
+			if flt(row.total_quantity) < 0 and not (row.correction_reason or "").strip():
+				frappe.throw(
+					_("Row {0}: enter the Correction Reason for the negative quantity on {1}.").format(row.idx, self.get_item_label(row))
+				)
+
 	def before_submit(self):
 		if not self.measurements:
 			frappe.throw(_("Add at least one measured BOQ item."))
 		for row in self.measurements:
 			item = self.get_item_label(row)
-			if flt(row.total_quantity) <= 0:
+			if not flt(row.total_quantity):
 				frappe.throw(_("Row {0}: enter the Quantity measured for {1}.").format(row.idx, item))
-			if not row.drawing:
+			if flt(row.total_quantity) < 0:
+				if not (row.correction_reason or "").strip():
+					frappe.throw(_("Row {0}: enter the Correction Reason for the negative quantity on {1}.").format(row.idx, item))
+			elif not row.drawing:
 				frappe.throw(_("Row {0}: attach the drawing or measurement sheet as proof for {1}.").format(row.idx, item))
+		self.validate_corrections()
+
+	def validate_corrections(self):
+		"""A correction can reduce what was measured before, not go below zero."""
+		for boq_item, qty in self.get_quantities().items():
+			if qty >= 0:
+				continue
+			before = flt(
+				frappe.db.sql(
+					"""
+					select sum(mi.total_quantity) from `tabBF Measurement Item` mi
+					join `tabBF Site Measurement Log` log on log.name = mi.parent
+					where log.contract = %s and log.docstatus = 1 and mi.boq_item = %s and log.name != %s
+					""",
+					(self.contract, boq_item, self.name),
+				)[0][0]
+			)
+			if before + qty < 0:
+				row = next(r for r in self.measurements if r.boq_item == boq_item)
+				frappe.throw(
+					_("{0}: the correction ({1}) is more than the quantity measured before ({2}).").format(
+						self.get_item_label(row), qty, before
+					)
+				)
+
+	def get_quantities(self):
+		quantities = {}
+		for row in self.measurements:
+			quantities[row.boq_item] = quantities.get(row.boq_item, 0) + flt(row.total_quantity)
+		return quantities
 
 	def get_item_label(self, row):
 		item_no = frappe.db.get_value("BF BOQ Item", row.boq_item, "item_no")

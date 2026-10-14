@@ -1,0 +1,66 @@
+{%- set c = ipc.contract -%}
+{%- set fmt = frappe.utils.fmt_money -%}
+<div class="ipc">
+	<h1>{{ _("Interim Payment Certificate") }} {{ doc.claim_title or doc.name }}</h1>
+	{% include "consms/templates/print/ipc_header.html" %}
+	<table class="meta" style="margin-top:6px">
+		<tr>
+			<td><b>{{ _("Original Contract Amount") }}:</b> {{ fmt(ipc.original_value, precision=2) }} {{ _("excl. VAT") }}
+				({{ fmt(ipc.summary.grand.original, precision=2) }} {{ _("incl. VAT") }})</td>
+			<td><b>{{ _("Revised Contract Amount") }}:</b> {{ fmt(ipc.revised_value, precision=2) if ipc.revised_value else _("NIL") }}</td>
+		</tr>
+		{% if c %}
+		<tr>
+			<td><b>{{ _("Commencement Date") }}:</b> {{ frappe.utils.formatdate(c.start_date) if c.start_date else "-" }}
+				{% if c.contract_duration %}&nbsp; ({{ c.contract_duration }} {{ _("days") }}){% endif %}</td>
+			<td><b>{{ _("Completion Date") }}:</b> {{ frappe.utils.formatdate(c.original_completion_date) if c.original_completion_date else "-" }}
+				{% if c.revised_completion_date and c.revised_completion_date != c.original_completion_date %}
+				&nbsp; <b>{{ _("Revised") }}:</b> {{ frappe.utils.formatdate(c.revised_completion_date) }}{% endif %}</td>
+		</tr>
+		{% endif %}
+	</table>
+
+	<p style="margin:10px 0 4px">{{ _("Now this Payment Certificate reads as hereunder stated:") }}</p>
+	<table class="lines">
+		<tr><td style="width:6%">1.</td><td>{{ _("Completed execution of the Contract works as itemised in the Valuation Sheet (this certificate)") }}</td><td class="num" style="width:24%">{{ fmt(doc.this_period_work, precision=2) }}</td></tr>
+		<tr><td>2.</td><td>{{ _("Add: Value of Materials on Site") }}</td><td class="num">{{ fmt(doc.materials_on_site, precision=2) }}</td></tr>
+		<tr><td>3.</td><td>{{ _("Less: Retention {0}%").format(frappe.utils.flt(doc.retention_percentage)) }}{% if c and c.retention_limit_percentage %}{{ _(", to the maximum of {0}% of the Contract Sum").format(frappe.utils.flt(c.retention_limit_percentage)) }}{% endif %}</td><td class="num">({{ fmt(doc.retention_deduction, precision=2) }})</td></tr>
+		<tr><td>4.</td><td>{{ _("Less: Advance Recovery {0}%").format(frappe.utils.flt(doc.advance_recovery_percentage)) }}</td><td class="num">({{ fmt(doc.advance_payment_recovery, precision=2) }})</td></tr>
+		<tr><td>5.</td><td>{{ _("Add: Retention Released") }}</td><td class="num">{{ fmt(doc.retention_release, precision=2) }}</td></tr>
+		<tr><td>6.</td><td>{{ _("Less: Liquidated Damages") }}</td><td class="num">({{ fmt(doc.liquidated_damages, precision=2) }})</td></tr>
+		<tr class="sub"><td></td><td>{{ _("Amount Due (Excluding VAT)") }}</td><td class="num">{{ fmt(doc.net_amount_due, precision=2) }}</td></tr>
+		<tr><td>7.</td><td>{{ _("Add: {0}% VAT").format(frappe.utils.flt(doc.vat_percentage)) }}{% if ipc.has_exempt %} {{ _("(Excluding VAT-exempt items, e.g. P&G)") }}{% endif %} {{ _("on") }} {{ fmt(doc.vat_base, precision=2) }}</td><td class="num">{{ fmt(doc.vat_amount, precision=2) }}</td></tr>
+		<tr class="due"><td></td><td>{{ _("Amount Due to Contractor") }}</td><td class="num">{{ fmt(doc.amount_due, precision=2) }}</td></tr>
+	</table>
+	<p style="margin:6px 0"><b>{{ _("Amount in Words") }}:</b> {{ ipc.amount_in_words }}</p>
+
+	<table class="grid small" style="margin-top:6px">
+		<tr><th colspan="4" style="text-align:left">{{ _("To Date") }}</th></tr>
+		<tr>
+			<td>{{ _("Work Certified to Date") }}</td><td class="num">{{ fmt(doc.gross_valuation, precision=2) }}</td>
+			<td>{{ _("Previously Certified (Excl. VAT)") }}</td><td class="num">{{ fmt(doc.previous_certified_amount, precision=2) }}</td>
+		</tr>
+		<tr>
+			<td>{{ _("Retention Held to Date") }}</td><td class="num">{{ fmt(doc.retention_held_to_date, precision=2) }}</td>
+			<td>{{ _("Advance Recovered / Balance") }}</td><td class="num">{{ fmt(doc.advance_recovered_to_date, precision=2) }} / {{ fmt(doc.advance_balance, precision=2) }}</td>
+		</tr>
+	</table>
+
+	<table class="sign">
+		<tr>
+			<td><b>{{ _("Certificate Prepared by") }}:</b><br>{{ _("Site Engineer") }} ({{ ipc.company or _("Contractor") }})</td>
+			<td><b>{{ _("Accepted by Contractor") }}:</b><br>{{ _("Project Manager") }} ({{ ipc.company or _("Contractor") }})</td>
+		</tr>
+		<tr><td>{{ _("Name") }}: ......................................................</td><td>{{ _("Name") }}: ......................................................</td></tr>
+		<tr><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td></tr>
+		<tr>
+			<td><b>{{ _("Checked and Verified by") }}:</b><br>{{ _("Project Supervisor") }} ({{ ipc.client or _("Client") }})</td>
+			<td><b>{{ _("Approved for Payment by") }}:</b><br>{{ _("Project Manager") }} ({{ ipc.client or _("Client") }})</td>
+		</tr>
+		<tr><td>{{ _("Name") }}: ......................................................</td><td>{{ _("Name") }}: ......................................................</td></tr>
+		<tr><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td></tr>
+	</table>
+	<p style="margin-top:12px"><b>{{ _("Remarks / Instructions") }}:</b></p>
+	<p class="muted">1. ..................................................................................................................................................................</p>
+	<p class="muted">2. ..................................................................................................................................................................</p>
+</div>

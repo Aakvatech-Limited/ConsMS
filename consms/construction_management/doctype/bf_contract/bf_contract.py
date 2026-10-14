@@ -18,6 +18,7 @@ class BFContract(Document):
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
 		self.validate_submittals()
 		self.calculate_period()
+		self.set_payment_terms()
 
 	def on_submit(self):
 		self.create_site_store()
@@ -34,6 +35,20 @@ class BFContract(Document):
 		self.validate_submittals()
 		self.lock_original_dates()
 		self.calculate_period()
+		self.set_payment_terms()
+
+	def set_payment_terms(self):
+		for field in ("advance_payment_percentage", "advance_recovery_percentage", "retention_percentage",
+				"retention_limit_percentage", "vat_percentage", "ld_limit_percentage"):
+			if not 0 <= flt(self.get(field)) <= 100:
+				frappe.throw(_("{0} must be between 0 and 100.").format(_(self.meta.get_label(field))))
+		if flt(self.advance_payment_percentage):
+			self.advance_payment_amount = flt(
+				flt(self.total_contract_amount) * flt(self.advance_payment_percentage) / 100, 2
+			)
+		if flt(self.advance_payment_amount) and not flt(self.advance_recovery_percentage):
+			frappe.throw(_("Set the Advance Recovery per IPC (%), so the advance is recovered from the certificates."))
+		self.advance_balance = flt(self.advance_payment_amount) - flt(self.advance_recovered)
 
 	def lock_original_dates(self):
 		"""Original dates may be filled in once after submit, never changed: time changes go through extensions."""
@@ -199,3 +214,39 @@ def make_progress_claim(source_name, target_doc=None):
 		}
 	}, target_doc, set_missing_values)
 	return doc
+
+
+@frappe.whitelist()
+def make_advance_payment_invoice(source_name):
+	"""Sales Invoice for the contract's advance payment; it is recovered from the IPCs."""
+	contract = frappe.get_doc("BF Contract", source_name)
+	contract.check_permission("read")
+	if not flt(contract.advance_payment_amount):
+		frappe.throw(_("Set the Advance Payment on the contract first."))
+	existing = frappe.db.get_value(
+		"Sales Invoice", {"bf_contract": contract.name, "bf_advance_payment": 1, "docstatus": ["!=", 2]}, "name"
+	)
+	if existing:
+		frappe.throw(_("Advance Payment Invoice {0} already exists for this contract.").format(existing))
+
+	invoice = frappe.new_doc("Sales Invoice")
+	invoice.customer = contract.customer
+	invoice.project = contract.project
+	invoice.company = frappe.db.get_value("Project", contract.project, "company") if contract.project else None
+	invoice.bf_contract = contract.name
+	invoice.bf_advance_payment = 1
+	invoice.disable_rounded_total = 1
+	invoice.append("items", {
+		"item_code": frappe.db.get_single_value("BF Construction Settings", "default_progress_claim_item"),
+		"item_name": _("Advance Payment"),
+		"description": _("Advance Payment ({0}% of contract value) for Contract {1}, against Advance Payment Guarantee {2}").format(
+			flt(contract.advance_payment_percentage) or "", contract.name, contract.advance_guarantee_no or ""),
+		"qty": 1,
+		"rate": contract.advance_payment_amount,
+	})
+	invoice.set_missing_values()
+	# VAT is charged on the work in each certificate, so the advance itself carries none
+	invoice.set("taxes", [])
+	invoice.taxes_and_charges = None
+	invoice.calculate_taxes_and_totals()
+	return invoice

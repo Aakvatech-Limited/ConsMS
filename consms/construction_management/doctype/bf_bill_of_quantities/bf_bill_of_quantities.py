@@ -96,3 +96,16 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	"""
 	params.extend([start, page_len])
 	return frappe.db.sql(query, params)
+
+
+@frappe.whitelist()
+def set_vat_exempt_bills(boq, bills):
+	"""Mark the lines of the given bills VAT exempt (and the others not), also on a submitted BOQ."""
+	doc = frappe.get_doc("BF Bill of Quantities", boq)
+	doc.check_permission("write")
+	bills = set(frappe.parse_json(bills) if isinstance(bills, str) else bills or [])
+	for row in doc.items:
+		exempt = 1 if (row.bill or "") in bills else 0
+		if row.vat_exempt != exempt:
+			row.db_set("vat_exempt", exempt)
+	return len([row for row in doc.items if row.vat_exempt])

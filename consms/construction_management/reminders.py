@@ -1,4 +1,4 @@
-"""Daily reminders for documents about to expire: contract submittals and bid securities."""
+"""Daily reminders for documents about to expire: contract submittals, bid securities and advance payment guarantees."""
 
 import frappe
 from frappe import _
@@ -24,6 +24,7 @@ def get_expiring_submittals(days=SUBMITTAL_DAYS):
 
 def send_expiry_reminders():
 	send_response_reminders()
+	send_advance_guarantee_reminders()
 	for row in get_expiring_submittals():
 		remind(
 			"BF Contract",
@@ -55,6 +56,26 @@ def send_expiry_reminders():
 				row.security_type, row.guarantee_no or "", row.tender_name, formatdate(row.expiry_date)
 			),
 			date=row.expiry_date,
+		)
+
+
+def send_advance_guarantee_reminders():
+	"""Advance payment guarantees expiring within 30 days while part of the advance is still to be recovered."""
+	for c in frappe.get_all(
+		"BF Contract",
+		filters=[["docstatus", "=", 1], ["advance_guarantee_expiry", "is", "set"],
+			["advance_guarantee_expiry", "<=", add_days(today(), SUBMITTAL_DAYS)], ["advance_balance", ">", 0]],
+		fields=["name", "owner", "advance_guarantee_no", "advance_guarantee_expiry", "advance_balance"],
+	):
+		remind(
+			"BF Contract",
+			c.name,
+			c.owner,
+			key=f"advance-guarantee:{c.name}:{c.advance_guarantee_expiry}",
+			text=_("Advance Payment Guarantee {0} on contract {1} expires on {2}; {3} of the advance is still to be recovered. Extend it.").format(
+				c.advance_guarantee_no or "", c.name, formatdate(c.advance_guarantee_expiry),
+				frappe.format_value(c.advance_balance, "Currency")),
+			date=c.advance_guarantee_expiry,
 		)
 
 

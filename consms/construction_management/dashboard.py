@@ -1,8 +1,8 @@
 """Values for the Construction MS workspace number cards.
 
-Progress Claims store cumulative figures (work executed, retention), so
-totals that depend on them read only the latest submitted claim of each
-contract. Net Amount Due is per claim, so it can be summed directly.
+Progress Claims store the work to date (gross valuation), so totals of work
+read only the latest submitted claim of each contract. Amounts due, retention
+and advance recovery are per certificate, so they are summed.
 """
 
 import frappe
@@ -53,8 +53,15 @@ def certified_to_date(filters=None):
 
 @frappe.whitelist()
 def retention_held(filters=None):
+	"""Each certificate deducts its own retention; releases pay part of it back."""
+	held = frappe.db.sql(
+		"""
+		select coalesce(sum(retention_deduction), 0) - coalesce(sum(retention_release), 0)
+		from `tabBF Progress Claim` where docstatus = 1 and claim_type = 'Client Claim'
+		"""
+	)[0][0]
 	return {
-		"value": sum(flt(c.retention_deduction) for c in get_latest_client_claims()),
+		"value": flt(held),
 		"fieldtype": "Currency",
 		"route": ["query-report", "Contract Status Summary"],
 	}

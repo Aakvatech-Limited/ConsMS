@@ -14,3 +14,4 @@ consms.patches.v1_0.remove_mobilization_number_cards
 consms.patches.v1_0.remove_erpnext_budgets
 consms.patches.v1_0.remove_construction_type
 consms.patches.v1_0.drop_removed_doctype_tables
+consms.patches.v1_0.convert_claims_to_per_certificate

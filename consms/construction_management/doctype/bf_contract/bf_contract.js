@@ -22,6 +22,20 @@ frappe.ui.form.on("BF Contract", {
 				});
 			}, __("Create"));
 
+			if (frm.doc.customer && flt(frm.doc.advance_payment_amount)) {
+				frm.add_custom_button(__("Advance Payment Invoice"), function() {
+					frappe.call({
+						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_advance_payment_invoice",
+						args: { source_name: frm.doc.name },
+						callback(r) {
+							if (!r.message) return;
+							const doc = frappe.model.sync(r.message)[0];
+							frappe.set_route("Form", doc.doctype, doc.name);
+						},
+					});
+				}, __("Create"));
+			}
+
 			frm.add_custom_button(__("Extension of Time"), function() {
 				frappe.model.open_mapped_doc({
 					method: "consms.construction_management.doctype.bf_contract.bf_contract.make_extension_of_time",
@@ -66,6 +80,11 @@ frappe.ui.form.on("BF Contract", {
 					});
 				}, __("Create"));
 			});
+		}
+	},
+	advance_payment_percentage(frm) {
+		if (flt(frm.doc.advance_payment_percentage)) {
+			frm.set_value("advance_payment_amount", flt(frm.doc.total_contract_amount) * flt(frm.doc.advance_payment_percentage) / 100);
 		}
 	},
 	contract_amount: function(frm) {

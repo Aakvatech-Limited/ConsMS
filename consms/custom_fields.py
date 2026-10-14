@@ -19,6 +19,13 @@ def create_custom_fields():
                 "options": "BF Progress Claim",
                 "insert_after": "bf_contract",
                 "read_only": 1
+            },
+            {
+                "fieldname": "bf_advance_payment",
+                "label": "Advance Payment (Contract)",
+                "fieldtype": "Check",
+                "insert_after": "bf_progress_claim",
+                "read_only": 1
             }
         ]
     }

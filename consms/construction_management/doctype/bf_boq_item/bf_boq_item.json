@@ -15,7 +15,8 @@
   "uom",
   "erp_uom",
   "unit_rate",
-  "amount"
+  "amount",
+  "vat_exempt"
  ],
  "fields": [
   {
@@ -89,13 +90,21 @@
    "in_list_view": 1,
    "label": "Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "vat_exempt",
+   "fieldtype": "Check",
+   "label": "VAT Exempt",
+   "default": "0",
+   "allow_on_submit": 1,
+   "description": "No VAT on this line in Progress Claims, e.g. Preliminaries & General."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-14 02:30:00.000000",
+ "modified": "2026-10-15 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF BOQ Item",

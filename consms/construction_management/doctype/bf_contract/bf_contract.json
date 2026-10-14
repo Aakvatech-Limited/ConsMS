@@ -34,6 +34,28 @@
   "approved_extension_days",
   "revised_completion_date",
   "actual_completion_date",
+  "sb_payment_terms",
+  "advance_payment_percentage",
+  "advance_payment_amount",
+  "advance_recovery_percentage",
+  "cb_advance",
+  "advance_guarantee_no",
+  "advance_guarantee_bank",
+  "advance_guarantee_expiry",
+  "sb_retention_terms",
+  "retention_limit_percentage",
+  "defects_liability_months",
+  "vat_percentage",
+  "cb_ld",
+  "ld_rate_per_day",
+  "ld_limit_percentage",
+  "sb_balances",
+  "advance_recovered",
+  "advance_balance",
+  "cb_balances",
+  "retention_held",
+  "retention_released",
+  "liquidated_damages_to_date",
   "submittals_section",
   "submittals"
  ],
@@ -137,7 +159,8 @@
    "description": "Part of each payment that the client holds back until the work is finished and any defects are fixed. It is paid out at the end. Usually 5–10%.",
    "fieldname": "retention_percentage",
    "fieldtype": "Percent",
-   "label": "Retention (%)"
+   "label": "Retention per IPC (%)",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "cb_contract_totals",
@@ -244,13 +267,159 @@
    "fieldtype": "Table",
    "label": "Submittals",
    "options": "BF Contract Submittal"
+  },
+  {
+   "fieldname": "sb_payment_terms",
+   "fieldtype": "Section Break",
+   "label": "Payment Terms",
+   "collapsible": 0,
+   "description": "Used on every Progress Claim (IPC): advance recovery, retention, VAT and liquidated damages."
+  },
+  {
+   "fieldname": "advance_payment_percentage",
+   "fieldtype": "Percent",
+   "label": "Advance Payment (%)",
+   "allow_on_submit": 1,
+   "description": "Of the Total Contract Value. Fills the Advance Payment Amount."
+  },
+  {
+   "fieldname": "advance_payment_amount",
+   "fieldtype": "Currency",
+   "label": "Advance Payment Amount",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "advance_recovery_percentage",
+   "fieldtype": "Percent",
+   "label": "Advance Recovery per IPC (%)",
+   "default": "20",
+   "allow_on_submit": 1,
+   "description": "Deducted from the work of each certificate until the advance is fully recovered."
+  },
+  {
+   "fieldname": "cb_advance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "advance_guarantee_no",
+   "fieldtype": "Data",
+   "label": "Advance Payment Guarantee No.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "advance_guarantee_bank",
+   "fieldtype": "Data",
+   "label": "Guarantee Issued By",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "advance_guarantee_expiry",
+   "fieldtype": "Date",
+   "label": "Guarantee Expiry Date",
+   "allow_on_submit": 1,
+   "description": "A reminder is sent 30 days before expiry."
+  },
+  {
+   "fieldname": "sb_retention_terms",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "retention_limit_percentage",
+   "fieldtype": "Percent",
+   "label": "Retention Limit (% of Contract Value)",
+   "default": "5",
+   "allow_on_submit": 1,
+   "description": "Retention stops once this much of the Total Contract Value is held."
+  },
+  {
+   "fieldname": "defects_liability_months",
+   "fieldtype": "Int",
+   "label": "Defects Liability Period (Months)",
+   "default": "12",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "vat_percentage",
+   "fieldtype": "Percent",
+   "label": "VAT (%)",
+   "default": "18",
+   "allow_on_submit": 1,
+   "description": "Charged on the work of each certificate, excluding BOQ lines marked VAT Exempt (e.g. Preliminaries & General)."
+  },
+  {
+   "fieldname": "cb_ld",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ld_rate_per_day",
+   "fieldtype": "Currency",
+   "label": "Liquidated Damages per Day",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "ld_limit_percentage",
+   "fieldtype": "Percent",
+   "label": "Liquidated Damages Limit (% of Contract Value)",
+   "default": "10",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_balances",
+   "fieldtype": "Section Break",
+   "label": "Balances to Date",
+   "collapsible": 1,
+   "description": "Updated when Progress Claims are submitted or cancelled."
+  },
+  {
+   "fieldname": "advance_recovered",
+   "fieldtype": "Currency",
+   "label": "Advance Recovered",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "advance_balance",
+   "fieldtype": "Currency",
+   "label": "Advance Balance to Recover",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb_balances",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention_held",
+   "fieldtype": "Currency",
+   "label": "Retention Held",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "retention_released",
+   "fieldtype": "Currency",
+   "label": "Retention Released",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "liquidated_damages_to_date",
+   "fieldtype": "Currency",
+   "label": "Liquidated Damages to Date",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 23:00:00.000000",
+ "modified": "2026-10-15 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

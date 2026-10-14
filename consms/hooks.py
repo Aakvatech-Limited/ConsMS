@@ -77,10 +77,9 @@ doctype_js = {
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "consms.utils.jinja_methods",
-# 	"filters": "consms.utils.jinja_filters"
-# }
+jinja = {
+	"methods": ["consms.construction_management.ipc.get_ipc_print_data"],
+}
 
 # Installation
 # ------------
