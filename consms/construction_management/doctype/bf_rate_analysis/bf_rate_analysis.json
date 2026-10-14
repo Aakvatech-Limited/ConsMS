@@ -8,7 +8,6 @@
   "rate_analysis_name",
   "uom",
   "cb_1",
-  "construction_type",
   "cost_per_unit",
   "sb_resources",
   "items",
@@ -38,12 +37,6 @@
   {
    "fieldname": "cb_1",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "construction_type",
-   "fieldtype": "Link",
-   "label": "Construction Type",
-   "options": "BF Construction Type"
   },
   {
    "description": "Total cost of all resources for one unit of work.",
@@ -95,7 +88,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-13 23:30:00.000000",
+ "modified": "2026-10-14 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Rate Analysis",

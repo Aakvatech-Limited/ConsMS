@@ -1,7 +1,6 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-from consms.construction_management.measurement import ensure_standard_construction_types
 from consms.construction_management.tasks import ensure_mobilization_task_type
 from consms.construction_management.uom import ensure_standard_uom_mappings
 
@@ -77,7 +76,6 @@ def after_migrate():
     })
 
     ensure_mobilization_task_type()
-    ensure_standard_construction_types()
     ensure_standard_uom_mappings()
     ensure_tender_document_types()
     ensure_bid_security_types()

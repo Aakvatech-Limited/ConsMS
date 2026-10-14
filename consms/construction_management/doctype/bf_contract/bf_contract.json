@@ -14,7 +14,6 @@
   "project",
   "contract_type",
   "main_contract",
-  "construction_type",
   "site_warehouse",
   "customer",
   "supplier",
@@ -87,14 +86,6 @@
    "fieldtype": "Link",
    "label": "Parent Main Contract",
    "options": "BF Contract"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "The kind of work, e.g. Building, Road or Pipeline. It decides how site work is measured.",
-   "fieldname": "construction_type",
-   "fieldtype": "Link",
-   "label": "Construction Type",
-   "options": "BF Construction Type"
   },
   {
    "allow_on_submit": 1,
@@ -259,7 +250,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 10:00:00.000000",
+ "modified": "2026-10-14 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

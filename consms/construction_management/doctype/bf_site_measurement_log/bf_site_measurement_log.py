@@ -2,18 +2,28 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
-from consms.construction_management.measurement import calculate_quantity, update_task_progress
+from consms.construction_management.measurement import update_task_progress
 
 
 class BFSiteMeasurementLog(Document):
-	def validate(self):
-		construction_type = (
-			frappe.get_cached_doc("BF Construction Type", self.construction_type) if self.construction_type else None
-		)
+	def before_submit(self):
+		if not self.measurements:
+			frappe.throw(_("Add at least one measured BOQ item."))
 		for row in self.measurements:
-			row.total_quantity = calculate_quantity(row, construction_type)
+			item = self.get_item_label(row)
+			if flt(row.total_quantity) <= 0:
+				frappe.throw(_("Row {0}: enter the Quantity measured for {1}.").format(row.idx, item))
+			if not row.drawing:
+				frappe.throw(_("Row {0}: attach the drawing or measurement sheet as proof for {1}.").format(row.idx, item))
+
+	def get_item_label(self, row):
+		item_no = frappe.db.get_value("BF BOQ Item", row.boq_item, "item_no")
+		description = (row.item_description or "")[:60]
+		return frappe.bold(f"{item_no} {description}".strip() if item_no else description or row.boq_item)
 
 	def on_submit(self):
 		update_task_progress(row.task for row in self.measurements)

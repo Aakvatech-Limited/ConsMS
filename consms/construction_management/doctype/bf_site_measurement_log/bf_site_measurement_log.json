@@ -11,7 +11,6 @@
   "contract",
   "project",
   "boq",
-  "construction_type",
   "date",
   "cb_1",
   "location_grid",
@@ -80,15 +79,6 @@
    "options": "BF Bill of Quantities"
   },
   {
-   "description": "From the contract. Decides which measurement boxes are shown and how the quantity is calculated.",
-   "fetch_from": "contract.construction_type",
-   "fieldname": "construction_type",
-   "fieldtype": "Link",
-   "label": "Construction Type",
-   "options": "BF Construction Type",
-   "read_only": 1
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -109,7 +99,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-12 11:00:00.000000",
+ "modified": "2026-10-14 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Measurement Log",

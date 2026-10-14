@@ -140,12 +140,6 @@ doctype_js = {
 # ---------------
 # Hook on document methods and events
 
-# Site measurement formulas from other apps, picked on a BF Construction Type with method "Custom".
-# The function gets (measurement_row, construction_type) and returns the quantity.
-# consms_measurement_methods = {
-# 	"Bridge Deck": "my_app.measurement.bridge_deck_quantity",
-# }
-
 doc_events = {
 	"Material Request": {
 		"validate": "consms.material_request.warn_if_over_budget",

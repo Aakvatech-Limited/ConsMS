@@ -9,17 +9,11 @@
   "boq_item",
   "item_description",
   "uom",
-  "drawing_reference",
   "task",
-  "cb_dims",
-  "multiplier",
-  "chainage_from",
-  "chainage_to",
-  "length",
-  "width",
-  "height",
-  "percent_complete",
-  "total_quantity"
+  "cb_qty",
+  "total_quantity",
+  "drawing",
+  "drawing_reference"
  ],
  "fields": [
   {
@@ -32,7 +26,7 @@
    "reqd": 1
   },
   {
-   "columns": 2,
+   "columns": 3,
    "fieldname": "item_description",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -44,12 +38,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "UOM",
-   "read_only": 1
-  },
-  {
-   "fieldname": "drawing_reference",
-   "fieldtype": "Data",
-   "label": "Drawing Ref"
+   "read_only": 1,
+   "columns": 1
   },
   {
    "description": "The project task this work belongs to; its progress updates when the log is submitted.",
@@ -61,69 +51,39 @@
    "options": "Task"
   },
   {
-   "fieldname": "cb_dims",
+   "fieldname": "cb_qty",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "description": "How many identical pieces were done. Example: 4 identical manholes → 4. Use 1 for a single piece.",
-   "fieldname": "multiplier",
-   "fieldtype": "Float",
-   "label": "No."
-  },
-  {
-   "description": "Start point along the road or line, in metres.",
-   "fieldname": "chainage_from",
-   "fieldtype": "Float",
-   "hidden": 1,
-   "label": "Chainage From"
-  },
-  {
-   "description": "End point along the road or line, in metres.",
-   "fieldname": "chainage_to",
-   "fieldtype": "Float",
-   "hidden": 1,
-   "label": "Chainage To"
-  },
-  {
-   "description": "Length measured on site. Fill it for work measured in m, m² or m³; leave empty otherwise.",
-   "fieldname": "length",
-   "fieldtype": "Float",
-   "label": "Length (L)"
-  },
-  {
-   "description": "Width measured on site. Fill it for work measured in m² or m³ (area or volume); leave empty otherwise.",
-   "fieldname": "width",
-   "fieldtype": "Float",
-   "label": "Width (W)"
-  },
-  {
-   "description": "Height or depth measured on site. Fill it for work measured in m³ (volume), e.g. depth of a trench; leave empty otherwise.",
-   "fieldname": "height",
-   "fieldtype": "Float",
-   "label": "Height/Depth (H)"
-  },
-  {
-   "description": "Share of this BOQ line finished in this period.",
-   "fieldname": "percent_complete",
-   "fieldtype": "Percent",
-   "hidden": 1,
-   "label": "% Complete"
   },
   {
    "columns": 2,
    "fieldname": "total_quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Total Quantity",
-   "read_only": 1
+   "label": "Quantity",
+   "read_only": 0,
+   "reqd": 1,
+   "non_negative": 1,
+   "description": "Quantity done, as measured on site and shown on the drawing."
+  },
+  {
+   "fieldname": "drawing",
+   "fieldtype": "Attach",
+   "label": "Drawing (Proof)",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Marked-up drawing or measurement sheet supporting this quantity. Required to submit."
+  },
+  {
+   "fieldname": "drawing_reference",
+   "fieldtype": "Data",
+   "label": "Drawing No."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-12 11:00:00.000000",
+ "modified": "2026-10-14 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Measurement Item",
