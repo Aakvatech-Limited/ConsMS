@@ -7,10 +7,15 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from consms.construction_management.measurement import update_task_progress
+from consms.construction_management.variations import get_over_limit, over_limit_message
 
 
 class BFSiteMeasurementLog(Document):
 	def validate(self):
+		over = get_over_limit(self)
+		if over:
+			frappe.msgprint(over_limit_message(over) + "<br><br>" + _("Submitting will be blocked: create a Variation Order for the extra quantity."),
+				title=_("More than the BOQ"), indicator="orange")
 		for row in self.measurements:
 			if flt(row.total_quantity) < 0 and not (row.correction_reason or "").strip():
 				frappe.throw(
@@ -30,6 +35,10 @@ class BFSiteMeasurementLog(Document):
 			elif not row.drawing:
 				frappe.throw(_("Row {0}: attach the drawing or measurement sheet as proof for {1}.").format(row.idx, item))
 		self.validate_corrections()
+		over = get_over_limit(self)
+		if over:
+			frappe.throw(over_limit_message(over) + "<br><br>" + _("Create a Variation Order for the extra quantity (Actions > Create Variation Order) and have it approved first."),
+				title=_("More than the BOQ"))
 
 	def validate_corrections(self):
 		"""A correction can reduce what was measured before, not go below zero."""

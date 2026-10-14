@@ -17,7 +17,14 @@
   "unit_rate",
   "amount",
   "vat_exempt",
-  "is_provisional_sum"
+  "is_provisional_sum",
+  "sb_variations",
+  "original_qty",
+  "variation_qty",
+  "revised_qty",
+  "cb_variations",
+  "revised_amount",
+  "variation_order"
  ],
  "fields": [
   {
@@ -106,13 +113,66 @@
    "label": "Provisional Sum",
    "allow_on_submit": 1,
    "description": "Ticked automatically for unit PS. Used by 'Provisional Sums' summary lines."
+  },
+  {
+   "fieldname": "sb_variations",
+   "fieldtype": "Section Break",
+   "label": "Variations"
+  },
+  {
+   "fieldname": "original_qty",
+   "fieldtype": "Float",
+   "label": "Original Qty",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "As tendered; fixed when the BOQ is submitted."
+  },
+  {
+   "fieldname": "variation_qty",
+   "fieldtype": "Float",
+   "label": "Variation Qty",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Total of approved Variation Orders (+/-)."
+  },
+  {
+   "fieldname": "revised_qty",
+   "fieldtype": "Float",
+   "label": "Revised Qty",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Original + variations: the most that can be measured."
+  },
+  {
+   "fieldname": "cb_variations",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "revised_amount",
+   "fieldtype": "Currency",
+   "label": "Revised Amount",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "variation_order",
+   "fieldtype": "Link",
+   "label": "Added by Variation Order",
+   "options": "BF Variation Order",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-15 14:00:00.000000",
+ "modified": "2026-10-15 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF BOQ Item",

@@ -42,8 +42,9 @@ def get_data(contract):
 	actual = get_actual_cost(contract)
 	baseline = get_baseline_cost(contract)
 	data = []
-	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity", "bill"], order_by="idx"):
-		pct = done.get(line.name, 0) / flt(line.quantity) * 100 if flt(line.quantity) else 0
+	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity", "revised_qty", "bill"], order_by="idx"):
+		qty = flt(line.revised_qty or line.quantity)
+		pct = done.get(line.name, 0) / qty * 100 if qty else 0
 		row = make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0))
 		row["baseline"] = baseline.get(line.name, row["budget"])
 		row["budget_change"] = row["budget"] - row["baseline"]

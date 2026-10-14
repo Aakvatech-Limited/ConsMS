@@ -9,6 +9,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, flt, nowdate
 
 from consms.construction_management.ipc import calculate_boq_summary
+from consms.construction_management.variations import set_revised_quantities
 from consms.construction_management.uom import get_uom_map, normalize, resolve_uom
 
 PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
@@ -31,10 +32,12 @@ class BFBillofQuantities(Document):
 		if self.is_new() and not self.summary_template:
 			self.summary_template = frappe.db.get_single_value("BF Construction Settings", "default_boq_summary_template")
 		calculate_boq_summary(self)
+		set_revised_quantities(self)
 
 	def before_update_after_submit(self):
 		self.set_provisional_sums()
 		calculate_boq_summary(self)
+		set_revised_quantities(self)
 
 	def set_provisional_sums(self):
 		for item in self.items:

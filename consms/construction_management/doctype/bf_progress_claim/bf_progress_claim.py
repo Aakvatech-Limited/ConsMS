@@ -130,13 +130,15 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 			prev_var_claims[pvi.variation_order] = prev_var_claims.get(pvi.variation_order, 0.0) + flt(pvi.this_period_amount)
 
 	doc.set("variations", [])
-	for v in frappe.get_all("BF Variation Order", filters={"contract": contract, "docstatus": 1}, fields=["name", "reason", "requested_amount"]):
+	# BOQ-line changes and new items are paid through measurement; only lump sums are claimed by amount
+	for v in frappe.get_all("BF Variation Order", filters={"contract": contract, "docstatus": 1, "lump_sum_amount": [">", 0]},
+			fields=["name", "reason", "lump_sum_amount"]):
 		prev_claimed = prev_var_claims.get(v.name, 0.0)
-		remaining = max(flt(v.requested_amount) - prev_claimed, 0.0)
+		remaining = max(flt(v.lump_sum_amount) - prev_claimed, 0.0)
 		doc.append("variations", {
 			"variation_order": v.name,
 			"variation_reason": v.reason,
-			"approved_amount": flt(v.requested_amount),
+			"approved_amount": flt(v.lump_sum_amount),
 			"previously_certified": prev_claimed,
 			"this_period_amount": remaining,
 		})

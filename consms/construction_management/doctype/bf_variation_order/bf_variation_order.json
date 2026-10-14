@@ -10,12 +10,24 @@
   "variation_details",
   "project",
   "contract",
+  "boq",
   "cb_9f1d4557",
   "requested_amount",
+  "lump_sum_amount",
+  "measurement_log",
+  "sb_approval",
+  "client_instruction_no",
+  "approval_date",
+  "cb_approval",
+  "approval_letter",
   "items_sb",
   "items",
   "justification",
   "reason",
+  "sb_cost",
+  "cost_impact",
+  "cb_cost",
+  "variation_margin",
   "amended_from",
   "connections_tab"
  ],
@@ -47,7 +59,7 @@
    "bold": 1,
    "fieldname": "requested_amount",
    "fieldtype": "Currency",
-   "label": "Requested Amount",
+   "label": "Variation Amount",
    "read_only": 1
   },
   {
@@ -87,13 +99,83 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "BOQ",
+   "options": "BF Bill of Quantities",
+   "read_only": 1,
+   "fetch_from": "contract.boq"
+  },
+  {
+   "fieldname": "lump_sum_amount",
+   "fieldtype": "Currency",
+   "label": "Lump Sum Part",
+   "read_only": 1,
+   "description": "Claimed by amount on the IPC. BOQ-line changes and new items are paid through measurement."
+  },
+  {
+   "fieldname": "measurement_log",
+   "fieldtype": "Link",
+   "label": "From Measurement",
+   "options": "BF Site Measurement Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Client Approval",
+   "description": "Submitting the Variation Order means the client approved it: the BOQ gets a new revision."
+  },
+  {
+   "fieldname": "client_instruction_no",
+   "fieldtype": "Data",
+   "label": "Client Instruction No."
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Date",
+   "label": "Approval Date"
+  },
+  {
+   "fieldname": "cb_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approval_letter",
+   "fieldtype": "Attach",
+   "label": "Approval Letter"
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Internal Cost Impact",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "cost_impact",
+   "fieldtype": "Currency",
+   "label": "Cost Impact",
+   "read_only": 1,
+   "description": "From the Rate Analysis of each line."
+  },
+  {
+   "fieldname": "cb_cost",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "variation_margin",
+   "fieldtype": "Currency",
+   "label": "Margin on Variation",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 18:00:00.000000",
+ "modified": "2026-10-15 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Variation Order",

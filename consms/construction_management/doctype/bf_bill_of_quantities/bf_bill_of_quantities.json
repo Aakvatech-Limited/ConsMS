@@ -23,6 +23,11 @@
   "cb_summary",
   "bid_price",
   "summary_lines",
+  "sb_revisions",
+  "variations_total",
+  "cb_revisions",
+  "revised_total",
+  "revisions",
   "connections_tab"
  ],
  "fields": [
@@ -120,13 +125,50 @@
    "label": "Summary Lines",
    "options": "BF Certificate Line",
    "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_revisions",
+   "fieldtype": "Section Break",
+   "label": "Variations and Revisions",
+   "collapsible": 1,
+   "description": "Each approved Variation Order makes a new revision of the BOQ quantities; the original quantities never change."
+  },
+  {
+   "fieldname": "variations_total",
+   "fieldtype": "Currency",
+   "label": "Variations (BOQ Lines)",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb_revisions",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "revised_total",
+   "fieldtype": "Currency",
+   "label": "Revised BOQ Total",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "revisions",
+   "fieldtype": "Table",
+   "label": "Revisions",
+   "options": "BF BOQ Revision",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 15:00:00.000000",
+ "modified": "2026-10-15 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Bill of Quantities",

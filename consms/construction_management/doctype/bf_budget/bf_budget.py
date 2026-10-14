@@ -95,6 +95,7 @@ class BFBudget(Document):
 	def build_boq_lines(self):
 		"""One row per BOQ line, keeping recipes already chosen."""
 		chosen = {line.boq_item: line.rate_analysis for line in self.boq_lines}
+		applied = {line.boq_item: (line.applied_rate_analysis, flt(line.boq_qty)) for line in self.boq_lines}
 		self.set("boq_lines", [])
 		for item in frappe.get_doc("BF Bill of Quantities", self.boq).items:
 			self.append(
@@ -104,9 +105,12 @@ class BFBudget(Document):
 					"description": item.description,
 					"bill": item.bill,
 					"rate_analysis": chosen.get(item.name),
-					"boq_qty": item.quantity,
+					# a line whose quantity did not change keeps its resources (and any manual edits)
+					"applied_rate_analysis": applied[item.name][0]
+						if item.name in applied and applied[item.name][1] == flt(item.revised_qty or item.quantity) else None,
+					"boq_qty": flt(item.revised_qty or item.quantity),
 					"boq_unit": item.uom,
-					"boq_amount": item.amount,
+					"boq_amount": flt(item.revised_amount or item.amount),
 				},
 			)
 

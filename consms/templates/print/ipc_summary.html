@@ -17,18 +17,18 @@
 			<tr>
 				<td>{{ loop.index }}</td>
 				<td>{{ b.name }}{% if b.vat_exempt %} <i class="muted">({{ _("VAT exempt") }})</i>{% endif %}</td>
-				<td class="num">{{ fmt(b.original, precision=2) }}</td><td class="num"></td>
+				<td class="num">{{ fmt(b.original, precision=2) }}</td><td class="num">{{ fmt(b.revised, precision=2) if b.revised != b.original else "" }}</td>
 				<td class="num">{{ fmt(b.previous, precision=2) }}</td><td class="num">{{ fmt(b.this, precision=2) }}</td>
 				<td class="num">{{ fmt(b.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(b.percent) }}%</td>
-				<td class="num">{{ fmt(b.original - b.cumulative, precision=2) }}</td>
+				<td class="num">{{ fmt(b.revised - b.cumulative, precision=2) }}</td>
 			</tr>
 		{%- endfor %}
 			<tr class="total-row">
 				<td></td><td>{{ _("Total") }}</td>
-				<td class="num">{{ fmt(s.original, precision=2) }}</td><td></td>
+				<td class="num">{{ fmt(s.original, precision=2) }}</td><td class="num">{{ fmt(s.revised, precision=2) if s.revised != s.original else "" }}</td>
 				<td class="num">{{ fmt(s.previous, precision=2) }}</td><td class="num">{{ fmt(s.this, precision=2) }}</td>
 				<td class="num">{{ fmt(s.cumulative, precision=2) }}</td><td class="num">{{ "%.1f"|format(s.percent) }}%</td>
-				<td class="num">{{ fmt(s.original - s.cumulative, precision=2) }}</td>
+				<td class="num">{{ fmt(s.revised - s.cumulative, precision=2) }}</td>
 			</tr>
 			{% if ipc.boq_summary %}
 			{%- for r in ipc.boq_summary.rows[1:] %}

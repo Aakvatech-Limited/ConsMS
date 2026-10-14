@@ -23,6 +23,20 @@ frappe.ui.form.on("BF Site Measurement Log", {
 	},
 
 	refresh: function(frm) {
+		if (!frm.is_new() && frm.doc.docstatus === 0) {
+			// Quantities beyond the revised BOQ need an approved Variation Order first
+			frm.add_custom_button(__("Create Variation Order"), function() {
+				frappe.call({
+					method: "consms.construction_management.variations.make_variation_order_from_measurement",
+					args: { measurement_log: frm.doc.name },
+					callback: function(r) {
+						if (!r.message) return;
+						const doc = frappe.model.sync(r.message)[0];
+						frappe.set_route("Form", doc.doctype, doc.name);
+					},
+				});
+			}, __("Actions"));
+		}
 		if (frm.doc.boq && frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("Fetch BOQ Items"), function() {
 				frappe.call({

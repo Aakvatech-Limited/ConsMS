@@ -369,7 +369,8 @@ def get_ipc_print_data(claim):
 		boq_items = frappe.get_all(
 			"BF BOQ Item",
 			filters={"parent": claim.boq},
-			fields=["name", "item_no", "description", "bill", "uom", "quantity", "unit_rate", "amount", "vat_exempt"],
+			fields=["name", "item_no", "description", "bill", "uom", "quantity", "unit_rate", "amount", "vat_exempt",
+				"revised_qty", "revised_amount"],
 			order_by="idx",
 		)
 
@@ -378,7 +379,7 @@ def get_ipc_print_data(claim):
 		bill = item.bill or _("General Items")
 		if bill not in by_bill:
 			by_bill[bill] = frappe._dict(
-				name=bill, rows=[], original=0.0, previous=0.0, this=0.0, cumulative=0.0, vat_exempt=True
+				name=bill, rows=[], original=0.0, revised=0.0, previous=0.0, this=0.0, cumulative=0.0, vat_exempt=True
 			)
 			bills.append(by_bill[bill])
 		row = rows_by_item.get(item.name)
@@ -387,9 +388,10 @@ def get_ipc_print_data(claim):
 			item_no=item.item_no,
 			description=item.description,
 			uom=item.uom,
-			quantity=flt(item.quantity),
+			quantity=flt(item.revised_qty or item.quantity),
 			rate=flt(item.unit_rate),
-			amount=flt(item.amount),
+			amount=flt(item.revised_amount or item.amount),
+			original_amount=flt(item.amount),
 			previous_qty=flt(row.previous_qty) if row else 0,
 			previous_value=flt(row.previous_value) if row else 0,
 			this_qty=flt(row.this_period_qty) if row else 0,
@@ -399,14 +401,15 @@ def get_ipc_print_data(claim):
 		)
 		group = by_bill[bill]
 		group.rows.append(line)
-		group.original += line.amount
+		group.original += line.original_amount
+		group.revised += line.amount
 		group.previous += line.previous_value
 		group.this += line.this_value
 		group.cumulative += line.cumulative_value
 		group.vat_exempt = group.vat_exempt and bool(item.vat_exempt)
 
 	for group in bills:
-		group.percent = group.cumulative / group.original * 100 if group.original else 0
+		group.percent = group.cumulative / group.revised * 100 if group.revised else 0
 
 	def total(key, exempt=None):
 		return sum(g[key] for g in bills if exempt is None or g.vat_exempt == exempt)
@@ -418,6 +421,7 @@ def get_ipc_print_data(claim):
 	vat_rate = flt(vat_line.rate) / 100 if vat_line else 0
 	summary = frappe._dict(
 		original=total("original"),
+		revised=total("revised"),
 		previous=total("previous"),
 		this=total("this"),
 		cumulative=total("cumulative"),
@@ -426,7 +430,7 @@ def get_ipc_print_data(claim):
 	)
 	summary.vat = {k: summary.taxable[k] * vat_rate for k in summary.taxable}
 	summary.grand = {k: summary.taxable[k] + summary.vat[k] + summary.exempt[k] for k in summary.taxable}
-	summary.percent = summary.cumulative / summary.original * 100 if summary.original else 0
+	summary.percent = summary.cumulative / summary.revised * 100 if summary.revised else 0
 
 	variations = flt(
 		frappe.db.sql(

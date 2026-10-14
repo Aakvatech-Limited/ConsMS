@@ -209,7 +209,8 @@ def make_variation_order(source_name, target_doc=None):
 			"doctype": "BF Variation Order",
 			"field_map": {
 				"project": "project",
-				"name": "contract"
+				"name": "contract",
+				"boq": "boq"
 			}
 		}
 	}, target_doc)
