@@ -35,8 +35,6 @@
   "approved_extension_days",
   "revised_completion_date",
   "actual_completion_date",
-  "sb_extensions",
-  "extensions",
   "submittals_section",
   "submittals"
  ],
@@ -221,6 +219,7 @@
   },
   {
    "allow_on_submit": 1,
+   "description": "Total days approved on Extension of Time documents (Create > Extension of Time).",
    "fieldname": "approved_extension_days",
    "fieldtype": "Int",
    "label": "Approved Extension (Days)",
@@ -243,20 +242,6 @@
    "label": "Actual Completion Date"
   },
   {
-   "collapsible": 1,
-   "fieldname": "sb_extensions",
-   "fieldtype": "Section Break",
-   "label": "Extensions of Time"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "Requests for more time. Only Approved ones move the completion date.",
-   "fieldname": "extensions",
-   "fieldtype": "Table",
-   "label": "Extensions of Time",
-   "options": "BF Contract Extension"
-  },
-  {
    "fieldname": "submittals_section",
    "fieldtype": "Section Break",
    "label": "Required Submittals"
@@ -274,7 +259,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 04:30:00.000000",
+ "modified": "2026-10-14 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

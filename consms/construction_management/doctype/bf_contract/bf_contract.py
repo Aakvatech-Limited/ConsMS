@@ -53,10 +53,13 @@ class BFContract(Document):
 			if getdate(self.original_completion_date) < getdate(self.start_date):
 				frappe.throw(_("Original Completion Date cannot be before the Start Date."))
 			self.contract_duration = date_diff(self.original_completion_date, self.start_date)
-		for row in self.extensions:
-			if row.status == "Approved" and not row.approved_on:
-				row.approved_on = frappe.utils.today()
-		self.approved_extension_days = sum(cint(r.days) for r in self.extensions if r.status == "Approved")
+		self.approved_extension_days = cint(
+			frappe.db.sql(
+				"""select sum(days_approved) from `tabBF Extension of Time`
+				where contract = %s and docstatus = 1 and status = 'Approved'""",
+				self.name,
+			)[0][0]
+		) if not self.is_new() else 0
 		self.revised_completion_date = (
 			add_days(self.original_completion_date, self.approved_extension_days) if self.original_completion_date else None
 		)
@@ -144,6 +147,16 @@ def make_site_daily_report(source_name, target_doc=None):
 			"field_no_map": ["amended_from"],
 		}
 	}, target_doc, set_missing_values)
+
+@frappe.whitelist()
+def make_extension_of_time(source_name, target_doc=None):
+	return get_mapped_doc("BF Contract", source_name, {
+		"BF Contract": {
+			"doctype": "BF Extension of Time",
+			"field_map": {"project": "project", "name": "contract"},
+			"field_no_map": ["amended_from", "status"],
+		}
+	}, target_doc)
 
 @frappe.whitelist()
 def make_variation_order(source_name, target_doc=None):
