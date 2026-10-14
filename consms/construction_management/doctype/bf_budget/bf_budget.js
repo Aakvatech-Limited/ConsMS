@@ -4,6 +4,11 @@
 const BUDGET_METHOD = "consms.construction_management.doctype.bf_budget.bf_budget";
 
 frappe.ui.form.on("BF Budget", {
+	onload(frm) {
+		// lines come from the template: no adding or removing rows by hand
+		frm.set_df_property("overhead_lines", "cannot_add_rows", true);
+		frm.set_df_property("overhead_lines", "cannot_delete_rows", true);
+	},
 	setup(frm) {
 		// only approved recipes
 		frm.set_query("rate_analysis", "boq_lines", () => ({ filters: { docstatus: 1 } }));

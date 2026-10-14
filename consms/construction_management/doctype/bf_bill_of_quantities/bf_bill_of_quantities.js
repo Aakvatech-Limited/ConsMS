@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Bill of Quantities", {
+	onload(frm) {
+		// lines come from the template: no adding or removing rows by hand
+		frm.set_df_property("summary_lines", "cannot_add_rows", true);
+		frm.set_df_property("summary_lines", "cannot_delete_rows", true);
+	},
 	setup(frm) {
 		frm.set_query("task", "items", () => ({
 			filters: { project: frm.doc.project, is_template: 0 },

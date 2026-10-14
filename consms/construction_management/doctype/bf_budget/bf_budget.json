@@ -18,6 +18,7 @@
   "overhead_template",
   "cb_overheads",
   "total_with_overheads",
+  "sb_overhead_lines",
   "overhead_lines",
   "revision_reason",
   "sb_lines",
@@ -106,7 +107,6 @@
    "label": "Budget per BOQ Line"
   },
   {
-   "cannot_add_rows": 1,
    "cannot_delete_rows": 1,
    "description": "Pick a Rate Analysis for each BOQ line, then Save: its resources are built below.",
    "fieldname": "boq_lines",
@@ -175,12 +175,17 @@
    "fieldname": "overhead_lines",
    "fieldtype": "Table",
    "label": "Overhead Lines",
-   "options": "BF Certificate Line"
+   "options": "BF Certificate Line",
+   "description": "From the template. Type amounts only on 'Typed Amount' lines (e.g. F. variation of prices), then Save."
+  },
+  {
+   "fieldname": "sb_overhead_lines",
+   "fieldtype": "Section Break"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 17:00:00.000000",
+ "modified": "2026-10-15 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Budget",

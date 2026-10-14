@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Progress Claim", {
+	onload(frm) {
+		// lines come from the template: no adding or removing rows by hand
+		frm.set_df_property("certificate_lines", "cannot_add_rows", true);
+		frm.set_df_property("certificate_lines", "cannot_delete_rows", true);
+	},
 	setup: function(frm) {
 		frm.set_query("variation_order", "variations", function() {
 			return {
