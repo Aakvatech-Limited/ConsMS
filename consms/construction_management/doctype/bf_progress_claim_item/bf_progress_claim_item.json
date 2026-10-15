@@ -6,10 +6,13 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "item_no",
   "boq_item",
   "item_description",
+  "bill",
   "uom",
   "unit_rate",
+  "vat_exempt",
   "cb_qty",
   "previous_qty",
   "this_period_qty",
@@ -107,13 +110,33 @@
    "fieldtype": "Currency",
    "label": "Cumulative Value",
    "read_only": 1
+  },
+  {
+   "fieldname": "item_no",
+   "fieldtype": "Data",
+   "label": "Item No",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "bill",
+   "fieldtype": "Data",
+   "label": "Bill / Section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vat_exempt",
+   "fieldtype": "Check",
+   "label": "VAT Exempt",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-09 19:30:00.000000",
+ "modified": "2026-10-15 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim Item",

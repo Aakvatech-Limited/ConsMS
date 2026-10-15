@@ -2,16 +2,19 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
-from frappe.utils import flt
+from frappe.utils import flt, getdate
+
+from consms.construction_management.ipc import calculate, set_liquidated_damages, update_contract_balances
 
 class BFProgressClaim(Document):
 	def validate(self):
 		if self.period_from and self.period_to:
-			if self.period_from > self.period_to:
-				frappe.throw("Period From cannot be after Period To.")
-			
+			if getdate(self.period_from) > getdate(self.period_to):
+				frappe.throw(_("Period From cannot be after Period To."))
+
 			overlapping = frappe.db.sql("""
 				SELECT name FROM `tabBF Progress Claim`
 				WHERE contract = %s AND docstatus < 2 AND name != %s
@@ -21,154 +24,185 @@ class BFProgressClaim(Document):
 					(period_from >= %s AND period_to <= %s)
 				)
 			""", (self.contract, self.name or "New", self.period_from, self.period_from, self.period_to, self.period_to, self.period_from, self.period_to))
-			
+
 			if overlapping:
-				frappe.throw(f"There is already a Progress Claim ({overlapping[0][0]}) covering this time period for this Contract.")
+				frappe.throw(_("There is already a Progress Claim ({0}) covering this time period for this Contract.").format(overlapping[0][0]))
 
 		for var in self.get("variations", []):
 			var.cumulative_amount = flt(var.previously_certified) + flt(var.this_period_amount)
 			if flt(var.cumulative_amount) > flt(var.approved_amount):
-				frappe.throw(f"Row {var.idx}: Cumulative Claimed Amount ({var.cumulative_amount}) cannot exceed the Approved Amount ({var.approved_amount}) for Variation {var.variation_order}.")
-		
+				frappe.throw(_("Row {0}: Cumulative Claimed Amount ({1}) cannot exceed the Approved Amount ({2}) for Variation {3}.").format(
+					var.idx, var.cumulative_amount, var.approved_amount, var.variation_order))
+
 		self.calculate_totals()
+		self.set_documents()
+
+	def set_documents(self):
+		"""Add the document types this certificate type needs (keeps rows already filled in)."""
+		have = {row.document_type for row in self.documents}
+		for doc_type in get_certificate_document_types(self.certificate_type):
+			if doc_type not in have:
+				self.append("documents", {"document_type": doc_type, "status": "Pending"})
+
+	def before_submit(self):
+		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
+		needed = set(get_certificate_document_types(self.certificate_type))
+		missing = [row.document_type for row in self.documents
+			if row.document_type in mandatory and row.document_type in needed and row.status != "Ready"]
+		if missing:
+			frappe.throw(
+				_("Attach these documents and mark them Ready before submitting the certificate: {0}").format(
+					", ".join(frappe.bold(d) for d in missing)),
+				title=_("Supporting documents missing"),
+			)
+		for row in self.documents:
+			if row.status == "Ready" and not row.attachment:
+				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
 
 	def calculate_totals(self):
-		total_work_executed = 0.0
-		for item in self.claim_items:
-			item.this_period_value = flt(item.this_period_qty) * flt(item.unit_rate)
-			item.cumulative_qty = flt(item.previous_qty) + flt(item.this_period_qty)
-			item.cumulative_value = flt(item.cumulative_qty) * flt(item.unit_rate)
-			
-			total_work_executed += item.cumulative_value
+		calculate(self)
 
-		total_variations = 0.0
-		for var in self.get("variations", []):
-			var.cumulative_amount = flt(var.previously_certified) + flt(var.this_period_amount)
-			total_variations += flt(var.cumulative_amount)
+	def before_update_after_submit(self):
+		# certificate lines share a child doctype with BOQ summaries (editable after submit there), not here
+		before = self.get_doc_before_save()
+		old = [(l.label, flt(l.amount)) for l in before.certificate_lines] if before else []
+		if old != [(l.label, flt(l.amount)) for l in self.certificate_lines]:
+			frappe.throw(_("The lines of a submitted certificate cannot be changed. Cancel and amend it instead."))
 
-		self.approved_variations = total_variations
-		self.total_work_executed = total_work_executed
-		self.gross_valuation = flt(self.total_work_executed) + flt(self.approved_variations) + flt(self.materials_on_site)
-		
-		self.retention_deduction = (flt(self.retention_percentage) / 100.0) * self.gross_valuation
-		
-		# Deductions
-		total_deductions = flt(self.retention_deduction) + flt(self.advance_payment_recovery) + flt(self.previous_certified_amount)
-		self.net_amount_due = self.gross_valuation - total_deductions
+	def on_submit(self):
+		update_contract_balances(self.contract)
+
+	def on_cancel(self):
+		update_contract_balances(self.contract)
+
+
+def get_certificate_document_types(certificate_type):
+	scopes = {"Interim": ["All Certificates"],
+		"Substantial Completion": ["All Certificates", "Substantial Completion and Final"],
+		"Final": ["All Certificates", "Substantial Completion and Final", "Final"]}[certificate_type or "Interim"]
+	return frappe.get_all("BF Document Type",
+		filters={"applies_to": "Payment Certificate", "certificate_types": ["in", scopes]},
+		pluck="name", order_by="is_mandatory desc, name")
 
 
 @frappe.whitelist()
 def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 	doc = frappe.get_doc("BF Progress Claim", claim_name)
-	contract_doc = frappe.get_doc("BF Contract", contract)
-	boq_name = contract_doc.boq
+	doc.check_permission("write")
+	boq_name = frappe.db.get_value("BF Contract", contract, "boq")
 
 	if not boq_name:
-		frappe.throw("The selected Contract does not have an attached BOQ.")
+		frappe.throw(_("The selected Contract does not have an attached BOQ."))
 
-	# 1. Fetch BOQ Items
-	boq_items = frappe.get_all("BF BOQ Item", filters={"parent": boq_name}, fields=["name", "description", "uom", "unit_rate"])
+	boq_items = frappe.get_all(
+		"BF BOQ Item",
+		filters={"parent": boq_name},
+		fields=["name", "item_no", "description", "bill", "uom", "unit_rate", "vat_exempt"],
+		order_by="idx",
+	)
 
-	# 2. Fetch Measurements for this period
+	# Measurements of this period
 	filters = {"contract": contract, "docstatus": 1}
-	if period_from: filters["date"] = [">=", period_from]
-	if period_to: 
-		if "date" in filters:
-			filters["date"] = ["between", [period_from, period_to]]
-		else:
-			filters["date"] = ["<=", period_to]
+	if period_from and period_to:
+		filters["date"] = ["between", [period_from, period_to]]
+	elif period_from:
+		filters["date"] = [">=", period_from]
+	elif period_to:
+		filters["date"] = ["<=", period_to]
 
-	logs = frappe.get_all("BF Site Measurement Log", filters=filters, pluck="name")
-	
 	period_qtys = {}
+	logs = frappe.get_all("BF Site Measurement Log", filters=filters, pluck="name")
 	if logs:
-		measurement_items = frappe.get_all("BF Measurement Item", 
-			filters={"parent": ["in", logs]}, 
-			fields=["boq_item", "total_quantity"]
-		)
-		for mi in measurement_items:
+		for mi in frappe.get_all("BF Measurement Item", filters={"parent": ["in", logs]}, fields=["boq_item", "total_quantity"]):
 			period_qtys[mi.boq_item] = period_qtys.get(mi.boq_item, 0.0) + flt(mi.total_quantity)
 
-	# 3. Fetch Previous IPCs for cumulative qtys
-	past_claims = frappe.get_all("BF Progress Claim", 
-		filters={"contract": contract, "docstatus": 1, "name": ["!=", claim_name]}, 
-		pluck="name"
+	# Earlier certificates
+	past_claims = frappe.get_all(
+		"BF Progress Claim",
+		filters={"contract": contract, "docstatus": 1, "name": ["!=", claim_name]},
+		pluck="name",
 	)
-	
-	prev_qtys = {}
-	prev_certified = 0.0
+	prev_qtys, prev_var_claims = {}, {}
 	if past_claims:
-		past_items = frappe.get_all("BF Progress Claim Item", 
-			filters={"parent": ["in", past_claims]}, 
-			fields=["boq_item", "this_period_qty"]
-		)
-		for pi in past_items:
+		for pi in frappe.get_all("BF Progress Claim Item", filters={"parent": ["in", past_claims]}, fields=["boq_item", "this_period_qty"]):
 			prev_qtys[pi.boq_item] = prev_qtys.get(pi.boq_item, 0.0) + flt(pi.this_period_qty)
-			
-		# The Previous Certified Amount is the SUM of all previously certified NET amounts (Amount Due To Date)
-		past_claim_docs = frappe.get_all("BF Progress Claim", filters={"name": ["in", past_claims]}, fields=["net_amount_due"])
-		if past_claim_docs:
-			prev_certified = sum([flt(p.net_amount_due) for p in past_claim_docs])
-
-	# Fetch Past Variation Claims
-	prev_var_claims = {}
-	if past_claims:
-		past_var_items = frappe.get_all("BF Progress Claim Variation", 
-			filters={"parent": ["in", past_claims]}, 
-			fields=["variation_order", "this_period_amount"]
-		)
-		for pvi in past_var_items:
+		for pvi in frappe.get_all("BF Progress Claim Variation", filters={"parent": ["in", past_claims]}, fields=["variation_order", "this_period_amount"]):
 			prev_var_claims[pvi.variation_order] = prev_var_claims.get(pvi.variation_order, 0.0) + flt(pvi.this_period_amount)
 
-	# Fetch Approved Variations
-	variations = frappe.get_all("BF Variation Order", 
-		filters={"contract": contract, "docstatus": 1}, 
-		fields=["name", "reason", "requested_amount"]
-	)
-	
 	doc.set("variations", [])
-	total_variations = 0.0
-	for v in variations:
+	# BOQ-line changes and new items are paid through measurement; only lump sums are claimed by amount
+	for v in frappe.get_all("BF Variation Order", filters={"contract": contract, "docstatus": 1, "lump_sum_amount": [">", 0]},
+			fields=["name", "reason", "lump_sum_amount"]):
 		prev_claimed = prev_var_claims.get(v.name, 0.0)
-		remaining = flt(v.requested_amount) - prev_claimed
-		if remaining < 0: remaining = 0.0
-		
+		remaining = max(flt(v.lump_sum_amount) - prev_claimed, 0.0)
 		doc.append("variations", {
 			"variation_order": v.name,
 			"variation_reason": v.reason,
-			"approved_amount": flt(v.requested_amount),
+			"approved_amount": flt(v.lump_sum_amount),
 			"previously_certified": prev_claimed,
 			"this_period_amount": remaining,
-			"cumulative_amount": prev_claimed + remaining
 		})
-		total_variations += prev_claimed + remaining
-		
-	doc.approved_variations = total_variations
 
-	# Clear existing items
 	doc.set("claim_items", [])
-	
 	for item in boq_items:
 		prev_qty = prev_qtys.get(item.name, 0.0)
 		this_qty = period_qtys.get(item.name, 0.0)
-		
-		# If there is no quantity measured in this period AND no previous quantity, we can skip it to keep IPC clean,
-		# or add it with 0. Let's add it only if there is some quantity involved.
-		if prev_qty > 0 or this_qty > 0:
+		# negative quantities are corrections of earlier measurements
+		if prev_qty or this_qty:
 			doc.append("claim_items", {
 				"boq_item": item.name,
+				"item_no": item.item_no,
+				"bill": item.bill,
+				"vat_exempt": item.vat_exempt,
 				"item_description": item.description,
 				"uom": item.uom,
 				"unit_rate": item.unit_rate,
 				"previous_qty": prev_qty,
-				"this_period_qty": this_qty
+				"this_period_qty": this_qty,
 			})
 
-	doc.previous_certified_amount = prev_certified
-	doc.calculate_totals()
+	doc.period_from, doc.period_to = period_from or doc.period_from, period_to or doc.period_to
+	if not doc.certificate_lines:
+		calculate(doc)
+	set_liquidated_damages(doc)
 	doc.save()
-	
+
 	return {"status": "success", "count": len(doc.claim_items)}
+
+
+def set_claim_vat(invoice, claim, template_doctype):
+	"""The certificate's own VAT (on the work, excluding VAT-exempt lines), not a % of the net amount."""
+	invoice.set("taxes", [])
+	invoice.taxes_and_charges = None
+	if not flt(claim.vat_amount):
+		return
+
+	template = get_default_taxes_and_charges(template_doctype, company=invoice.company) or {}
+	accounts = [row.get("account_head") for row in template.get("taxes") or [] if row.get("account_head")]
+	if not accounts:
+		# no default template: use the company's only active one
+		templates = frappe.get_all(template_doctype, filters={"company": invoice.company, "disabled": 0}, pluck="name")
+		if len(templates) == 1:
+			accounts = [row.account_head for row in frappe.get_doc(template_doctype, templates[0]).taxes if row.account_head]
+	if not accounts:
+		frappe.throw(
+			_("Set a default {0} with the VAT account for company {1}, so the certificate's VAT can be charged.").format(
+				_(template_doctype), invoice.company
+			)
+		)
+
+	row = {
+		"charge_type": "Actual",
+		"account_head": accounts[0],
+		"description": "{0} - {1}".format(
+			", ".join(line.label for line in claim.certificate_lines if line.role == "VAT") or _("VAT"), claim.name
+		),
+		"tax_amount": claim.vat_amount,
+	}
+	if template_doctype == "Purchase Taxes and Charges Template":
+		row.update({"category": "Total", "add_deduct_tax": "Add"})
+	invoice.append("taxes", row)
+
 
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
@@ -198,9 +232,9 @@ def make_sales_invoice(source_name, target_doc=None):
 	)
 	
 	doclist.set_missing_values()
-	if not doclist.get("taxes"):
-		# VAT is charged on the invoice, not on the claim
-		doclist.update(get_default_taxes_and_charges("Sales Taxes and Charges Template", company=doclist.company) or {})
+	doclist.disable_rounded_total = 1  # the invoice must equal the certificate to the cent
+	set_claim_vat(doclist, frappe.get_doc("BF Progress Claim", source_name), "Sales Taxes and Charges Template")
+	doclist.calculate_taxes_and_totals()
 	
 	return doclist
 
@@ -232,8 +266,8 @@ def make_purchase_invoice(source_name, target_doc=None):
 	)
 	
 	doclist.set_missing_values()
-	if not doclist.get("taxes"):
-		# VAT is charged on the invoice, not on the claim
-		doclist.update(get_default_taxes_and_charges("Purchase Taxes and Charges Template", company=doclist.company) or {})
+	doclist.disable_rounded_total = 1
+	set_claim_vat(doclist, frappe.get_doc("BF Progress Claim", source_name), "Purchase Taxes and Charges Template")
+	doclist.calculate_taxes_and_totals()
 	
 	return doclist

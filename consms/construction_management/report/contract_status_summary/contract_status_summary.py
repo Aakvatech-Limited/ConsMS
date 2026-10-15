@@ -39,7 +39,7 @@ def get_data(filters):
 	contracts = frappe.get_all(
 		"BF Contract",
 		filters=contract_filters,
-		fields=["name", "project", "customer", "supplier", "total_contract_amount", "boq"],
+		fields=["name", "project", "customer", "supplier", "total_contract_amount", "boq", "retention_held"],
 		order_by="creation desc",
 	)
 	if not contracts:
@@ -68,7 +68,7 @@ def get_data(filters):
 				"measured": measured.get(c.name, 0),
 				"work_certified": work_certified,
 				"percent_complete": work_certified / revised_value * 100 if revised_value else 0,
-				"retention": claim.get("retention_deduction", 0),
+				"retention": c.retention_held or 0,
 				"net_certified": net_certified.get(c.name, 0),
 				"invoiced": invoiced.get(c.name, 0),
 				"balance": revised_value - work_certified,
@@ -115,11 +115,11 @@ def get_measured(contracts):
 
 
 def get_latest_claims(contracts):
-	"""Progress claims hold cumulative values, so only the latest one per contract counts."""
+	"""Work certified to date is on each claim, so only the latest one per contract counts."""
 	claims = frappe.get_all(
 		"BF Progress Claim",
 		filters={"contract": ["in", contracts], "docstatus": 1},
-		fields=["contract", "gross_valuation", "retention_deduction"],
+		fields=["contract", "gross_valuation"],
 		order_by="posting_date desc, creation desc",
 	)
 	latest = {}

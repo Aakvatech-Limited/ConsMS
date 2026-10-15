@@ -17,6 +17,8 @@
   "supplier",
   "boq",
   "claim_title",
+  "certificate_type",
+  "certificate_template",
   "cb_dates",
   "posting_date",
   "period_from",
@@ -26,17 +28,30 @@
   "variations_section",
   "variations",
   "summary_sb",
-  "total_work_executed",
-  "approved_variations",
-  "materials_on_site",
-  "gross_valuation",
+  "this_period_work",
   "cb_deductions",
-  "retention_percentage",
+  "net_amount_due",
+  "vat_amount",
+  "amount_due",
+  "sb_lines",
+  "certificate_lines",
+  "materials_on_site",
   "retention_deduction",
   "advance_payment_recovery",
+  "retention_release",
+  "liquidated_damages",
+  "vat_base",
+  "sb_documents",
+  "documents",
+  "sb_to_date",
+  "total_work_executed",
+  "approved_variations",
+  "gross_valuation",
   "previous_certified_amount",
-  "sb_totals",
-  "net_amount_due",
+  "cb_to_date",
+  "retention_held_to_date",
+  "advance_recovered_to_date",
+  "advance_balance",
   "amended_from",
   "connections_tab"
  ],
@@ -161,35 +176,37 @@
   {
    "fieldname": "summary_sb",
    "fieldtype": "Section Break",
-   "label": "Financial Summary (FIDIC / PPRA Standard)"
+   "label": "Payment Certificate"
   },
   {
    "bold": 1,
    "description": "Value of all work done on this contract so far, from the claim lines (Cumulative Value).",
    "fieldname": "total_work_executed",
    "fieldtype": "Currency",
-   "label": "1. Total Value of Work Executed",
+   "label": "Work Executed to Date",
    "read_only": 1
   },
   {
    "description": "Value of approved extra or changed work (Variation Orders) done so far.",
    "fieldname": "approved_variations",
    "fieldtype": "Currency",
-   "label": "2. Add: Approved Variations (VO)",
+   "label": "Variations to Date",
    "read_only": 1
   },
   {
    "description": "Optional. Value of materials delivered to site but not yet used, if the contract allows paying for them.",
    "fieldname": "materials_on_site",
    "fieldtype": "Currency",
-   "label": "3. Materials on Site (Optional)"
+   "label": "Add: Materials on Site",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "bold": 1,
-   "description": "Total value earned so far, before any deductions.",
+   "description": "Work executed + variations, cumulative.",
    "fieldname": "gross_valuation",
    "fieldtype": "Currency",
-   "label": "4. Gross Valuation (1 + 2 + 3)",
+   "label": "Work Certified to Date",
    "read_only": 1
   },
   {
@@ -197,42 +214,35 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Taken from the contract. The share held back until the work is finished and defects are fixed.",
-   "fetch_from": "contract.retention_percentage",
-   "fieldname": "retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention (%)"
-  },
-  {
-   "description": "Amount held back now: Gross Valuation × Retention %. Paid out at the end of the project.",
+   "description": "This certificate, up to the contract's retention limit.",
    "fieldname": "retention_deduction",
    "fieldtype": "Currency",
-   "label": "5. Less: Retention Fund",
+   "label": "Less: Retention",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "description": "This certificate, until the advance is fully recovered.",
+   "fieldname": "advance_payment_recovery",
+   "fieldtype": "Currency",
+   "label": "Less: Advance Recovery",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "description": "Sum of the earlier certificates' Amount Due. For information; not deducted.",
+   "fieldname": "previous_certified_amount",
+   "fieldtype": "Currency",
+   "label": "Previously Certified (Excl. VAT)",
    "read_only": 1
   },
   {
-   "description": "Part of any advance payment the client gave at the start, taken back from this claim.",
-   "fieldname": "advance_payment_recovery",
-   "fieldtype": "Currency",
-   "label": "6. Less: Advance Payment Recovery"
-  },
-  {
-   "description": "Amount already approved in earlier claims, so it is not paid twice. Filled in when you fetch measurements.",
-   "fieldname": "previous_certified_amount",
-   "fieldtype": "Currency",
-   "label": "7. Less: Previous Certified Amount"
-  },
-  {
-   "fieldname": "sb_totals",
-   "fieldtype": "Column Break"
-  },
-  {
    "bold": 1,
-   "description": "Amount to be paid for this claim: Gross Valuation − items 5, 6 and 7. VAT is added on the Sales Invoice.",
+   "description": "Amount due without the VAT lines.",
    "fieldname": "net_amount_due",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Net Amount Due (Excl. VAT)",
+   "label": "Amount Due (Excl. VAT)",
    "read_only": 1
   },
   {
@@ -255,13 +265,129 @@
    "fieldtype": "Table",
    "label": "Variations",
    "options": "BF Progress Claim Variation"
+  },
+  {
+   "fieldname": "this_period_work",
+   "fieldtype": "Currency",
+   "label": "Work Executed This Certificate",
+   "read_only": 1,
+   "description": "Work this period + variations claimed this period."
+  },
+  {
+   "fieldname": "retention_release",
+   "fieldtype": "Currency",
+   "label": "Add: Retention Released",
+   "description": "Part of the retention held that is paid back (e.g. 50% at completion, 50% after the defects period).",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "liquidated_damages",
+   "fieldtype": "Currency",
+   "label": "Less: Liquidated Damages",
+   "description": "Suggested from the contract's rate per day when the period runs past the revised completion date.",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "vat_base",
+   "fieldtype": "Currency",
+   "label": "VAT Base",
+   "read_only": 1,
+   "description": "Work this certificate excluding VAT-exempt BOQ lines.",
+   "hidden": 1
+  },
+  {
+   "fieldname": "vat_amount",
+   "fieldtype": "Currency",
+   "label": "VAT",
+   "read_only": 1,
+   "description": "Total of the VAT lines; charged on the Sales Invoice exactly as shown."
+  },
+  {
+   "fieldname": "amount_due",
+   "fieldtype": "Currency",
+   "label": "Amount Due",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "sb_to_date",
+   "fieldtype": "Section Break",
+   "label": "To Date",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "cb_to_date",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention_held_to_date",
+   "fieldtype": "Currency",
+   "label": "Retention Held to Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "advance_recovered_to_date",
+   "fieldtype": "Currency",
+   "label": "Advance Recovered to Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "advance_balance",
+   "fieldtype": "Currency",
+   "label": "Advance Balance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certificate_type",
+   "fieldtype": "Select",
+   "label": "Certificate Type",
+   "options": "Interim\nSubstantial Completion\nFinal",
+   "default": "Interim",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Substantial Completion and Final certificates use the template's release / recovery lines."
+  },
+  {
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "BF Certificate Template",
+   "fetch_from": "contract.certificate_template",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "sb_lines",
+   "fieldtype": "Section Break",
+   "label": "Certificate Lines",
+   "description": "From the Certificate Template. Type amounts on 'Typed Amount' lines (e.g. materials on site, interest, liquidated damages), then Save."
+  },
+  {
+   "fieldname": "certificate_lines",
+   "fieldtype": "Table",
+   "label": "Certificate Lines",
+   "options": "BF Certificate Line"
+  },
+  {
+   "fieldname": "sb_documents",
+   "fieldtype": "Section Break",
+   "label": "Supporting Documents",
+   "collapsible": 1,
+   "description": "Documents sent with this certificate (from Document Types for payment certificates). Mandatory ones must be Ready to submit."
+  },
+  {
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "Documents",
+   "options": "BF Tender Document"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 20:00:00.000000",
+ "modified": "2026-10-15 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Progress Claim",

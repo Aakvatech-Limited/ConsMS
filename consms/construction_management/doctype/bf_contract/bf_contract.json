@@ -8,26 +8,57 @@
  "engine": "InnoDB",
  "field_order": [
   "details_tab",
-  "contract_type",
+  "connections_tab",
   "contract_reference",
   "tender",
   "project",
+  "contract_type",
+  "main_contract",
+  "site_warehouse",
   "customer",
   "supplier",
-  "main_contract",
-  "construction_type",
   "cb_885ac733",
   "contract_amount",
   "contingency_percentage",
-  "retention_percentage",
   "cb_contract_totals",
   "contingency_amount",
   "total_contract_amount",
+  "contract_sum_incl_vat",
+  "approved_variations",
+  "revised_contract_value",
   "amended_from",
   "boq",
+  "sb_period",
+  "start_date",
+  "original_completion_date",
+  "contract_duration",
+  "cb_period",
+  "approved_extension_days",
+  "revised_completion_date",
+  "actual_completion_date",
+  "sb_payment_terms",
+  "certificate_template",
+  "advance_payment_percentage",
+  "advance_payment_amount",
+  "cb_advance",
+  "advance_guarantee_no",
+  "advance_guarantee_bank",
+  "advance_guarantee_expiry",
+  "defects_cb",
+  "defects_liability_months",
+  "ld_rate_per_day",
+  "measurement_tolerance",
+  "sb_currencies",
+  "payment_currencies",
+  "sb_balances",
+  "advance_recovered",
+  "advance_balance",
+  "cb_balances",
+  "retention_held",
+  "retention_released",
+  "liquidated_damages_to_date",
   "submittals_section",
-  "submittals",
-  "connections_tab"
+  "submittals"
  ],
  "fields": [
   {
@@ -81,11 +112,11 @@
   },
   {
    "allow_on_submit": 1,
-   "description": "The kind of work, e.g. Building, Road or Pipeline. It decides how site work is measured.",
-   "fieldname": "construction_type",
+   "description": "Store on site for this contract's materials. Created automatically on submit if empty.",
+   "fieldname": "site_warehouse",
    "fieldtype": "Link",
-   "label": "Construction Type",
-   "options": "BF Construction Type"
+   "label": "Site Store",
+   "options": "Warehouse"
   },
   {
    "depends_on": "eval:doc.contract_type=='Main Contract';",
@@ -110,8 +141,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "The agreed price for all the work in the BOQ. Filled in automatically from the BOQ total.",
-   "fetch_from": "boq.total_amount",
+   "description": "From the BOQ: the bid price without VAT when the BOQ has a tender summary, otherwise the total of bills.",
    "fieldname": "contract_amount",
    "fieldtype": "Currency",
    "label": "Contract Amount",
@@ -123,13 +153,6 @@
    "fieldname": "contingency_percentage",
    "fieldtype": "Percent",
    "label": "Contingency (%)"
-  },
-  {
-   "default": "5",
-   "description": "Part of each payment that the client holds back until the work is finished and any defects are fixed. It is paid out at the end. Usually 5–10%.",
-   "fieldname": "retention_percentage",
-   "fieldtype": "Percent",
-   "label": "Retention (%)"
   },
   {
    "fieldname": "cb_contract_totals",
@@ -171,6 +194,60 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_period",
+   "fieldtype": "Section Break",
+   "label": "Contract Period"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Commencement date (site possession). Can be set once on a submitted contract; after that, change the time with an Extension of Time.",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Can be set once on a submitted contract; after that, change the time with an Extension of Time.",
+   "fieldname": "original_completion_date",
+   "fieldtype": "Date",
+   "label": "Original Completion Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "contract_duration",
+   "fieldtype": "Int",
+   "label": "Contract Duration (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Total days approved on Extension of Time documents (Create > Extension of Time).",
+   "fieldname": "approved_extension_days",
+   "fieldtype": "Int",
+   "label": "Approved Extension (Days)",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "bold": 1,
+   "description": "Original completion + approved extensions of time.",
+   "fieldname": "revised_completion_date",
+   "fieldtype": "Date",
+   "label": "Revised Completion Date",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Fill when the works are completed (e.g. taking-over certificate).",
+   "fieldname": "actual_completion_date",
+   "fieldtype": "Date",
+   "label": "Actual Completion Date"
+  },
+  {
    "fieldname": "submittals_section",
    "fieldtype": "Section Break",
    "label": "Required Submittals"
@@ -182,13 +259,179 @@
    "fieldtype": "Table",
    "label": "Submittals",
    "options": "BF Contract Submittal"
+  },
+  {
+   "fieldname": "sb_payment_terms",
+   "fieldtype": "Section Break",
+   "label": "Payment Terms",
+   "collapsible": 0,
+   "description": "How each payment certificate is worked out comes from the Certificate Template (retention, advance recovery, VAT, releases...)."
+  },
+  {
+   "fieldname": "advance_payment_percentage",
+   "fieldtype": "Percent",
+   "label": "Advance Payment (%)",
+   "allow_on_submit": 1,
+   "description": "Of the Total Contract Value. Fills the Advance Payment Amount."
+  },
+  {
+   "fieldname": "advance_payment_amount",
+   "fieldtype": "Currency",
+   "label": "Advance Payment Amount",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_advance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "advance_guarantee_no",
+   "fieldtype": "Data",
+   "label": "Advance Payment Guarantee No.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "advance_guarantee_bank",
+   "fieldtype": "Data",
+   "label": "Guarantee Issued By",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "advance_guarantee_expiry",
+   "fieldtype": "Date",
+   "label": "Guarantee Expiry Date",
+   "allow_on_submit": 1,
+   "description": "A reminder is sent 30 days before expiry."
+  },
+  {
+   "fieldname": "defects_liability_months",
+   "fieldtype": "Int",
+   "label": "Defects Liability Period (Months)",
+   "default": "12",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "ld_rate_per_day",
+   "fieldtype": "Currency",
+   "label": "Liquidated Damages per Day",
+   "allow_on_submit": 1,
+   "description": "Used to suggest Liquidated Damages on certificates for periods after the revised completion date."
+  },
+  {
+   "fieldname": "sb_balances",
+   "fieldtype": "Section Break",
+   "label": "Balances to Date",
+   "collapsible": 1,
+   "description": "Updated when Progress Claims are submitted or cancelled."
+  },
+  {
+   "fieldname": "advance_recovered",
+   "fieldtype": "Currency",
+   "label": "Advance Recovered",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "advance_balance",
+   "fieldtype": "Currency",
+   "label": "Advance Balance to Recover",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb_balances",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention_held",
+   "fieldtype": "Currency",
+   "label": "Retention Held",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "retention_released",
+   "fieldtype": "Currency",
+   "label": "Retention Released",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "liquidated_damages_to_date",
+   "fieldtype": "Currency",
+   "label": "Liquidated Damages to Date",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "BF Certificate Template",
+   "allow_on_submit": 1,
+   "description": "The client's rules, e.g. Ministry of Water (SEUWASA) or TANROADS. Used by every Progress Claim of this contract."
+  },
+  {
+   "fieldname": "defects_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract_sum_incl_vat",
+   "fieldtype": "Currency",
+   "label": "Contract Sum (incl. VAT)",
+   "read_only": 1,
+   "description": "The BOQ bid price, as on the Form of Tender."
+  },
+  {
+   "fieldname": "sb_currencies",
+   "fieldtype": "Section Break",
+   "label": "Payment Currencies",
+   "collapsible": 1,
+   "description": "Only when the client pays in more than one currency, e.g. 15% TZS and 85% USD. The certificate shows the amount due in each."
+  },
+  {
+   "fieldname": "payment_currencies",
+   "fieldtype": "Table",
+   "label": "Payment Currencies",
+   "options": "BF Payment Currency",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "approved_variations",
+   "fieldtype": "Currency",
+   "label": "Approved Variations",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "revised_contract_value",
+   "fieldtype": "Currency",
+   "label": "Revised Contract Value",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "measurement_tolerance",
+   "fieldtype": "Percent",
+   "label": "Measurement Tolerance (%)",
+   "default": "0",
+   "allow_on_submit": 1,
+   "description": "How far a BOQ line may be measured above its revised quantity before a Variation Order is needed. 0 = not at all."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-12 11:30:00.000000",
+ "modified": "2026-10-15 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",

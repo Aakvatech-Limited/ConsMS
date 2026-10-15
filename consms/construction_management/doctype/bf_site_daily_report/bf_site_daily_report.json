@@ -1,0 +1,277 @@
+{
+ "actions": [],
+ "autoname": "format:BF-SDR-{YYYY}-{####}",
+ "creation": "2026-10-14 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract",
+  "project",
+  "boq",
+  "cb_1",
+  "date",
+  "weather",
+  "location",
+  "cb_2",
+  "source_warehouse",
+  "stock_entry",
+  "sb_work",
+  "work_done",
+  "sb_labour",
+  "labour",
+  "sb_plant",
+  "plant",
+  "sb_materials",
+  "materials",
+  "sb_totals",
+  "labour_cost",
+  "total_headcount",
+  "cb_3",
+  "plant_cost",
+  "total_fuel",
+  "cb_4",
+  "material_cost",
+  "total_cost",
+  "amended_from",
+  "connections_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract",
+   "options": "BF Contract",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "contract.project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "contract.boq",
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "Bill of Quantities",
+   "options": "BF Bill of Quantities",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "weather",
+   "fieldtype": "Select",
+   "label": "Weather",
+   "options": "\nSunny\nCloudy\nRain - work continued\nRain - work stopped"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location on Site"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Store the materials below are taken from.",
+   "fetch_from": "contract.site_warehouse",
+   "fetch_if_empty": 1,
+   "fieldname": "source_warehouse",
+   "fieldtype": "Link",
+   "label": "Site Store",
+   "options": "Warehouse"
+  },
+  {
+   "description": "Created on submit: issues the materials to the project.",
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Issue",
+   "no_copy": 1,
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_work",
+   "fieldtype": "Section Break",
+   "label": "Work Done Today"
+  },
+  {
+   "fieldname": "work_done",
+   "fieldtype": "Text Editor",
+   "label": "Work Done / Remarks"
+  },
+  {
+   "fieldname": "sb_labour",
+   "fieldtype": "Section Break",
+   "label": "Labour"
+  },
+  {
+   "fieldname": "labour",
+   "fieldtype": "Table",
+   "label": "Labour",
+   "options": "BF Daily Labour"
+  },
+  {
+   "fieldname": "sb_plant",
+   "fieldtype": "Section Break",
+   "label": "Machines"
+  },
+  {
+   "fieldname": "plant",
+   "fieldtype": "Table",
+   "label": "Machines",
+   "options": "BF Daily Plant"
+  },
+  {
+   "fieldname": "sb_materials",
+   "fieldtype": "Section Break",
+   "label": "Materials Used"
+  },
+  {
+   "fieldname": "materials",
+   "fieldtype": "Table",
+   "label": "Materials Used",
+   "options": "BF Daily Material"
+  },
+  {
+   "fieldname": "sb_totals",
+   "fieldtype": "Section Break",
+   "label": "Cost of the Day"
+  },
+  {
+   "fieldname": "labour_cost",
+   "fieldtype": "Currency",
+   "label": "Labour Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_headcount",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "People on Site",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plant_cost",
+   "fieldtype": "Currency",
+   "label": "Plant Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_fuel",
+   "fieldtype": "Float",
+   "label": "Fuel Used (Litres)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "material_cost",
+   "fieldtype": "Currency",
+   "label": "Material Cost",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "BF Site Daily Report",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-14 00:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "BF Site Daily Report",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects User",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "contract",
+ "track_changes": 1
+}

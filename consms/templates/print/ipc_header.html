@@ -1,0 +1,12 @@
+<div class="client">{{ frappe.db.get_value("Customer", doc.customer, "customer_name") if doc.customer else (doc.supplier or "") }}</div>
+<h2>{{ ipc.project_name }}</h2>
+<table class="meta">
+	<tr>
+		<td><b>{{ _("Contract No.") }}:</b> {{ doc.contract }}</td>
+		<td class="num"><b>{{ _("Certificate") }}:</b> {{ doc.claim_title or doc.name }} ({{ doc.name }})</td>
+	</tr>
+	<tr>
+		<td><b>{{ _("Contractor") }}:</b> {{ ipc.company or "" }}</td>
+		<td class="num"><b>{{ _("Period") }}:</b> {{ frappe.utils.formatdate(doc.period_from) if doc.period_from else "" }} - {{ frappe.utils.formatdate(doc.period_to) if doc.period_to else "" }}</td>
+	</tr>
+</table>

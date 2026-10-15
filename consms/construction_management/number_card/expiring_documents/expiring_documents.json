@@ -1,0 +1,17 @@
+{
+ "color": "#e74c3c",
+ "creation": "2026-10-14 05:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Expiring Documents (30 days)",
+ "method": "consms.construction_management.dashboard.expiring_documents",
+ "modified": "2026-10-14 05:00:00.000000",
+ "module": "Construction Management",
+ "name": "Expiring Documents",
+ "show_percentage_stats": 0,
+ "type": "Custom"
+}

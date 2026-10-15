@@ -5,3 +5,15 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 consms.patches.v1_0.move_mobilization_to_tasks
+consms.patches.v1_0.set_boq_erp_uom
+consms.patches.v1_0.create_contract_site_stores
+consms.patches.v1_0.move_bid_security_to_table
+consms.patches.v1_0.move_extensions_to_doctype
+consms.patches.v1_0.move_mobilization_to_works_execution
+consms.patches.v1_0.remove_mobilization_number_cards
+consms.patches.v1_0.remove_erpnext_budgets
+consms.patches.v1_0.remove_construction_type
+consms.patches.v1_0.drop_removed_doctype_tables
+consms.patches.v1_0.convert_claims_to_per_certificate
+consms.patches.v1_0.move_certificates_to_templates
+consms.patches.v1_0.start_boq_variations

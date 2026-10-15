@@ -1,0 +1,69 @@
+{%- set c = ipc.contract -%}
+{%- set fmt = frappe.utils.fmt_money -%}
+<div class="ipc">
+	<h1>{{ ipc.title }} {{ doc.claim_title or doc.name }}</h1>
+	{% include "consms/templates/print/ipc_header.html" %}
+	<table class="meta" style="margin-top:6px">
+		<tr>
+			<td><b>{{ _("Original Contract Amount") }}:</b> {{ fmt(ipc.original_value, precision=2) }} {{ _("excl. VAT") }}
+				({{ fmt(ipc.summary.grand.original, precision=2) }} {{ _("incl. VAT") }})</td>
+			<td><b>{{ _("Revised Contract Amount") }}:</b> {{ fmt(ipc.revised_value, precision=2) if ipc.revised_value else _("NIL") }}</td>
+		</tr>
+		{% if c %}
+		<tr>
+			<td><b>{{ _("Commencement Date") }}:</b> {{ frappe.utils.formatdate(c.start_date) if c.start_date else "-" }}
+				{% if c.contract_duration %}&nbsp; ({{ c.contract_duration }} {{ _("days") }}){% endif %}</td>
+			<td><b>{{ _("Completion Date") }}:</b> {{ frappe.utils.formatdate(c.original_completion_date) if c.original_completion_date else "-" }}
+				{% if c.revised_completion_date and c.revised_completion_date != c.original_completion_date %}
+				&nbsp; <b>{{ _("Revised") }}:</b> {{ frappe.utils.formatdate(c.revised_completion_date) }}{% endif %}</td>
+		</tr>
+		{% endif %}
+	</table>
+
+	<p style="margin:10px 0 4px">{{ _("Now this Payment Certificate reads as hereunder stated:") }}</p>
+	{% include "consms/templates/print/ipc_lines.html" %}
+	<p style="margin:6px 0"><b>{{ _("Amount in Words") }}:</b> {{ ipc.amount_in_words }}</p>
+	{% if ipc.currencies %}
+	<table class="grid small" style="margin:4px 0">
+		<tr><th style="text-align:left">{{ _("Payment Currency") }}</th><th>{{ _("Share") }}</th><th>{{ _("Exchange Rate") }}</th><th>{{ _("Amount for Payment") }}</th></tr>
+		{%- for c in ipc.currencies %}
+		<tr><td>{{ c.currency }}</td><td class="num">{{ c.share }}%</td><td class="num">{{ c.rate }}</td><td class="num">{{ frappe.utils.fmt_money(c.amount, precision=2, currency=c.currency) }}</td></tr>
+		{%- endfor %}
+	</table>
+	{% endif %}
+
+	<table class="grid small" style="margin-top:6px">
+		<tr><th colspan="4" style="text-align:left">{{ _("To Date") }}</th></tr>
+		<tr>
+			<td>{{ _("Work Certified to Date") }}</td><td class="num">{{ fmt(doc.gross_valuation, precision=2) }}</td>
+			<td>{{ _("Previously Certified (Excl. VAT)") }}</td><td class="num">{{ fmt(doc.previous_certified_amount, precision=2) }}</td>
+		</tr>
+		<tr>
+			<td>{{ _("Retention Held to Date") }}</td><td class="num">{{ fmt(doc.retention_held_to_date, precision=2) }}</td>
+			<td>{{ _("Advance Recovered / Balance") }}</td><td class="num">{{ fmt(doc.advance_recovered_to_date, precision=2) }} / {{ fmt(doc.advance_balance, precision=2) }}</td>
+		</tr>
+	</table>
+
+	<table class="sign">
+		<tr>
+			<td><b>{{ _("Certificate Prepared by") }}:</b><br>{{ _("Site Engineer") }} ({{ ipc.company or _("Contractor") }})</td>
+			<td><b>{{ _("Accepted by Contractor") }}:</b><br>{{ _("Project Manager") }} ({{ ipc.company or _("Contractor") }})</td>
+		</tr>
+		<tr><td>{{ _("Name") }}: ......................................................</td><td>{{ _("Name") }}: ......................................................</td></tr>
+		<tr><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td></tr>
+		<tr>
+			<td><b>{{ _("Checked and Verified by") }}:</b><br>{{ _("Project Supervisor") }} ({{ ipc.client or _("Client") }})</td>
+			<td><b>{{ _("Approved for Payment by") }}:</b><br>{{ _("Project Manager") }} ({{ ipc.client or _("Client") }})</td>
+		</tr>
+		<tr><td>{{ _("Name") }}: ......................................................</td><td>{{ _("Name") }}: ......................................................</td></tr>
+		<tr><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td><td>{{ _("Signature") }}: ..............................  {{ _("Date") }}: ..................</td></tr>
+	</table>
+	{%- set attached = doc.documents | selectattr("status", "equalto", "Ready") | list %}
+	{% if attached %}
+	<p style="margin-top:10px"><b>{{ _("Attached Items") }}:</b></p>
+	<ol style="margin:2px 0 0 18px">{% for d in attached %}<li>{{ d.document_type }}</li>{% endfor %}</ol>
+	{% endif %}
+	<p style="margin-top:12px"><b>{{ _("Remarks / Instructions") }}:</b></p>
+	<p class="muted">1. ..................................................................................................................................................................</p>
+	<p class="muted">2. ..................................................................................................................................................................</p>
+</div>

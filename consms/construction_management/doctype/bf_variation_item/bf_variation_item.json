@@ -6,27 +6,65 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "item_code",
+  "change_type",
+  "boq_item",
+  "item_no",
   "description",
+  "bill",
   "cb_uom",
   "uom",
+  "current_qty",
   "quantity",
+  "new_qty",
   "unit_rate",
-  "amount"
+  "amount",
+  "sb_internal",
+  "rate_analysis",
+  "cb_internal",
+  "cost_impact",
+  "item_code"
  ],
  "fields": [
   {
-   "fieldname": "item_code",
-   "fieldtype": "Link",
+   "fieldname": "change_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Change to BOQ Line\nNew Item\nLump Sum",
+   "default": "Change to BOQ Line",
+   "reqd": 1,
    "in_list_view": 1,
-   "label": "Item Code",
-   "options": "Item"
+   "columns": 2
+  },
+  {
+   "fieldname": "boq_item",
+   "fieldtype": "Link",
+   "label": "BOQ Line",
+   "options": "BF BOQ Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "depends_on": "eval:doc.change_type == 'Change to BOQ Line'",
+   "mandatory_depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
+  },
+  {
+   "fieldname": "item_no",
+   "fieldtype": "Data",
+   "label": "Item No",
+   "read_only_depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
   },
   {
    "fetch_from": "item_code.description",
    "fieldname": "description",
    "fieldtype": "Text",
-   "label": "Description"
+   "label": "Description",
+   "read_only_depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
+  },
+  {
+   "fieldname": "bill",
+   "fieldtype": "Data",
+   "label": "Bill / Section",
+   "default": "Additional Works",
+   "depends_on": "eval:doc.change_type == 'New Item'",
+   "description": "Where the new item goes in the BOQ (default: Additional Works)."
   },
   {
    "fieldname": "cb_uom",
@@ -37,35 +75,86 @@
    "fieldname": "uom",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "UOM"
+   "label": "Unit (as in the BOQ)",
+   "columns": 1,
+   "read_only_depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
+  },
+  {
+   "fieldname": "current_qty",
+   "fieldtype": "Float",
+   "label": "Current Revised Qty",
+   "read_only": 1,
+   "depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
   },
   {
    "fieldname": "quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Quantity",
-   "reqd": 1
+   "label": "Quantity Change (+/-)",
+   "reqd": 1,
+   "columns": 1,
+   "description": "Extra (+) or less (-) quantity in the BOQ unit. For a lump sum, 1."
+  },
+  {
+   "fieldname": "new_qty",
+   "fieldtype": "Float",
+   "label": "New Revised Qty",
+   "read_only": 1,
+   "depends_on": "eval:doc.change_type == 'Change to BOQ Line'"
   },
   {
    "fieldname": "unit_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Unit Rate",
-   "reqd": 1
+   "label": "Rate",
+   "columns": 2,
+   "read_only_depends_on": "eval:doc.change_type == 'Change to BOQ Line'",
+   "description": "BOQ rate for a change to a BOQ line; the agreed rate for a new item."
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Amount",
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "sb_internal",
+   "fieldtype": "Section Break",
+   "label": "Internal (not printed for the client)"
+  },
+  {
+   "fieldname": "rate_analysis",
+   "fieldtype": "Link",
+   "label": "Rate Analysis",
+   "options": "BF Rate Analysis",
+   "description": "Recipe for the extra work (taken from the budget for a BOQ line); gives the cost impact."
+  },
+  {
+   "fieldname": "cb_internal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_impact",
+   "fieldtype": "Currency",
+   "label": "Cost Impact",
    "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 0,
+   "label": "Item Code",
+   "options": "Item",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-28 11:57:50.485180",
+ "modified": "2026-10-15 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Variation Item",

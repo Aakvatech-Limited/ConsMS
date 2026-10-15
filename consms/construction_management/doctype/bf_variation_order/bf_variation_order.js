@@ -2,68 +2,54 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Variation Order", {
+	setup(frm) {
+		frm.set_query("boq_item", "items", () => ({ filters: { parent: frm.doc.boq } }));
+		frm.set_query("rate_analysis", "items", () => ({ filters: { docstatus: 1 } }));
+	},
+
 	refresh(frm) {
-		
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("Update Budget"), () => {
+				frappe.confirm(
+					__("The current budget of this contract is replaced by a new version with the approved quantities and new items. Continue?"),
+					() => frappe.call({
+						method: "consms.construction_management.variations.make_budget_revision",
+						args: { variation_order: frm.doc.name },
+						freeze: true,
+						callback: (r) => r.message && frappe.set_route("Form", "BF Budget", r.message),
+					})
+				);
+			});
+		}
 	},
 });
 
 frappe.ui.form.on("BF Variation Item", {
-	item_code: function(frm, cdt, cdn) {
-		let row = frappe.get_doc(cdt, cdn);
-		if (row.item_code) {
-			// First try to get Item Price
-			frappe.call({
-				method: "erpnext.stock.get_item_details.get_item_details",
-				args: {
-					args: {
-						item_code: row.item_code,
-						company: frappe.defaults.get_user_default("Company") || frappe.boot.default_company,
-						qty: row.quantity || 1,
-						doctype: "Sales Order"
-					}
-				},
-				callback: function(r) {
-					if (r.message) {
-						let rate = r.message.price_list_rate || r.message.standard_rate || r.message.valuation_rate || 0;
-						frappe.model.set_value(cdt, cdn, "unit_rate", rate);
-						
-						if (!row.description && r.message.description) {
-							frappe.model.set_value(cdt, cdn, "description", r.message.description);
-						}
-						if (!row.uom && r.message.stock_uom) {
-							frappe.model.set_value(cdt, cdn, "uom", r.message.stock_uom);
-						}
-					}
-				}
-			});
-		}
+	change_type(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row.change_type !== "Change to BOQ Line") frappe.model.set_value(cdt, cdn, "boq_item", "");
+		if (row.change_type === "New Item" && !row.bill) frappe.model.set_value(cdt, cdn, "bill", __("Additional Works"));
+		if (row.change_type === "Lump Sum" && !row.quantity) frappe.model.set_value(cdt, cdn, "quantity", 1);
 	},
-	quantity: function(frm, cdt, cdn) {
-		calculate_amount(frm, cdt, cdn);
+	boq_item(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.boq_item) return;
+		frappe.db.get_value("BF BOQ Item", row.boq_item, ["item_no", "description", "uom", "unit_rate", "revised_qty"]).then((r) => {
+			const d = r.message || {};
+			frappe.model.set_value(cdt, cdn, { item_no: d.item_no, description: d.description, uom: d.uom, unit_rate: d.unit_rate, current_qty: d.revised_qty });
+			calculate(cdt, cdn);
+		});
 	},
-	unit_rate: function(frm, cdt, cdn) {
-		calculate_amount(frm, cdt, cdn);
+	quantity(frm, cdt, cdn) {
+		calculate(cdt, cdn);
 	},
-	amount: function(frm, cdt, cdn) {
-		calculate_total(frm);
+	unit_rate(frm, cdt, cdn) {
+		calculate(cdt, cdn);
 	},
-	items_remove: function(frm) {
-		calculate_total(frm);
-	}
 });
 
-function calculate_amount(frm, cdt, cdn) {
-	let row = frappe.get_doc(cdt, cdn);
-	let amt = flt(row.quantity) * flt(row.unit_rate);
-	frappe.model.set_value(cdt, cdn, "amount", amt);
-}
-
-function calculate_total(frm) {
-	let total = 0;
-	if (frm.doc.items) {
-		frm.doc.items.forEach(item => {
-			total += flt(item.amount);
-		});
-	}
-	frm.set_value("requested_amount", total);
+function calculate(cdt, cdn) {
+	const row = locals[cdt][cdn];
+	frappe.model.set_value(cdt, cdn, "amount", flt(row.quantity) * flt(row.unit_rate));
+	if (row.change_type === "Change to BOQ Line") frappe.model.set_value(cdt, cdn, "new_qty", flt(row.current_qty) + flt(row.quantity));
 }

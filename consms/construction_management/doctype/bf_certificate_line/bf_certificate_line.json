@@ -1,0 +1,217 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-15 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "name": "BF Certificate Line",
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Line",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "label": "Add / Less",
+   "options": "Add\nLess\nSubtotal",
+   "default": "Add",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "calculation",
+   "fieldtype": "Select",
+   "label": "Amount From",
+   "options": "Work This Certificate\nPercentage\nTyped Amount\nTotal of Bills\nProvisional Sums\nDirect Cost",
+   "default": "Typed Amount",
+   "depends_on": "eval:doc.line_type != 'Subtotal'",
+   "in_list_view": 0,
+   "columns": 2,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "%",
+   "depends_on": "eval:doc.calculation == 'Percentage'",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "percentage_of",
+   "fieldtype": "Select",
+   "label": "% Of",
+   "options": "Work This Certificate\nWork This Certificate (excl. VAT-Exempt)\nWork to Date\nRunning Total\nTotal at Line\nRetention Held\nAdvance Balance\nContract Value\nTotal of Bills\nDirect Cost\nBOQ Value",
+   "depends_on": "eval:doc.calculation == 'Percentage'",
+   "in_list_view": 0,
+   "columns": 2,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "line_no",
+   "fieldtype": "Int",
+   "label": "Line No.",
+   "depends_on": "eval:doc.percentage_of == 'Total at Line'",
+   "description": "The running total after this line number of the template is used.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_rules",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deduct_previous",
+   "fieldtype": "Check",
+   "label": "Less Earlier Certificates",
+   "description": "Subtract what this line took on earlier certificates (use with 'Work to Date').",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "limit",
+   "fieldtype": "Select",
+   "label": "Limit",
+   "options": "\n% of Contract Value\nAdvance Payment\nRetention Held",
+   "description": "In total over all certificates, this line (or its role) never goes beyond the limit.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "limit_rate",
+   "fieldtype": "Percent",
+   "label": "Limit (%)",
+   "depends_on": "eval:doc.limit == '% of Contract Value'",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "label": "Applies To",
+   "options": "All Certificates\nInterim Only\nSubstantial Completion\nFinal\nSubstantial Completion and Final",
+   "default": "All Certificates",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Select",
+   "label": "Role",
+   "options": "\nWork\nMaterials on Site\nRetention\nRetention Release\nAdvance Payment\nAdvance Recovery\nVAT\nLiquidated Damages",
+   "description": "Tells the system what the line is: retention and advance balances on the contract, VAT on the invoice, reports.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "calculation_only",
+   "fieldtype": "Check",
+   "label": "For Calculation Only",
+   "description": "Changes the running total for the lines below, but is left out of the final total.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "template_line_no",
+   "fieldtype": "Int",
+   "label": "Template Line No.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_amounts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Base",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "previous_amount",
+   "fieldtype": "Currency",
+   "label": "Previous Certificates",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only_depends_on": "eval:doc.calculation != 'Typed Amount' || doc.line_type == 'Subtotal'",
+   "description": "Type the amount on 'Typed Amount' lines; the others are calculated on save.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_date_amount",
+   "fieldtype": "Currency",
+   "label": "To Date",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "running_total",
+   "fieldtype": "Currency",
+   "label": "Running Total",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "allow_on_submit": 1
+  }
+ ],
+ "field_order": [
+  "label",
+  "line_type",
+  "calculation",
+  "rate",
+  "percentage_of",
+  "line_no",
+  "cb_rules",
+  "deduct_previous",
+  "limit",
+  "limit_rate",
+  "applies_to",
+  "role",
+  "calculation_only",
+  "template_line_no",
+  "sb_amounts",
+  "base_amount",
+  "previous_amount",
+  "amount",
+  "cb_amounts",
+  "to_date_amount",
+  "running_total"
+ ]
+}

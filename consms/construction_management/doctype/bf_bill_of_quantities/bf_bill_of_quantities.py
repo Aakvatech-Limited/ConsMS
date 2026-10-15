@@ -2,101 +2,73 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
 from frappe.utils import add_days, flt, nowdate
 
+from consms.construction_management.ipc import calculate_boq_summary
+from consms.construction_management.variations import set_revised_quantities
+from consms.construction_management.uom import get_uom_map, normalize, resolve_uom
+
+PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
+
 class BFBillofQuantities(Document):
+	def after_insert(self):
+		# Tender -> BOQ: keep the tender pointing at its (latest) BOQ so the contract picks it up
+		if self.tender:
+			frappe.db.set_value("BF Tender", self.tender, "boq", self.name)
+
 	def validate(self):
+		self.validate_one_boq_per_tender()
+		self.set_erp_uoms()
 		total = 0
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)
 			total += item.amount
+		self.set_provisional_sums()
 		self.total_amount = total
+		if self.is_new() and not self.summary_template:
+			self.summary_template = frappe.db.get_single_value("BF Construction Settings", "default_boq_summary_template")
+		calculate_boq_summary(self)
+		set_revised_quantities(self)
 
-@frappe.whitelist()
-def make_material_request(source_name, target_doc=None):
-	def set_missing_values(source, target):
-		target.material_request_type = "Purchase"
-		target.project = source.project
-		target.bf_boq = source.name
-		target.items = []
+	def before_update_after_submit(self):
+		self.set_provisional_sums()
+		calculate_boq_summary(self)
+		set_revised_quantities(self)
 
-	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
-		"BF Bill of Quantities": {
-			"doctype": "Material Request",
-			"field_map": {
-				"project": "project",
-				"name": "bf_boq"
-			}
-		}
-	}, target_doc, set_missing_values)
-	
-	return doc
+	def set_provisional_sums(self):
+		for item in self.items:
+			if normalize(item.uom) in PROVISIONAL_SUM_UNITS:
+				item.is_provisional_sum = 1
 
-@frappe.whitelist()
-def get_items_for_material_request(source_name, target_doc=None):
-	"""Get Items From > BF Bill of Quantities on Material Request: add the stock items still left to request."""
+	def before_submit(self):
+		unmapped = sorted({row.uom or _("(blank)") for row in self.items if not row.erp_uom})
+		if unmapped:
+			frappe.throw(
+				_("Map these BOQ units to an ERP UOM before submitting (UOM Mapping list): {0}").format(
+					", ".join(frappe.bold(u) for u in unmapped)
+				),
+				title=_("Unmapped BOQ Units"),
+			)
 
-	def set_missing_values(source, target):
-		target.bf_boq = target.bf_boq or source.name
-		target.schedule_date = target.schedule_date or add_days(nowdate(), 7)
-		already_added = {row.bf_boq_item for row in target.get("items") if row.get("bf_boq_item")}
+	def set_erp_uoms(self):
+		uom_map = get_uom_map()
+		for row in self.items:
+			if row.uom and not row.erp_uom:
+				row.erp_uom = resolve_uom(row.uom, uom_map)
 
-		for row in source.items:
-			if row.name in already_added or not row.item_code:
-				continue
-			if not frappe.get_cached_value("Item", row.item_code, "is_stock_item"):
-				continue
-
-			remaining_qty = flt(row.quantity) - flt(row.requested_qty)
-			if remaining_qty <= 0:
-				continue
-
-			target.append("items", {
-				"item_code": row.item_code,
-				"qty": remaining_qty,
-				"schedule_date": target.schedule_date,
-				"project": source.project,
-				"bf_boq": source.name,
-				"bf_boq_item": row.name,
-				"bf_boq_item_id": row.name,
-				# filled only when Task is an accounting dimension
-				"task": row.task if has_task_dimension else None,
-			})
-
-	has_task_dimension = frappe.get_meta("Material Request Item").has_field("task")
-	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
-		"BF Bill of Quantities": {"doctype": "Material Request"}
-	}, target_doc, set_missing_values)
-
-	doc.run_method("set_missing_values")
-	return doc
-
-@frappe.whitelist()
-def make_bf_tender(source_name, target_doc=None):
-	def set_missing_values(source, target):
-		target.tender_name = f"Tender for {source.project}"
-
-	doc = get_mapped_doc("BF Bill of Quantities", source_name, {
-		"BF Bill of Quantities": {
-			"doctype": "BF Tender",
-			"field_map": {
-				"project": "project",
-				"name": "boq"
-			}
-		}
-	}, target_doc, set_missing_values)
-	
-	return doc
-
-@frappe.whitelist()
-def check_existing_tender(boq_name):
-	existing_tender = frappe.db.get_value("BF Tender", {"boq": boq_name}, "name")
-	if existing_tender:
-		return existing_tender
-	return None
+	def validate_one_boq_per_tender(self):
+		if not self.tender:
+			return
+		other = frappe.db.get_value(
+			"BF Bill of Quantities",
+			{"tender": self.tender, "docstatus": ["!=", 2], "name": ["not in", [self.name, self.amended_from or ""]]},
+		)
+		if other:
+			frappe.throw(_("Tender {0} already has Bill of Quantities {1}.").format(self.tender, other))
 
 @frappe.whitelist()
 def get_awarded_tender(boq_name):
@@ -123,8 +95,8 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 
 	if txt:
 		search_txt = f"%{txt}%"
-		conditions.append("(name LIKE %s OR IFNULL(item_code, '') LIKE %s OR IFNULL(description, '') LIKE %s)")
-		params.extend([search_txt, search_txt, search_txt])
+		conditions.append("(name LIKE %s OR IFNULL(description, '') LIKE %s)")
+		params.extend([search_txt, search_txt])
 
 	where_stmt = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
@@ -132,7 +104,6 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 		SELECT 
 			name,
 			CONCAT(
-				IF(IFNULL(item_code, '') != '', CONCAT('[', item_code, '] '), ''),
 				IFNULL(description, ''), 
 				IF(IFNULL(uom, '') != '', CONCAT(' | UOM: ', uom), ''),
 				IF(IFNULL(quantity, 0) > 0, CONCAT(' | Qty: ', quantity), '')
@@ -144,3 +115,16 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	"""
 	params.extend([start, page_len])
 	return frappe.db.sql(query, params)
+
+
+@frappe.whitelist()
+def set_vat_exempt_bills(boq, bills):
+	"""Mark the lines of the given bills VAT exempt (and the others not), also on a submitted BOQ."""
+	doc = frappe.get_doc("BF Bill of Quantities", boq)
+	doc.check_permission("write")
+	bills = set(frappe.parse_json(bills) if isinstance(bills, str) else bills or [])
+	for row in doc.items:
+		exempt = 1 if (row.bill or "") in bills else 0
+		if row.vat_exempt != exempt:
+			row.db_set("vat_exempt", exempt)
+	return len([row for row in doc.items if row.vat_exempt])

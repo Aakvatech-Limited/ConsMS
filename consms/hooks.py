@@ -44,7 +44,8 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-	"Material Request": "public/js/material_request.js"
+	"Material Request": "public/js/material_request.js",
+	"Project": "public/js/project.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -76,10 +77,9 @@ doctype_js = {
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "consms.utils.jinja_methods",
-# 	"filters": "consms.utils.jinja_filters"
-# }
+jinja = {
+	"methods": ["consms.construction_management.ipc.get_ipc_print_data"],
+}
 
 # Installation
 # ------------
@@ -139,20 +139,14 @@ doctype_js = {
 # ---------------
 # Hook on document methods and events
 
-# Site measurement formulas from other apps, picked on a BF Construction Type with method "Custom".
-# The function gets (measurement_row, construction_type) and returns the quantity.
-# consms_measurement_methods = {
-# 	"Bridge Deck": "my_app.measurement.bridge_deck_quantity",
-# }
-
 doc_events = {
 	"Material Request": {
-		"validate": "consms.material_request.warn_if_over_boq",
-		"on_submit": "consms.material_request.update_boq_requested_qty",
-		"on_cancel": "consms.material_request.update_boq_requested_qty",
+		"validate": "consms.material_request.warn_if_over_budget",
+		"on_submit": "consms.material_request.update_budget_requested_qty",
+		"on_cancel": "consms.material_request.update_budget_requested_qty",
 	},
 	"Task": {
-		"on_update": "consms.construction_management.tasks.update_mobilization_from_task",
+		"on_update": "consms.construction_management.tasks.update_works_execution_from_task",
 	},
 }
 
@@ -163,6 +157,12 @@ after_migrate = [
 
 # Scheduled Tasks
 # ---------------
+
+scheduler_events = {
+	"daily": [
+		"consms.construction_management.reminders.send_expiry_reminders",
+	],
+}
 
 # scheduler_events = {
 # 	"all": [
@@ -265,5 +265,6 @@ after_migrate = [
 
 
 override_doctype_dashboards = {
+	"Project": "consms.setup.get_project_dashboard",
 	"Material Request": "consms.setup.get_material_request_dashboard"
 }

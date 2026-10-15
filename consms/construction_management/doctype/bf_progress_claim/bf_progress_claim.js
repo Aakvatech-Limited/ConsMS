@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Progress Claim", {
+	onload(frm) {
+		// lines come from the template: no adding or removing rows by hand
+		frm.set_df_property("certificate_lines", "cannot_add_rows", true);
+		frm.set_df_property("certificate_lines", "cannot_delete_rows", true);
+	},
 	setup: function(frm) {
 		frm.set_query("variation_order", "variations", function() {
 			return {
@@ -33,8 +38,9 @@ frappe.ui.form.on("BF Progress Claim", {
 					}
 				});
 			}, __("Actions"));
+
 		}
-		
+
 		if (frm.doc.docstatus === 1) {
 			if (frm.doc.claim_type === "Client Claim") {
 				frm.add_custom_button(__("Sales Invoice"), function() {
@@ -54,35 +60,20 @@ frappe.ui.form.on("BF Progress Claim", {
 		}
 	},
 	
-	materials_on_site: function(frm) {
-		frm.trigger("calculate_totals_frontend");
+	// The certificate lines come from the template and are worked out on the server: save to see the figures
+	certificate_type: function(frm) {
+		frm.clear_table("certificate_lines");
+		frm.refresh_field("certificate_lines");
+		frm.trigger("show_save_hint");
 	},
-	retention_percentage: function(frm) {
-		frm.trigger("calculate_totals_frontend");
+	certificate_template: function(frm) {
+		frm.clear_table("certificate_lines");
+		frm.refresh_field("certificate_lines");
+		frm.trigger("show_save_hint");
 	},
-	advance_payment_recovery: function(frm) {
-		frm.trigger("calculate_totals_frontend");
+	show_save_hint: function(frm) {
+		frappe.show_alert({ message: __("Save to recalculate the certificate."), indicator: "blue" });
 	},
-	
-	calculate_totals_frontend: function(frm) {
-		var total_work = frm.doc.total_work_executed || 0.0;
-		var total_var = 0.0;
-		$.each(frm.doc.variations || [], function(i, d) {
-			d.cumulative_amount = flt(d.previously_certified) + flt(d.this_period_amount);
-			total_var += flt(d.cumulative_amount);
-		});
-		frm.set_value("approved_variations", total_var);
-
-		var gross = total_work + flt(frm.doc.materials_on_site) + total_var;
-		frm.set_value("gross_valuation", gross);
-		
-		var retention = (flt(frm.doc.retention_percentage) / 100.0) * gross;
-		frm.set_value("retention_deduction", retention);
-		
-		var deductions = retention + flt(frm.doc.advance_payment_recovery) + flt(frm.doc.previous_certified_amount);
-		var net = gross - deductions;
-		frm.set_value("net_amount_due", net);
-	}
 });
 
 frappe.ui.form.on("BF Progress Claim Variation", {
@@ -94,9 +85,15 @@ frappe.ui.form.on("BF Progress Claim Variation", {
 			frappe.msgprint(__("Cumulative Claimed amount cannot exceed the Approved Amount."));
 			frappe.model.set_value(cdt, cdn, "this_period_amount", flt(row.approved_amount) - flt(row.previously_certified));
 		}
-		frm.trigger("calculate_totals_frontend");
+		frm.trigger("show_save_hint");
 	},
 	variations_remove: function(frm) {
-		frm.trigger("calculate_totals_frontend");
+		frm.trigger("show_save_hint");
 	}
+});
+
+frappe.ui.form.on("BF Certificate Line", {
+	amount: function(frm) {
+		frm.trigger("show_save_hint");
+	},
 });

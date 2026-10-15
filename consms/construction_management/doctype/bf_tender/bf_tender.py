@@ -2,16 +2,167 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.utils import flt
+
+def get_document_types(applies_to):
+	"""Document types required for a Tender or a Contract (including 'Both')."""
+	return frappe.get_all(
+		"BF Document Type", filters={"applies_to": ["in", [applies_to, "Both"]]}, pluck="name", order_by="is_mandatory desc, name"
+	)
+
+
+# Status after submit -> statuses it may move to
+STATUS_TRANSITIONS = {"Bid Submitted": ("Awarded", "Lost")}
 
 
 class BFTender(Document):
 	def before_insert(self):
 		self.status = "Draft"
+		if not self.documents:
+			for doc_type in get_document_types("Tender"):
+				self.append("documents", {"document_type": doc_type, "status": "Pending"})
+
+	def validate(self):
+		self.set_totals()
+		mandatory = set(frappe.get_all("BF Document Type", filters={"is_mandatory": 1}, pluck="name"))
+		for row in self.documents:
+			if row.status == "Not Applicable" and row.document_type in mandatory:
+				frappe.throw(_("Row {0}: {1} is mandatory and cannot be Not Applicable.").format(row.idx, frappe.bold(row.document_type)))
+			if row.status == "Ready" and not row.attachment:
+				frappe.throw(_("Row {0}: attach {1} before marking it Ready.").format(row.idx, frappe.bold(row.document_type)))
+
+	def before_update_after_submit(self):
+		self.set_totals()
+
+	def set_totals(self):
+		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
+		for row in self.bid_securities:
+			if row.status == "Returned" and not row.returned_on:
+				row.returned_on = frappe.utils.today()
+		self.total_bid_security = sum(flt(row.amount) for row in self.bid_securities if row.status == "Held by Client")
+
+	def before_submit(self):
+		pending = [row.document_type for row in self.documents if row.status == "Pending"]
+		if pending:
+			frappe.throw(
+				_("These tender documents are still Pending: {0}. Mark each Ready (with attachment) or Not Applicable.").format(
+					", ".join(frappe.bold(d) for d in pending)
+				),
+				title=_("Tender documents incomplete"),
+			)
+		if not self.boq or frappe.db.get_value("BF Bill of Quantities", self.boq, "docstatus") != 1:
+			frappe.throw(_("Submit the priced Bill of Quantities for this tender before submitting the bid."))
 
 	def on_submit(self):
-		self.db_set("status", "Awarded")
+		self.db_set("status", "Bid Submitted")
+
+
+@frappe.whitelist()
+def set_status(tender_name, status):
+	tender = frappe.get_doc("BF Tender", tender_name)
+	tender.check_permission("submit")
+
+	if status not in STATUS_TRANSITIONS.get(tender.status, ()):
+		frappe.throw(_("Cannot change Tender status from {0} to {1}.").format(tender.status, status))
+
+	tender.db_set("status", status)
+	tender.add_comment("Info", _("Marked as {0}").format(status))
+	return status
+
+
+def get_or_create_boq_pdf(tender):
+	"""One BOQ PDF per tender: a submitted BOQ cannot change, so reuse it and remove extra copies."""
+	file_name = f"BOQ {tender.boq}.pdf"
+	existing = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_name": ["like", f"BOQ {tender.boq}%.pdf"]},
+		pluck="name",
+		order_by="creation asc",
+	)
+	for extra in existing[1:]:
+		frappe.delete_doc("File", extra, ignore_permissions=True)
+	if existing:
+		return frappe.get_doc("File", existing[0])
+
+	try:
+		pdf = frappe.get_print("BF Bill of Quantities", tender.boq, print_format="BOQ Client Layout", as_pdf=True)
+		return frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": file_name,
+				"content": pdf,
+				"attached_to_doctype": "BF Tender",
+				"attached_to_name": tender.name,
+				"is_private": 1,
+			}
+		).insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(title=f"BOQ PDF for tender {tender.name}")
+		return None
+
+
+@frappe.whitelist()
+def get_tender_submission(tender_name):
+	"""Files and email details for sending the bid: tender documents + the BOQ as PDF."""
+	tender = frappe.get_doc("BF Tender", tender_name)
+	tender.check_permission("read")
+	if not tender.boq or frappe.db.get_value("BF Bill of Quantities", tender.boq, "docstatus") != 1:
+		frappe.throw(_("Submit the priced Bill of Quantities before sending the tender."))
+
+	warnings = []
+	urls = [row.attachment for row in tender.documents if row.status == "Ready" and row.attachment]
+	pending = [row.document_type for row in tender.documents if row.status == "Pending"]
+	if pending:
+		warnings.append(_("Still Pending: {0}").format(", ".join(pending)))
+
+	boq_pdf = get_or_create_boq_pdf(tender)
+	if not boq_pdf:
+		warnings.append(_("The BOQ PDF could not be generated; attach it manually."))
+
+	files = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_url": ["in", urls or [""]]},
+		fields=["name", "file_name", "file_url"],
+	)
+	if boq_pdf:
+		files.append({"name": boq_pdf.name, "file_name": boq_pdf.file_name, "file_url": boq_pdf.file_url})
+
+	customer = frappe.db.get_value("Project", tender.project, "customer") if tender.project else None
+	recipient = frappe.db.get_value("Customer", customer, "email_id") if customer else None
+	documents = [row.document_type for row in tender.documents if row.status == "Ready"]
+	return {
+		"files": files,
+		"recipients": recipient or "",
+		"subject": _("Tender Submission: {0}").format(tender.tender_name),
+		"message": _("Dear Sir/Madam,<br><br>Please find attached our tender for <b>{0}</b>: the priced Bill of Quantities and the following documents:<ul>{1}</ul>Kind regards,").format(
+			tender.tender_name, "".join(f"<li>{d}</li>" for d in documents)
+		),
+		"warnings": warnings,
+	}
+
+
+@frappe.whitelist()
+def make_bf_boq(source_name, target_doc=None):
+	"""Tender -> BOQ: the BOQ is priced for this tender (one BOQ per tender)."""
+	existing = frappe.db.get_value("BF Tender", source_name, "boq")
+	if existing and frappe.db.get_value("BF Bill of Quantities", existing, "docstatus") != 2:
+		frappe.throw(_("This tender already has Bill of Quantities {0}.").format(existing))
+
+	return get_mapped_doc(
+		"BF Tender",
+		source_name,
+		{
+			"BF Tender": {
+				"doctype": "BF Bill of Quantities",
+				"field_map": {"project": "project", "name": "tender"},
+				"field_no_map": ["status", "boq", "amended_from"],
+			}
+		},
+		target_doc,
+	)
 
 
 @frappe.whitelist()
@@ -39,8 +190,7 @@ def make_bf_contract(source_name, target_doc=None):
     )
 
     if not doc.get("submittals"):
-        document_types = frappe.get_all("BF Document Type", fields=["name"])
-        for doc_type in document_types:
-            doc.append("submittals", {"submittal_type": doc_type.name, "status": "Pending"})
+        for doc_type in get_document_types("Contract"):
+            doc.append("submittals", {"submittal_type": doc_type, "status": "Pending"})
 
     return doc
