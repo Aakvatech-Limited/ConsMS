@@ -137,3 +137,20 @@ def open_works_execution_tasks(filters=None):
 		"route": ["List", "Task"],
 		"route_options": {"name": ["in", names or [""]]},
 	}
+
+
+@frappe.whitelist()
+def pending_submittals(filters=None):
+	"""Submittals still pending on submitted contracts the user may see (counted through the contract, not the child table)."""
+	contracts = frappe.get_list("BF Contract", filters={"docstatus": 1}, pluck="name") if frappe.has_permission("BF Contract") else []
+	rows = frappe.get_all(
+		"BF Contract Submittal",
+		filters={"parenttype": "BF Contract", "parent": ["in", contracts or [""]], "status": "Pending"},
+		pluck="parent",
+	)
+	return {
+		"value": len(rows),
+		"fieldtype": "Int",
+		"route": ["List", "BF Contract"],
+		"route_options": {"name": ["in", list(set(rows)) or [""]]},
+	}
