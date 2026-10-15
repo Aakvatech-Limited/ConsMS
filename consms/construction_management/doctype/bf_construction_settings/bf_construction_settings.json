@@ -80,7 +80,7 @@
    "fieldname": "ai_model",
    "fieldtype": "Data",
    "label": "Model",
-   "description": "Leave empty for the provider's default (Gemini: gemini-2.5-flash, Groq: llama-3.3-70b-versatile). Use a model your free plan allows, e.g. a Flash-Lite model for higher free daily limits."
+   "description": "Leave empty for the default (Gemini: gemini-flash-lite-latest, always the current Flash-Lite with the highest free daily limit; Groq: llama-3.3-70b-versatile). For harder files try gemini-flash-latest."
   },
   {
    "fieldname": "ai_base_url",

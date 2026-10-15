@@ -18,7 +18,7 @@ from frappe import _
 from frappe.utils import cstr, flt
 
 PROVIDERS = {
-	"Google Gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-flash"),
+	"Google Gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-flash-lite-latest"),
 	"Groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
 }
 FIELDS = ("item_no", "description", "unit", "quantity", "rate", "amount")
@@ -192,7 +192,7 @@ Columns are numbered from 0. Find the columns of: item_no (item code such as 5.2
 Return JSON: {"is_boq": true|false, "header_row": <row number or null>, "columns": {"item_no": i, "description": i, "unit": i, "quantity": i, "rate": i, "amount": i}}.
 Use null for a column that does not exist. Use is_boq=false for sheets that are not a priced item list (cover pages, notes, summaries only)."""
 
-ROWS_PROMPT = """You classify the rows of a construction Bill of Quantities. Each row is [row, item_no, description, unit, quantity, rate, amount].
+ROWS_PROMPT = """You classify the heading and total rows of a construction Bill of Quantities (the priced items are already known and not sent). Each row is [row, item_no, description, unit, quantity, rate, amount].
 Types: "item" (a priced work item: has a unit and a rate or quantity), "bill" (a bill heading such as "BILL NO. 5 CANAL WORKS" or "1000 GENERAL"),
 "section" (a sub-heading inside a bill, such as "5.2 Main Canal" or "Earthworks"), "subtotal" (sub total / total carried forward / page total),
 "summary" (the final summary block: total of bills, provisional sums, contingency, VAT, bid price), "blank", "other" (notes, column headers).
@@ -293,24 +293,54 @@ def rule_row_type(values):
 
 # ---------------------------------------------------------------- putting it together
 
+def layout_fits(sheet, columns, header_row):
+	"""An AI-proposed layout is only used when the numbers agree with it: Qty x Rate = Amount on most priced rows."""
+	if None in (columns.get("description"), columns.get("unit"), columns.get("quantity"), columns.get("rate")):
+		return False
+	priced = agree = 0
+	for row in sheet["rows"]:
+		if header_row and row["r"] <= frappe.utils.cint(header_row):
+			continue
+		cells = row["cells"]
+		def get(f):
+			i = columns.get(f)
+			return cells[i] if i is not None and i < len(cells) else ""
+		quantity, rate, amount = number(get("quantity")), number(get("rate")), number(get("amount"))
+		if get("unit") and quantity is not None and rate is not None:
+			priced += 1
+			if amount is None or abs(quantity * rate - amount) <= max(1, abs(amount) * 0.001):
+				agree += 1
+	return priced >= 5 and agree >= 0.8 * priced
+
+
 def build_preview(file_url):
+	"""Columns and item rows come from the file (header words; a row is an item only with a unit and a number),
+	so quantities and rates are always the Excel's own. The AI names bills and sections and reads odd headings,
+	and proposes columns only for a workbook whose headers the built-in reader cannot find (checked against the numbers)."""
 	config = get_ai_config()
 	source = f"AI ({config['provider']}, {config['model']})" if config else _("Built-in reader (no AI key)")
-	notes = []
-	items, counts, file_totals = [], {}, []
+	notes, items, counts, file_totals = [], [], {}, []
 
-	for sheet in read_sheets(file_url):
-		layout = None
-		if config:
+	def ai_failed(e):
+		nonlocal config, source
+		notes.append(cstr(e) + " " + _("Used the built-in reader instead."))
+		config, source = None, _("Built-in reader (AI not available)")
+
+	sheets = read_sheets(file_url)
+	layouts = {sheet["name"]: rule_layout(sheet) for sheet in sheets}
+	if config and not any(layout[0] for layout in layouts.values()):
+		for sheet in sheets:
 			try:
-				layout = ai_layout(config, sheet)
+				is_boq, header_row, columns = ai_layout(config, sheet)
 			except AIUnavailable as e:
-				notes.append(cstr(e) + " " + _("Used the built-in reader instead."))
-				config, source = None, _("Built-in reader (AI not available)")
-		if not layout:
-			layout = rule_layout(sheet)
-		is_boq, header_row, columns = layout
-		if not is_boq or columns.get("description") is None:
+				ai_failed(e)
+				break
+			if is_boq and layout_fits(sheet, columns, header_row):
+				layouts[sheet["name"]] = (True, header_row, columns)
+
+	for sheet in sheets:
+		is_boq, header_row, columns = layouts[sheet["name"]]
+		if not is_boq:
 			continue
 
 		def pick(cells, field):
@@ -319,16 +349,23 @@ def build_preview(file_url):
 
 		rows = [r for r in sheet["rows"] if not header_row or r["r"] > frappe.utils.cint(header_row)]
 		compact = [[r["r"]] + [pick(r["cells"], f) for f in FIELDS] for r in rows]
+		classified = [[values[0], values[1:], *rule_row_type(values[1:])] for values in compact]
 
-		types = {}
+		# the AI only looks at the rows that are not items: headings, totals, notes
 		if config:
+			headings = [values for values, row in zip(compact, classified) if row[2] not in ("item", "blank")]
 			try:
-				types = ai_row_types(config, compact)
+				types = ai_row_types(config, headings) if headings else {}
 			except AIUnavailable as e:
-				notes.append(cstr(e) + " " + _("Used the built-in reader for the rest."))
-				config, source = None, _("Built-in reader (AI not available)")
+				ai_failed(e)
+				types = {}
+			for row in classified:
+				kind, title = types.get(row[0], (None, ""))
+				if row[2] == "other" and kind in ("bill", "section", "subtotal", "summary"):
+					row[2], row[3] = kind, title  # a heading the built-in reader could not place
+				elif kind == row[2] and kind in ("bill", "section") and title:
+					row[3] = title  # same kind, the AI's cleaner name
 
-		classified = [(values[0], values[1:], *(types.get(values[0]) or rule_row_type(values[1:]))) for values in compact]
 		bills_by_number = {}
 		for _row, cells, kind, title in classified:
 			match = re.search(r"bill no\.?\s*(\d+)", (title or "").lower())
