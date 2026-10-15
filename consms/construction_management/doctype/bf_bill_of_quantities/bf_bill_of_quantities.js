@@ -117,6 +117,7 @@ function import_with_ai(frm) {
 		fields: [
 			{ fieldname: "file", fieldtype: "Attach", label: __("Client BOQ Excel (as received)"), reqd: 1 },
 			{ fieldname: "replace", fieldtype: "Check", label: __("Replace the {0} lines already in this BOQ", [(frm.doc.items || []).length]), hidden: !has_lines },
+			{ fieldname: "set_summary", fieldtype: "Check", label: __("Also set the Tender Summary from the file's summary"), default: 1, hidden: 1 },
 			{ fieldname: "preview", fieldtype: "HTML" },
 		],
 		primary_action_label: __("Read File"),
@@ -184,6 +185,18 @@ function import_with_ai(frm) {
 		if ((result.notes || []).length) {
 			html += `<div class="alert alert-warning small"><b>${__("Check")}:</b><ul class="mb-0">${result.notes.slice(0, 30).map((n) => `<li>${esc(n)}</li>`).join("")}</ul></div>`;
 		}
+		const sm = result.summary;
+		dialog.set_df_property("set_summary", "hidden", !sm);
+		if (sm) {
+			html += `<div class="mb-3"><b>${__("Tender Summary from the file")}</b>
+				<span class="indicator-pill ${sm.matches ? "green" : "red"}">${sm.matches ? __("Bid price matches the file") : __("Bid price differs")}</span>
+				<div class="small text-muted">${__("Template")}: ${esc(sm.template)} &nbsp; ${__("Contingency")}: ${sm.contingency_rate}% &nbsp; ${__("VAT")}: ${sm.vat_rate}%
+				${sm.variation_amount ? "&nbsp; " + __("Variation of prices") + ": " + fmt(sm.variation_amount) : ""}</div>
+				<table class="table table-sm table-bordered small mt-1" style="max-width: 640px"><tbody>
+				${sm.summary_lines.map((l) => `<tr><td>${esc(l.label)}</td><td class="text-right">${fmt(l.amount)}</td></tr>`).join("")}
+				<tr><td><b>${__("Bid Price")}</b></td><td class="text-right"><b>${fmt(sm.bid)}</b>${sm.file_bid == null ? "" : ` <span class="text-muted">(${__("file")}: ${fmt(sm.file_bid)})</span>`}</td></tr>
+				</tbody></table></div>`;
+		}
 		html += `<div style="max-height: 420px; overflow: auto"><table class="table table-sm table-bordered small">
 			<thead><tr><th>${__("Item No")}</th><th>${__("Description")}</th><th>${__("Bill / Section")}</th><th>${__("Unit")}</th>
 			<th class="text-right">${__("Qty")}</th><th class="text-right">${__("Rate")}</th><th class="text-right">${__("Amount")}</th></tr></thead><tbody>`;
@@ -198,13 +211,13 @@ function import_with_ai(frm) {
 	function insert(values) {
 		frappe.call({
 			method: "consms.construction_management.boq_ai_import.insert_into_boq",
-			args: { boq: frm.doc.name, token: dialog.token, replace: values.replace ? 1 : 0 },
+			args: { boq: frm.doc.name, token: dialog.token, replace: values.replace ? 1 : 0, set_summary: values.set_summary ? 1 : 0 },
 			freeze: true,
 			callback(r) {
 				if (!r.message) return;
 				dialog.hide();
 				frm.reload_doc();
-				frappe.show_alert({ message: __("{0} lines imported. Total {1}", [r.message.count, format_currency(r.message.total)]), indicator: "green" });
+				frappe.show_alert({ message: __("{0} lines imported. Total {1}, bid price {2}", [r.message.count, format_currency(r.message.total), format_currency(r.message.bid_price)]), indicator: "green" });
 			},
 		});
 	}

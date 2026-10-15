@@ -17,6 +17,8 @@ import requests
 from frappe import _
 from frappe.utils import cstr, flt
 
+from consms.construction_management.ipc import LineHolder
+
 PROVIDERS = {
 	"Google Gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-flash-lite-latest"),
 	"Groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
@@ -51,7 +53,7 @@ def get_preview(token):
 
 
 @frappe.whitelist()
-def insert_into_boq(boq, token, replace=0):
+def insert_into_boq(boq, token, replace=0, set_summary=1):
 	doc = frappe.get_doc("BF Bill of Quantities", boq)
 	doc.check_permission("write")
 	if doc.docstatus != 0:
@@ -71,7 +73,10 @@ def insert_into_boq(boq, token, replace=0):
 			"unit_rate": item["rate"],
 		})
 	doc.save()
-	return {"count": len(state["result"]["items"]), "total": doc.total_amount}
+	summary = state["result"].get("summary")
+	if summary and frappe.utils.cint(set_summary):
+		apply_summary(doc, summary)
+	return {"count": len(state["result"]["items"]), "total": doc.total_amount, "bid_price": doc.bid_price}
 
 
 @frappe.whitelist()
@@ -319,7 +324,7 @@ def build_preview(file_url):
 	and proposes columns only for a workbook whose headers the built-in reader cannot find (checked against the numbers)."""
 	config = get_ai_config()
 	source = f"AI ({config['provider']}, {config['model']})" if config else _("Built-in reader (no AI key)")
-	notes, items, counts, file_totals = [], [], {}, []
+	notes, items, counts, file_totals, summary_lines = [], [], {}, [], []
 
 	def ai_failed(e):
 		nonlocal config, source
@@ -372,9 +377,21 @@ def build_preview(file_url):
 			if kind == "bill" and match:
 				bills_by_number.setdefault(match.group(1), title)
 
-		bill, section = None, None
+		bill, section, in_summary = None, None, False
 		for row_no, cells, kind, title in classified:
 			counts[kind] = counts.get(kind, 0) + 1
+			heading = " ".join(cstr(c) for c in (cells[0], cells[1])).strip().lower()
+			if re.search(r"^summary|total of bills|bid price", heading):
+				in_summary = True
+			if in_summary and kind != "item":
+				# the client's summary block: total of bills, provisional sums, contingency, VAT, bid price
+				amount = next((number(c) for c in (cells[5], cells[4], cells[3]) if number(c) is not None), None)
+				label = " ".join(cstr(c) for c in (cells[0], cells[1]) if cstr(c)).strip()
+				if amount is not None and label:
+					summary_lines.append({"label": label, "amount": amount})
+					if re.search(r"total of bills", label.lower()):
+						file_totals.append(amount)
+				continue
 			if kind == "bill":
 				bill, section = title or cstr(cells[1]), None
 			elif kind == "section":
@@ -408,7 +425,90 @@ def build_preview(file_url):
 	if len(repeated) > 10:
 		notes.append(_("{0} more descriptions repeat on several items.").format(len(repeated) - 10))
 
-	return {"source": source, "items": items, "total": total, "file_total": file_total, "counts": counts, "notes": notes}
+	summary = derive_summary(summary_lines, items, total, notes)
+	return {"source": source, "items": items, "total": total, "file_total": file_total, "counts": counts, "notes": notes,
+		"summary": summary}
+
+
+# ---------------------------------------------------------------- the client's summary -> Tender Summary
+
+PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
+
+
+def find_line(lines, pattern, exclude=None):
+	"""Amount of the first summary line matching the pattern; the bill totals listed in the summary are skipped."""
+	for line in lines:
+		text = line["label"].lower()
+		if re.match(r"bill\s*no|\d+\s", text):
+			continue
+		if re.search(pattern, text) and not (exclude and re.search(exclude, text)):
+			return line["amount"]
+	return None
+
+
+def derive_summary(lines, items, total, notes):
+	"""Rates the client used (contingency %, VAT %) and the variation of prices, worked out from the summary amounts,
+	then checked: the Tender Summary must give the same bid price as the file."""
+	if not lines:
+		return None
+	provisional = find_line(lines, r"less.*provisional sum|specified provisional sum", r"contingenc|variation")
+	contingency = find_line(lines, r"contingenc")
+	variation = find_line(lines, r"variation of price")
+	vat = find_line(lines, r"\bvat\b|value added tax")
+	bid = find_line(lines, r"bid price|form of tender|tender sum|contract sum|grand total")
+	if not (vat or contingency or bid):
+		return None
+
+	base = flt(total) - flt(provisional)
+	settings = {
+		"template": "Tender Summary A-I" if (provisional or contingency or variation) else "Bills + VAT 18%",
+		"contingency_rate": round(flt(contingency) / base * 100, 4) if contingency and base else 0,
+		"variation_amount": flt(variation),
+	}
+	settings["vat_rate"] = round(flt(vat) / (base + flt(contingency) + flt(variation)) * 100, 4) if vat else 0
+
+	from consms.construction_management.ipc import build_lines, run_lines
+	from consms.construction_management.uom import normalize
+
+	holder = LineHolder()
+	build_lines(holder, "lines", settings["template"])
+	set_summary_rates(holder.lines, settings)
+	items_ps = sum(i["quantity"] * i["rate"] for i in items if normalize(i["unit"]) in PROVISIONAL_SUM_UNITS)
+	system_bid, _roles = run_lines(holder.lines, {"Total of Bills": flt(total), "Provisional Sums": items_ps}, contract_value=flt(total))
+
+	if provisional and abs(items_ps - provisional) > 1:
+		notes.append(_("The summary takes off {0} of provisional sums, but the PS items add up to {1}.").format(
+			frappe.format_value(provisional, "Currency"), frappe.format_value(items_ps, "Currency")))
+	matches = bid is None or abs(system_bid - bid) <= 1
+	if not matches:
+		notes.append(_("With these rates the bid price is {0}, but the file says {1}.").format(
+			frappe.format_value(system_bid, "Currency"), frappe.format_value(bid, "Currency")))
+	return {**settings, "lines": lines, "file_bid": bid, "bid": system_bid, "matches": matches,
+		"summary_lines": [{"label": l.label, "amount": l.amount} for l in holder.lines]}
+
+
+def set_summary_rates(lines, settings):
+	"""Put the client's own rates on the template's lines (and in their names)."""
+	def rename(label, rate):
+		return re.sub(r"\d+(\.\d+)?\s*%", f"{frappe.utils.flt(rate, 4):g}%", label)
+
+	for line in lines:
+		text = (line.label or "").lower()
+		if line.role == "VAT" and settings.get("vat_rate"):
+			line.rate, line.label = settings["vat_rate"], rename(line.label, settings["vat_rate"])
+		elif "contingenc" in text and line.calculation == "Percentage":
+			line.rate, line.label = settings["contingency_rate"], rename(line.label, settings["contingency_rate"])
+		elif "variation of price" in text and line.calculation == "Typed Amount":
+			line.amount = settings["variation_amount"]
+
+
+def apply_summary(boq, summary):
+	"""Set the Tender Summary on the BOQ with the client's rates."""
+	boq.summary_template = summary["template"]
+	boq.set("summary_lines", [])
+	boq.save()
+	set_summary_rates(boq.summary_lines, summary)
+	boq.save()
 
 
 def make_item(sheet, row_no, cells, bill, section, notes):
