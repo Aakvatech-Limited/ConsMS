@@ -14,15 +14,27 @@ function set_bid_security_total(frm) {
 	frm.set_value("total_bid_security", total);
 }
 
-frappe.ui.form.on("BF Tender Cost", {
-	amount: (frm) => frm.set_value("total_tender_cost", (frm.doc.costs || []).reduce((t, r) => t + flt(r.amount), 0)),
-	costs_remove: (frm) => frm.set_value("total_tender_cost", (frm.doc.costs || []).reduce((t, r) => t + flt(r.amount), 0)),
-});
+// Tender costs are booked in accounting against the tender's Project: remark field per document
+const TENDER_COST_DOCTYPES = {
+	"Purchase Invoice": "remarks",
+	"Journal Entry": "user_remark",
+	"Expense Claim": "remark",
+};
 
 frappe.ui.form.on("BF Tender", {
 	refresh(frm) {
+		// Frappe hides the naming field once saved; the tender number should stay in view (read only)
+		frm.toggle_display("tender_no", true);
 		frm.events.bid_security_alert(frm);
 		if (frm.is_new()) return;
+
+		if (frm.doc.docstatus < 2) {
+			Object.keys(TENDER_COST_DOCTYPES)
+				.filter((doctype) => frappe.model.can_create(doctype))
+				.forEach((doctype) => {
+					frm.add_custom_button(__(doctype), () => frm.events.make_tender_cost(frm, doctype), __("Create"));
+				});
+		}
 
 		if (frm.doc.boq) {
 			frm.add_custom_button(__("Bill of Quantities"), () => frappe.set_route("Form", "BF Bill of Quantities", frm.doc.boq), __("View"));
@@ -100,6 +112,25 @@ frappe.ui.form.on("BF Tender", {
 				const list = $(composer.dialog.fields_dict.select_attachments.wrapper);
 				data.files.forEach((f) => list.find(`[data-file-name="${f.name}"]`).prop("checked", true));
 			});
+		});
+	},
+
+	async make_tender_cost(frm, doctype) {
+		const { message } = await frappe.db.get_value("Project", frm.doc.project, "company");
+		const values = { company: message.company };
+		// a Journal Entry has no Project of its own: it goes on each account row
+		if (doctype !== "Journal Entry") values.project = frm.doc.project;
+
+		frappe.new_doc(doctype, values, (doc) => {
+			// remark fields are "no copy", so they are set here rather than through the values above
+			doc[TENDER_COST_DOCTYPES[doctype]] = __("Tender {0}: {1}", [frm.doc.name, frm.doc.tender_name]);
+			if (doctype !== "Journal Entry") return;
+
+			// one debit and one credit row; the new entry already starts with one
+			while ((doc.accounts || []).length < 2) {
+				frappe.model.add_child(doc, "accounts");
+			}
+			doc.accounts.forEach((row) => (row.project = frm.doc.project));
 		});
 	},
 

@@ -1,13 +1,14 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:GE-TNDR-{YYYY}-{####}",
+ "autoname": "field:tender_no",
  "creation": "2026-06-26 17:47:18.023878",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "tender_details",
+  "tender_no",
   "tender_name",
   "project",
   "cb_6b40a0ab",
@@ -18,9 +19,6 @@
   "sb_bid_security",
   "bid_securities",
   "total_bid_security",
-  "sb_costs",
-  "costs",
-  "total_tender_cost",
   "amended_from",
   "connections_tab"
  ],
@@ -31,17 +29,28 @@
    "label": "Tender Details"
   },
   {
+   "bold": 1,
+   "description": "The client's tender number, e.g. AE/104/2022-23/HQ/W/12. It becomes the name of this tender; to correct it later, use Rename.",
+   "fieldname": "tender_no",
+   "fieldtype": "Data",
+   "label": "Tender No.",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
    "fieldname": "tender_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Tender Name",
+   "label": "Tender Title",
    "reqd": 1
   },
   {
+   "description": "Costs of this tender are booked in accounting against this Project.",
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
   },
   {
    "fieldname": "cb_6b40a0ab",
@@ -103,28 +112,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "sb_costs",
-   "fieldtype": "Section Break",
-   "label": "Tender Costs"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "Money spent on this tender: document fees, site visits, printing, consultants. Can be added after the bid is submitted.",
-   "fieldname": "costs",
-   "fieldtype": "Table",
-   "label": "Tender Costs",
-   "options": "BF Tender Cost"
-  },
-  {
-   "allow_on_submit": 1,
-   "bold": 1,
-   "fieldname": "total_tender_cost",
-   "fieldtype": "Currency",
-   "label": "Total Tender Cost",
-   "read_only": 1
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -145,11 +132,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 09:00:00.000000",
+ "modified": "2026-10-21 12:45:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Tender",
- "naming_rule": "Expression",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -170,8 +157,11 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "tender_name,project,status",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "tender_name",
  "track_changes": 1
 }

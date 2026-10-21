@@ -38,7 +38,6 @@ class BFTender(Document):
 		self.set_totals()
 
 	def set_totals(self):
-		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
 		for row in self.bid_securities:
 			if row.status == "Returned" and not row.returned_on:
 				row.returned_on = frappe.utils.today()
