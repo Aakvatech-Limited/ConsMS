@@ -23,7 +23,13 @@ class BFContract(Document):
 
 	def set_value_from_boq(self):
 		"""Contract amount = BOQ bid price without VAT (tender summary), or the total of bills."""
-		if not self.boq or self.docstatus:
+		if self.docstatus:
+			return
+		if not self.boq and self.tender:
+			from consms.construction_management.doctype.bf_tender.bf_tender import get_tender_boq
+
+			self.boq = get_tender_boq(self.tender)
+		if not self.boq:
 			return
 		boq = frappe.get_doc("BF Bill of Quantities", self.boq)
 		if boq.summary_lines:

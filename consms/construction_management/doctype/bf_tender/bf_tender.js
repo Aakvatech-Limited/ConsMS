@@ -36,15 +36,17 @@ frappe.ui.form.on("BF Tender", {
 				});
 		}
 
-		if (frm.doc.boq) {
-			frm.add_custom_button(__("Bill of Quantities"), () => frappe.set_route("Form", "BF Bill of Quantities", frm.doc.boq), __("View"));
+		// the BOQ points at this tender; the tender itself does not store it
+		const boq = (frm.doc.__onload || {}).boq;
+		if (boq) {
+			frm.add_custom_button(__("Bill of Quantities"), () => frappe.set_route("Form", "BF Bill of Quantities", boq), __("View"));
 		} else if (frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("BOQ"), () => {
 				frappe.model.open_mapped_doc({ method: `${TENDER_METHOD}.make_bf_boq`, frm });
 			}, __("Create"));
 		}
 
-		if (frm.doc.boq && (frm.doc.docstatus === 0 || frm.doc.status === "Bid Submitted")) {
+		if (boq && (frm.doc.docstatus === 0 || frm.doc.status === "Bid Submitted")) {
 			frm.add_custom_button(__("Send Tender"), () => frm.events.send_tender(frm));
 		}
 

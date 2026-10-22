@@ -15,11 +15,6 @@ from consms.construction_management.uom import get_uom_map, normalize, resolve_u
 PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
 
 class BFBillofQuantities(Document):
-	def after_insert(self):
-		# Tender -> BOQ: keep the tender pointing at its (latest) BOQ so the contract picks it up
-		if self.tender:
-			frappe.db.set_value("BF Tender", self.tender, "boq", self.name)
-
 	def validate(self):
 		self.validate_one_boq_per_tender()
 		self.set_erp_uoms()
@@ -72,8 +67,8 @@ class BFBillofQuantities(Document):
 
 @frappe.whitelist()
 def get_awarded_tender(boq_name):
-	tender = frappe.db.get_value("BF Tender", {"boq": boq_name, "docstatus": 1, "status": "Awarded"}, "name")
-	if not tender:
+	tender = frappe.db.get_value("BF Bill of Quantities", boq_name, "tender")
+	if not tender or frappe.db.get_value("BF Tender", tender, ["docstatus", "status"]) != (1, "Awarded"):
 		return None
 	contract = frappe.db.get_value("BF Contract", {"tender": tender, "docstatus": ["!=", 2]}, "name")
 	return {"tender": tender, "contract": contract}

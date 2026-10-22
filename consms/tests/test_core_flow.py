@@ -71,6 +71,35 @@ class TestCertificateEngine(FrappeTestCase):
 		self.assertEqual(roles["Advance Recovery"], 0)  # no advance paid, nothing to recover
 
 
+class TestTenderStage(FrappeTestCase):
+	"""Before the award the BOQ can still be corrected: the tender must not hold it."""
+
+	def test_boq_of_a_submitted_tender_can_be_cancelled(self):
+		from consms.construction_management.doctype.bf_tender.bf_tender import get_tender_boq
+
+		company = frappe.db.get_value("Company", {}, "name")
+		project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS tender stage test", "company": company}).insert()
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/TENDER/001", "tender_name": "Tender stage test", "project": project.name}
+		).insert()
+		boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": project.name, "tender": tender.name, "summary_template": None,
+			"items": [{"item_no": "1", "description": "Excavation", "uom": "Cubic Meter", "erp_uom": "Cubic Meter", "quantity": 10, "unit_rate": 1000}],
+		}).insert()
+		boq.submit()
+
+		tender.reload()
+		for row in tender.documents:
+			row.status, row.attachment = "Ready", "/files/test-proof.pdf"
+		tender.save()
+		tender.submit()  # needs the submitted BOQ, found through the lookup
+		self.assertEqual(get_tender_boq(tender.name), boq.name)
+
+		boq.reload()
+		boq.cancel()  # used to fail: "linked with BF Tender"
+		self.assertIsNone(get_tender_boq(tender.name))
+
+
 class TestCoreFlow(FrappeTestCase):
 	"""Real documents through the whole flow, with figures small enough to check by hand.
 
