@@ -11,6 +11,7 @@ from frappe.utils import add_days, flt, today
 from consms.construction_management.certificate_templates import ensure_certificate_templates
 from consms.construction_management.doctype.bf_progress_claim.bf_progress_claim import (
 	fetch_measurements,
+	make_purchase_invoice,
 	make_sales_invoice,
 )
 from consms.construction_management.doctype.bf_tender.bf_tender import make_bf_contract
@@ -116,10 +117,10 @@ class TestCoreFlow(FrappeTestCase):
 		contract.submit()
 		cls.contract = contract
 
-	def measure(self, quantities, date=None):
+	def measure(self, quantities, date=None, contract=None):
 		log = frappe.get_doc({
 			"doctype": "BF Site Measurement Log",
-			"contract": self.contract.name,
+			"contract": contract or self.contract.name,
 			"project": self.project.name,
 			"boq": self.boq.name,
 			"date": date or today(),
@@ -132,16 +133,18 @@ class TestCoreFlow(FrappeTestCase):
 		log.submit()
 		return log
 
-	def make_claim(self, title, period_from, period_to):
+	def make_claim(self, title, period_from, period_to, contract=None, claim_type="Client Claim"):
+		contract = contract or self.contract.name
 		claim = frappe.get_doc({
 			"doctype": "BF Progress Claim",
-			"contract": self.contract.name,
+			"contract": contract,
+			"claim_type": claim_type,
 			"project": self.project.name,
 			"claim_title": title,
 			"period_from": period_from,
 			"period_to": period_to,
 		}).insert()
-		fetch_measurements(claim.name, self.contract.name, period_from, period_to)
+		fetch_measurements(claim.name, contract, period_from, period_to)
 		return frappe.get_doc("BF Progress Claim", claim.name)
 
 	def test_1_contract_takes_its_value_from_the_boq(self):
@@ -187,3 +190,33 @@ class TestCoreFlow(FrappeTestCase):
 		# 1,000 m3 in the BOQ; 500 already measured
 		with self.assertRaises(frappe.ValidationError):
 			self.measure({"2.1": 600})
+
+	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
+		supplier = frappe.get_doc({
+			"doctype": "Supplier", "supplier_name": "ConsMS Test Subcontractor",
+			"supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}),
+		}).insert()
+		subcontract = frappe.get_doc({
+			"doctype": "BF Contract",
+			"tender": self.tender.name,
+			"contract_type": "Subcontract",
+			"main_contract": self.contract.name,
+			"supplier": supplier.name,
+			"project": self.project.name,
+			"boq": self.boq.name,
+			"contingency_percentage": 0,
+			"certificate_template": SEUWASA,
+		}).insert()
+		subcontract.submit()
+
+		self.measure({"2.2": 10}, date=add_days(today(), -3), contract=subcontract.name)
+		claim = self.make_claim("Sub IPC 01", add_days(today(), -10), today(), subcontract.name, "Subcontractor Claim")
+		self.assertEqual(claim.amount_due, 3_500_000 - 175_000 + 630_000)  # no advance on this subcontract
+		claim.submit()
+
+		if not frappe.get_all("Purchase Taxes and Charges Template", filters={"company": self.company, "disabled": 0}, limit=1):
+			self.skipTest("The company has no purchase tax template, so the invoice VAT cannot be checked.")
+		invoice = make_purchase_invoice(claim.name)
+		self.assertEqual(invoice.bf_contract, subcontract.name)
+		self.assertEqual(invoice.bf_progress_claim, claim.name)
+		self.assertEqual(flt(invoice.grand_total), 3_955_000)
