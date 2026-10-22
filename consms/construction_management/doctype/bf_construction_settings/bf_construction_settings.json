@@ -8,6 +8,7 @@
  "field_order": [
   "sb_billing",
   "default_progress_claim_item",
+  "vat_rate",
   "sb_budget_control",
   "over_budget_action",
   "cb_budget_control",
@@ -35,6 +36,13 @@
    "fieldtype": "Link",
    "label": "Default Progress Claim Item",
    "options": "Item"
+  },
+  {
+   "default": "18",
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "label": "VAT Rate",
+   "description": "Added to the certificates of contracts whose VAT Status is Standard Rated."
   },
   {
    "fieldname": "sb_budget_control",
@@ -128,7 +136,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-23 09:00:00.000000",
+ "modified": "2026-10-23 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

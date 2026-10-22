@@ -154,6 +154,9 @@ doc_events = {
 	"Task": {
 		"on_update": "consms.construction_management.tasks.update_works_execution_from_task",
 	},
+	"Communication": {
+		"after_insert": "consms.construction_management.doctype.bf_extension_of_time.bf_extension_of_time.record_sent_request",
+	},
 }
 
 after_migrate = [

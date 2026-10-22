@@ -22,6 +22,8 @@
   "decision_date",
   "decision_reference",
   "decision_remarks",
+  "sb_documents",
+  "documents",
   "amended_from",
   "connections_tab"
  ],
@@ -69,6 +71,7 @@
    "label": "Letter / Reference No."
   },
   {
+   "allow_on_submit": 1,
    "description": "The letter sent to the client or engineer requesting the extension.",
    "fieldname": "correspondence",
    "fieldtype": "Link",
@@ -143,6 +146,19 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_documents",
+   "fieldtype": "Section Break",
+   "label": "Documents"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Letters and documents about this extension: the client's approval, a revised programme, minutes. Can be added at any time, also after the decision.",
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "EOT Documents",
+   "options": "BF EOT Document"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -160,7 +176,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 10:00:00.000000",
+ "modified": "2026-10-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Extension of Time",

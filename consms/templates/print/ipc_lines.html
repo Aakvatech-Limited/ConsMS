@@ -8,7 +8,8 @@
 		</tr>
 	</thead>
 	<tbody>
-	{%- for line in doc.certificate_lines %}
+	{#- VAT has its own row below; certificates made before VAT moved to the contract still hold a VAT line -#}
+	{%- for line in doc.certificate_lines if line.role != "VAT" %}
 		<tr{% if line.line_type == "Subtotal" %} class="total-row"{% endif %}>
 			<td>{{ loop.index }}</td>
 			<td>{{ line.label }}{% if line.calculation == "Percentage" and line.base_amount %} <span class="muted small">({{ frappe.utils.flt(line.rate) }}% {{ _("of") }} {{ fmt(line.base_amount, precision=2) }})</span>{% endif %}</td>
@@ -17,9 +18,12 @@
 			<td class="num">{{ amt(line, line.to_date_amount) }}</td>
 		</tr>
 	{%- endfor %}
-		{% if doc.vat_amount %}
 		<tr class="total-row"><td></td><td>{{ _("Amount Due (Excluding VAT)") }}</td><td></td><td class="num">{{ fmt(doc.net_amount_due, precision=2) }}</td><td></td></tr>
-		{% endif %}
+		<tr>
+			<td></td>
+			<td>{% if ipc.vat.charged %}{{ _("Add: VAT {0}%").format(ipc.vat.rate_label) }} <span class="muted small">({{ _("of") }} {{ fmt(doc.vat_base, precision=2) }})</span>{% else %}{{ ipc.vat.note }}{% endif %}</td>
+			<td></td><td class="num">{{ fmt(doc.vat_amount, precision=2) }}</td><td></td>
+		</tr>
 		<tr class="grand"><td></td><td>{{ _("Amount Due to Contractor") }}</td><td></td><td class="num">{{ fmt(doc.amount_due, precision=2) }}</td><td></td></tr>
 	</tbody>
 </table>

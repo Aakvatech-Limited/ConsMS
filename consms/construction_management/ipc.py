@@ -141,6 +141,8 @@ def validate_template(template):
 		"Budget Overheads": ({"Direct Cost", "Percentage", "Typed Amount"}, work_bases | {"Total of Bills"}),
 	}[template.used_for]
 	for row in template.lines:
+		if template.used_for == "Payment Certificate" and row.role == "VAT":
+			frappe.throw(_("Line {0}: VAT is added to every certificate by the system, from the contract's VAT Status and Basis. Remove this line.").format(row.idx))
 		if row.line_type == "Subtotal":
 			continue
 		if row.calculation not in allowed_calculations:
@@ -162,7 +164,7 @@ def get_contract_terms(contract):
 	return frappe.db.get_value(
 		"BF Contract",
 		contract,
-		["total_contract_amount", "contract_amount", "advance_payment_amount", "certificate_template",
+		["total_contract_amount", "contract_amount", "advance_payment_amount", "certificate_template", "vat_status", "vat_basis",
 			"ld_rate_per_day", "original_completion_date", "revised_completion_date"],
 		as_dict=True,
 	) or frappe._dict()
@@ -249,6 +251,8 @@ def calculate(claim):
 	)
 	if rebuild:
 		build_lines(claim, "certificate_lines", claim.certificate_template, claim.certificate_type or "Interim")
+	# VAT is not a template line: the system adds it from the contract (older drafts may still hold one)
+	claim.set("certificate_lines", [line for line in claim.certificate_lines if line.role != "VAT"])
 
 	previous = get_previous_totals(claim)
 	advance = flt(terms.advance_payment_amount)
@@ -276,15 +280,28 @@ def calculate(claim):
 	claim.retention_release = money(roles["Retention Release"])
 	claim.advance_payment_recovery = money(roles["Advance Recovery"])
 	claim.liquidated_damages = money(roles["Liquidated Damages"])
-	claim.vat_amount = money(roles["VAT"])
-	claim.vat_base = money(sum(flt(line.base_amount) for line in claim.certificate_lines if line.role == "VAT"))
-	claim.amount_due = total
-	claim.net_amount_due = money(total - claim.vat_amount)
+	claim.vat_base, claim.vat_amount = get_vat(
+		taxable_work + this_variations, claim.retention_deduction + claim.advance_payment_recovery, terms)
+	claim.net_amount_due = total
+	claim.amount_due = money(total + claim.vat_amount)
 	claim.previous_certified_amount = money(previous.net)
 
 	claim.retention_held_to_date = money(previous.retention - previous.released + claim.retention_deduction - claim.retention_release)
 	claim.advance_recovered_to_date = money(previous.advance + claim.advance_payment_recovery)
 	claim.advance_balance = money(advance - claim.advance_recovered_to_date) if advance else 0
+
+
+def get_vat(taxable_work, deductions, terms):
+	"""(VAT base, VAT) of a certificate from the contract's VAT settings: one standard for every client.
+
+	Gross Work: VAT on the taxable work of the certificate (VAT-exempt bills such as P&G left out).
+	Net after Deductions: VAT after this certificate's retention and advance recovery are taken off.
+	"""
+	if (terms.vat_status or "Standard Rated") != "Standard Rated":
+		return 0.0, 0.0
+	base = flt(taxable_work) - (flt(deductions) if terms.vat_basis == "Net after Deductions" else 0)
+	rate = flt(frappe.db.get_single_value("BF Construction Settings", "vat_rate"))
+	return money(base), money(base * rate / 100)
 
 
 def suggest_liquidated_damages(claim):
@@ -414,11 +431,9 @@ def get_ipc_print_data(claim):
 	def total(key, exempt=None):
 		return sum(g[key] for g in bills if exempt is None or g.vat_exempt == exempt)
 
-	# VAT rows on the summary only when the template charges VAT on the work excluding exempt bills
-	vat_line = next(
-		(l for l in claim.certificate_lines if l.role == "VAT" and l.percentage_of == "Work This Certificate (excl. VAT-Exempt)"), None
-	)
-	vat_rate = flt(vat_line.rate) / 100 if vat_line else 0
+	# VAT rows on the summary by bill when VAT is on the gross work (it then follows the bills)
+	vat = get_vat_summary(claim, contract)
+	vat_rate = vat.rate / 100 if vat.on_bills else 0
 	summary = frappe._dict(
 		original=total("original"),
 		revised=total("revised"),
@@ -460,9 +475,68 @@ def get_ipc_print_data(claim):
 		revised_value=(contract_value(contract) + variations) if contract and variations else None,
 		bills=bills,
 		summary=summary,
-		vat_line=vat_line,
-		has_exempt=bool(vat_line) and any(g.vat_exempt for g in bills),
+		vat=vat,
+		has_exempt=vat.on_bills and any(g.vat_exempt for g in bills),
 		amount_in_words=money_in_words(claim.amount_due, currency),
+	)
+
+
+def certificate_vat_figures(claim):
+	"""What one certificate holds for the VAT summary (worked out from its lines, so older certificates work too)."""
+	work = flt(claim.this_period_work)
+	exempt = sum(flt(item.this_period_value) for item in claim.claim_items if item.vat_exempt)
+	return frappe._dict(
+		work=work,
+		exempt=exempt,
+		taxable=work - exempt,
+		deductions=flt(claim.retention_deduction) + flt(claim.advance_payment_recovery),
+		base=flt(claim.vat_base),
+		vat=flt(claim.vat_amount),
+		net=flt(claim.net_amount_due),
+		due=flt(claim.amount_due),
+	)
+
+
+def get_vat_summary(claim, contract=None):
+	"""The standard VAT summary printed on every certificate: Previous / This Certificate / To Date."""
+	status = (contract.vat_status if contract else None) or "Standard Rated"
+	basis = (contract.vat_basis if contract else None) or "Gross Work"
+	rate = flt(frappe.db.get_single_value("BF Construction Settings", "vat_rate"))
+	rate_label = f"{rate:g}"  # 18.0 -> 18, 17.5 -> 17.5
+	charged = status == "Standard Rated"
+
+	this = certificate_vat_figures(claim)
+	previous = frappe._dict.fromkeys(this, 0.0)
+	if claim.contract:
+		for name in frappe.get_all("BF Progress Claim", pluck="name", filters={
+				"contract": claim.contract, "claim_type": claim.claim_type or "Client Claim", "docstatus": 1, "name": ["!=", claim.name or ""]}):
+			for key, value in certificate_vat_figures(frappe.get_doc("BF Progress Claim", name)).items():
+				previous[key] += value
+
+	labels = [
+		("work", _("Work done (all bills)"), ""),
+		("exempt", _("Less: VAT-exempt work"), "less"),
+		("taxable", _("Taxable work"), "subtotal"),
+	]
+	if charged and basis == "Net after Deductions":
+		labels.append(("deductions", _("Less: retention and advance recovery"), "less"))
+	if charged:
+		labels += [("base", _("VAT base"), "subtotal"), ("vat", _("VAT {0}%").format(rate_label), "")]
+	labels += [("net", _("Amount due excl. VAT"), "subtotal"), ("due", _("Amount due incl. VAT"), "grand")]
+
+	return frappe._dict(
+		status=status,
+		basis=basis,
+		rate=rate,
+		rate_label=rate_label,
+		charged=charged,
+		on_bills=charged and basis == "Gross Work",
+		note={
+			"Exempt": _("VAT exempt") + (f" ({contract.vat_exemption_reference})" if contract and contract.vat_exemption_reference else ""),
+			"Zero Rated": _("Zero rated for VAT (0%)"),
+		}.get(status),
+		rows=[frappe._dict(label=label, style=style, previous=previous[key], this=this[key], to_date=previous[key] + this[key])
+			for key, label, style in labels],
 	)
 
 

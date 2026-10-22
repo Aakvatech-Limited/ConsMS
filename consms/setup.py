@@ -44,6 +44,8 @@ def after_migrate():
     ensure_activity_types()
     add_customer_types()
     ensure_certificate_templates()
+    if not frappe.db.get_single_value("BF Construction Settings", "vat_rate"):
+        frappe.db.set_single_value("BF Construction Settings", "vat_rate", 18)
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:

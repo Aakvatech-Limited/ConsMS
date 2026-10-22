@@ -1,0 +1,22 @@
+{%- set fmt = frappe.utils.fmt_money -%}
+{%- set v = ipc.vat -%}
+<table class="grid small vat-summary" style="margin-top:8px">
+	<thead>
+		<tr>
+			<th style="text-align:left">{{ _("VAT Summary") }}
+				<span class="muted">· {% if v.charged %}{{ _("Standard rated, {0}% on {1}").format(v.rate_label, _("gross work") if v.basis == "Gross Work" else _("net after deductions")) }}{% else %}{{ v.note }}{% endif %}</span>
+			</th>
+			<th style="width:18%">{{ _("Previous Certificates") }}</th><th style="width:18%">{{ _("This Certificate") }}</th><th style="width:18%">{{ _("To Date") }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{%- for r in v.rows %}
+		<tr{% if r.style == "subtotal" %} class="total-row"{% elif r.style == "grand" %} class="grand"{% endif %}>
+			<td>{{ r.label }}</td>
+			{%- for value in (r.previous, r.this, r.to_date) %}
+			<td class="num">{% if r.style == "less" and value %}({{ fmt(value, precision=2) }}){% else %}{{ fmt(value, precision=2) }}{% endif %}</td>
+			{%- endfor %}
+		</tr>
+	{%- endfor %}
+	</tbody>
+</table>
