@@ -5,7 +5,7 @@ frappe.ui.form.on("Material Request", {
 	refresh(frm) {
 		if (frm.doc.docstatus !== 0) return;
 
-		frm.add_custom_button(__("BF Budget"), () => {
+		frm.add_custom_button(__("Budget"), () => {
 			const method = "consms.construction_management.doctype.bf_budget.bf_budget.get_items_for_material_request";
 
 			// Opened from a Budget: pull straight from it, no need to pick it again
