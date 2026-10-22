@@ -3,6 +3,8 @@
 
 frappe.ui.form.on("BF Contract", {
 	refresh(frm) {
+		// Frappe hides the naming field once saved; the contract number should stay in view (read only)
+		frm.toggle_display("contract_no", true);
 		calculate_contingency(frm);
 		show_time_status(frm);
 		show_expiring_documents(frm);
@@ -84,7 +86,8 @@ frappe.ui.form.on("BF Contract", {
 	},
 	advance_payment_percentage(frm) {
 		if (flt(frm.doc.advance_payment_percentage)) {
-			frm.set_value("advance_payment_amount", flt(frm.doc.total_contract_amount) * flt(frm.doc.advance_payment_percentage) / 100);
+			const base = flt(frm.doc.contract_sum_incl_vat) || flt(frm.doc.total_contract_amount);
+			frm.set_value("advance_payment_amount", base * flt(frm.doc.advance_payment_percentage) / 100);
 		}
 	},
 	contract_amount: function(frm) {

@@ -23,7 +23,13 @@ class BFContract(Document):
 
 	def set_value_from_boq(self):
 		"""Contract amount = BOQ bid price without VAT (tender summary), or the total of bills."""
-		if not self.boq or self.docstatus:
+		if self.docstatus:
+			return
+		if not self.boq and self.tender:
+			from consms.construction_management.doctype.bf_tender.bf_tender import get_tender_boq
+
+			self.boq = get_tender_boq(self.tender)
+		if not self.boq:
 			return
 		boq = frappe.get_doc("BF Bill of Quantities", self.boq)
 		if boq.summary_lines:
@@ -59,11 +65,14 @@ class BFContract(Document):
 			self.certificate_template = frappe.db.get_single_value("BF Construction Settings", "default_certificate_template")
 		if not 0 <= flt(self.advance_payment_percentage) <= 100:
 			frappe.throw(_("Advance Payment (%) must be between 0 and 100."))
-		if flt(self.advance_payment_percentage):
-			self.advance_payment_amount = flt(
-				flt(self.total_contract_amount) * flt(self.advance_payment_percentage) / 100, 2
-			)
+		# a submitted contract keeps its advance (it may be invoiced already) unless the % itself is changed
+		if flt(self.advance_payment_percentage) and (self.docstatus == 0 or self.has_value_changed("advance_payment_percentage")):
+			self.advance_payment_amount = flt(self.get_advance_base() * flt(self.advance_payment_percentage) / 100, 2)
 		self.advance_balance = flt(self.advance_payment_amount) - flt(self.advance_recovered)
+
+	def get_advance_base(self):
+		"""The advance is a % of the Contract Sum on the Form of Tender (incl. VAT), or of the contract value without a tender summary."""
+		return flt(self.contract_sum_incl_vat) or flt(self.total_contract_amount)
 
 	def lock_original_dates(self):
 		"""Original dates may be filled in once after submit, never changed: time changes go through extensions."""

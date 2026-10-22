@@ -14,6 +14,11 @@ def get_document_types(applies_to):
 	)
 
 
+def get_tender_boq(tender):
+	"""The tender's BOQ. The BOQ points at its tender; the tender stores nothing, so the BOQ can be cancelled on its own."""
+	return frappe.db.get_value("BF Bill of Quantities", {"tender": tender, "docstatus": ["!=", 2]}, "name", order_by="creation desc")
+
+
 # Status after submit -> statuses it may move to
 STATUS_TRANSITIONS = {"Bid Submitted": ("Awarded", "Lost")}
 
@@ -24,6 +29,9 @@ class BFTender(Document):
 		if not self.documents:
 			for doc_type in get_document_types("Tender"):
 				self.append("documents", {"document_type": doc_type, "status": "Pending"})
+
+	def onload(self):
+		self.set_onload("boq", get_tender_boq(self.name))
 
 	def validate(self):
 		self.set_totals()
@@ -38,7 +46,6 @@ class BFTender(Document):
 		self.set_totals()
 
 	def set_totals(self):
-		self.total_tender_cost = sum(flt(row.amount) for row in self.costs)
 		for row in self.bid_securities:
 			if row.status == "Returned" and not row.returned_on:
 				row.returned_on = frappe.utils.today()
@@ -53,7 +60,8 @@ class BFTender(Document):
 				),
 				title=_("Tender documents incomplete"),
 			)
-		if not self.boq or frappe.db.get_value("BF Bill of Quantities", self.boq, "docstatus") != 1:
+		boq = get_tender_boq(self.name)
+		if not boq or frappe.db.get_value("BF Bill of Quantities", boq, "docstatus") != 1:
 			frappe.throw(_("Submit the priced Bill of Quantities for this tender before submitting the bid."))
 
 	def on_submit(self):
@@ -73,12 +81,12 @@ def set_status(tender_name, status):
 	return status
 
 
-def get_or_create_boq_pdf(tender):
+def get_or_create_boq_pdf(tender, boq):
 	"""One BOQ PDF per tender: a submitted BOQ cannot change, so reuse it and remove extra copies."""
-	file_name = f"BOQ {tender.boq}.pdf"
+	file_name = f"BOQ {boq}.pdf"
 	existing = frappe.get_all(
 		"File",
-		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_name": ["like", f"BOQ {tender.boq}%.pdf"]},
+		filters={"attached_to_doctype": "BF Tender", "attached_to_name": tender.name, "file_name": ["like", f"BOQ {boq}%.pdf"]},
 		pluck="name",
 		order_by="creation asc",
 	)
@@ -88,7 +96,7 @@ def get_or_create_boq_pdf(tender):
 		return frappe.get_doc("File", existing[0])
 
 	try:
-		pdf = frappe.get_print("BF Bill of Quantities", tender.boq, print_format="BOQ Client Layout", as_pdf=True)
+		pdf = frappe.get_print("BF Bill of Quantities", boq, print_format="BOQ Client Layout", as_pdf=True)
 		return frappe.get_doc(
 			{
 				"doctype": "File",
@@ -109,7 +117,8 @@ def get_tender_submission(tender_name):
 	"""Files and email details for sending the bid: tender documents + the BOQ as PDF."""
 	tender = frappe.get_doc("BF Tender", tender_name)
 	tender.check_permission("read")
-	if not tender.boq or frappe.db.get_value("BF Bill of Quantities", tender.boq, "docstatus") != 1:
+	boq = get_tender_boq(tender.name)
+	if not boq or frappe.db.get_value("BF Bill of Quantities", boq, "docstatus") != 1:
 		frappe.throw(_("Submit the priced Bill of Quantities before sending the tender."))
 
 	warnings = []
@@ -118,7 +127,7 @@ def get_tender_submission(tender_name):
 	if pending:
 		warnings.append(_("Still Pending: {0}").format(", ".join(pending)))
 
-	boq_pdf = get_or_create_boq_pdf(tender)
+	boq_pdf = get_or_create_boq_pdf(tender, boq)
 	if not boq_pdf:
 		warnings.append(_("The BOQ PDF could not be generated; attach it manually."))
 
@@ -147,8 +156,8 @@ def get_tender_submission(tender_name):
 @frappe.whitelist()
 def make_bf_boq(source_name, target_doc=None):
 	"""Tender -> BOQ: the BOQ is priced for this tender (one BOQ per tender)."""
-	existing = frappe.db.get_value("BF Tender", source_name, "boq")
-	if existing and frappe.db.get_value("BF Bill of Quantities", existing, "docstatus") != 2:
+	existing = get_tender_boq(source_name)
+	if existing:
 		frappe.throw(_("This tender already has Bill of Quantities {0}.").format(existing))
 
 	return get_mapped_doc(
@@ -158,7 +167,7 @@ def make_bf_boq(source_name, target_doc=None):
 			"BF Tender": {
 				"doctype": "BF Bill of Quantities",
 				"field_map": {"project": "project", "name": "tender"},
-				"field_no_map": ["status", "boq", "amended_from"],
+				"field_no_map": ["status", "amended_from"],
 			}
 		},
 		target_doc,
@@ -188,6 +197,10 @@ def make_bf_contract(source_name, target_doc=None):
         },
         target_doc,
     )
+
+    # the contract number is usually the tender number; it can be changed before saving
+    doc.contract_no = doc.contract_no or source_name
+    doc.boq = doc.boq or get_tender_boq(source_name)
 
     if not doc.get("submittals"):
         for doc_type in get_document_types("Contract"):

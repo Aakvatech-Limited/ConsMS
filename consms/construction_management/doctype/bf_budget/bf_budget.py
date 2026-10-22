@@ -71,7 +71,32 @@ class BFBudget(Document):
 		if other:
 			frappe.throw(_("Contract {0} already has Budget {1}. Amend it to make a revision.").format(self.contract, other))
 
+	def onload(self):
+		# the recipe picker and "create a new recipe" use each line's unit; mismatched lines are flagged
+		self.set_onload("boq_units", self.get_boq_units())
+		self.set_onload("unit_mismatches", self.get_unit_mismatches())
+
+	def get_boq_units(self):
+		"""{BOQ line: its ERP unit}."""
+		items = [line.boq_item for line in self.boq_lines if line.boq_item]
+		if not items:
+			return {}
+		return dict(frappe.get_all("BF BOQ Item", filters={"name": ["in", items]}, fields=["name", "erp_uom"], as_list=True))
+
+	def get_unit_mismatches(self):
+		"""Lines whose recipe is for a different unit than the BOQ line: their cost is multiplied by the wrong quantity."""
+		units = self.get_boq_units()
+		recipes = {line.rate_analysis for line in self.boq_lines if line.rate_analysis}
+		recipe_units = dict(frappe.get_all("BF Rate Analysis", filters={"name": ["in", list(recipes)]}, fields=["name", "uom"], as_list=True)) if recipes else {}
+		return [
+			{"idx": line.idx, "description": line.description, "boq_unit": units.get(line.boq_item),
+			 "rate_analysis": line.rate_analysis, "recipe_unit": recipe_units.get(line.rate_analysis)}
+			for line in self.boq_lines
+			if line.rate_analysis and units.get(line.boq_item) and recipe_units.get(line.rate_analysis) != units.get(line.boq_item)
+		]
+
 	def validate_rate_analyses(self):
+		units = self.get_boq_units()
 		for line in self.boq_lines:
 			if not line.rate_analysis or line.rate_analysis == line.applied_rate_analysis:
 				continue
@@ -82,14 +107,14 @@ class BFBudget(Document):
 						line.idx, frappe.bold(line.rate_analysis)
 					)
 				)
-			boq_uom = frappe.db.get_value("BF BOQ Item", line.boq_item, "erp_uom")
+			boq_uom = units.get(line.boq_item)
 			if boq_uom and ra.uom != boq_uom:
-				frappe.msgprint(
-					_("Row {0} ({1}): the BOQ line is in {2} but Rate Analysis {3} is per {4}. Check the quantities.").format(
+				frappe.throw(
+					_("Row {0} ({1}): the BOQ line is in {2} but Rate Analysis {3} is per {4}. "
+					  "A recipe gives the resources for 1 unit of the BOQ line, so its unit must be {2}.").format(
 						line.idx, line.description, frappe.bold(boq_uom), line.rate_analysis, frappe.bold(ra.uom)
 					),
-					title=_("Unit mismatch"),
-					indicator="orange",
+					title=_("Recipe unit does not match the BOQ line"),
 				)
 
 	def build_boq_lines(self):
@@ -117,10 +142,10 @@ class BFBudget(Document):
 	def apply_rate_analyses(self, rebuild_all=False):
 		"""Rebuild resources only for BOQ lines whose recipe changed, so manual edits elsewhere are kept."""
 		company = frappe.db.get_value("Project", self.project, "company")
-		for line in self.boq_lines:
-			if not rebuild_all and line.rate_analysis == line.applied_rate_analysis:
-				continue
-			self.set("items", [row for row in self.items if row.boq_item != line.boq_item])
+		changed = [line for line in self.boq_lines if rebuild_all or line.rate_analysis != line.applied_rate_analysis]
+		changed_items = {line.boq_item for line in changed}
+		self.set("items", [row for row in self.items if row.boq_item not in changed_items])
+		for line in changed:
 			if line.rate_analysis:
 				for res in frappe.get_doc("BF Rate Analysis", line.rate_analysis).items:
 					self.append(

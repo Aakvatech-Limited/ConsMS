@@ -8,72 +8,33 @@ from consms.construction_management.uom import ensure_standard_uom_mappings
 
 def after_migrate():
 
-    parent_boq_field = [
-        {
-            "fieldname": "bf_boq",
-            "label": "BF Bill of Quantities",
-            "fieldtype": "Link",
-            "options": "BF Bill of Quantities",
-            "insert_after": "project",
-        }
-    ]
+    # Links that trace a purchase back to its BOQ line and budget line. "Get Items From > Budget" on the
+    # Material Request fills them; they are carried MR -> RFQ -> Supplier Quotation -> PO -> Receipt -> Invoice.
+    # Read only, and hidden on purchases that do not come from a budget. On item rows only the BOQ Line shows;
+    # the other row links are for the code (the header already shows the BOQ and the budget).
+    def budget_link(fieldname, label, options, insert_after, hidden=0):
+        return {"fieldname": fieldname, "label": label, "fieldtype": "Link", "options": options,
+                "insert_after": insert_after, "read_only": 1, "depends_on": f"eval:doc.{fieldname}", "hidden": hidden}
 
-    boq_item_link_fields = [
-        {
-            "fieldname": "bf_boq",
-            "label": "BF Bill of Quantities",
-            "fieldtype": "Link",
-            "options": "BF Bill of Quantities",
-            "insert_after": "item_code",
-        },
-        {
-            "fieldname": "bf_boq_item",
-            "label": "BOQ Line Item",
-            "fieldtype": "Link",
-            "options": "BF BOQ Item",
-            "insert_after": "bf_boq",
-        },
-        {
-            "fieldname": "bf_boq_item_id",
-            "label": "BOQ Item ID",
-            "fieldtype": "Data",
-            "insert_after": "bf_boq_item",
-            "read_only": 1,
-        },
+    header_links = [
+        budget_link("bf_boq", "Bill of Quantities", "BF Bill of Quantities", "project"),
+        budget_link("bf_budget", "Budget", "BF Budget", "bf_boq"),
     ]
-
-    create_custom_fields({
-        "Material Request": parent_boq_field,
-        "Purchase Order": parent_boq_field,
-        "Purchase Receipt": parent_boq_field,
-        "Purchase Invoice": parent_boq_field,
-        "Material Request Item": boq_item_link_fields,
-        "Purchase Order Item": boq_item_link_fields,
-        "Purchase Receipt Item": boq_item_link_fields,
-        "Purchase Invoice Item": boq_item_link_fields,
-    })
-
-    # Budget link on buying documents, carried MR -> RFQ -> Supplier Quotation -> PO -> Receipt -> Invoice
-    parent_budget_field = [
-        {"fieldname": "bf_budget", "label": "BF Budget", "fieldtype": "Link", "options": "BF Budget",
-         "insert_after": "bf_boq", "read_only": 1},
+    row_links = [
+        budget_link("bf_boq", "Bill of Quantities", "BF Bill of Quantities", "item_code", hidden=1),
+        budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "bf_boq"),
+        budget_link("bf_budget", "Budget", "BF Budget", "bf_boq_item", hidden=1),
+        budget_link("bf_budget_item", "Budget Line", "BF Budget Item", "bf_budget", hidden=1),
     ]
-    item_budget_fields = [
-        {"fieldname": "bf_budget", "label": "BF Budget", "fieldtype": "Link", "options": "BF Budget",
-         "insert_after": "bf_boq_item_id", "read_only": 1},
-        {"fieldname": "bf_budget_item", "label": "Budget Line", "fieldtype": "Link", "options": "BF Budget Item",
-         "insert_after": "bf_budget", "read_only": 1},
-    ]
-    create_custom_fields({
-        "Request for Quotation": parent_boq_field,
-        "Supplier Quotation": parent_boq_field,
-        "Request for Quotation Item": boq_item_link_fields,
-        "Supplier Quotation Item": boq_item_link_fields,
-    })
     buying = ["Material Request", "Request for Quotation", "Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]
     create_custom_fields({
-        **{dt: parent_budget_field for dt in buying},
-        **{f"{dt} Item": item_budget_fields for dt in buying},
+        **{dt: header_links for dt in buying},
+        **{f"{dt} Item": row_links for dt in buying},
+        # Materials used on site (Site Daily Report -> Stock Issue): their cost in the books per task and BOQ line
+        "Stock Entry Detail": [
+            budget_link("bf_task", "Task", "Task", "project"),
+            budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "bf_task"),
+        ],
     })
 
     ensure_mobilization_task_type()
@@ -114,6 +75,31 @@ def ensure_tender_document_types():
         if not frappe.db.exists("BF Document Type", name):
             frappe.get_doc({"doctype": "BF Document Type", "document_name": name, "applies_to": "Tender",
                 "is_mandatory": mandatory, "description": description}).insert(ignore_permissions=True)
+
+
+def add_construction_links(data, links):
+    """Connections from an ERPNext document to the construction documents that point at it: {doctype: field}."""
+    data.setdefault("non_standard_fieldnames", {}).update(links)
+    data.setdefault("transactions", []).append({"label": "Construction", "items": list(links)})
+    return data
+
+
+def get_customer_dashboard(data):
+    return add_construction_links(data, {"BF Contract": "customer", "BF Progress Claim": "customer"})
+
+
+def get_supplier_dashboard(data):
+    return add_construction_links(data, {"BF Contract": "supplier", "BF Progress Claim": "supplier"})
+
+
+def get_stock_entry_dashboard(data):
+    # a Stock Issue made by a Site Daily Report links back to it
+    return add_construction_links(data, {"BF Site Daily Report": "stock_entry"})
+
+
+def get_task_dashboard(data):
+    # measurements of the task, and the Stock Issues that charged materials to it
+    return add_construction_links(data, {"BF Site Measurement Log": "task", "Stock Entry": "bf_task"})
 
 
 def get_project_dashboard(data):

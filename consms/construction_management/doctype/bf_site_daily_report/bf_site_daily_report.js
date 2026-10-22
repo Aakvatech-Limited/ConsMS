@@ -1,15 +1,20 @@
 // Copyright (c) 2026, Sydney Kibanga and contributors
 // For license information, please see license.txt
 
+const DAILY_TABLES = ["labour", "plant", "materials"];
+
 frappe.ui.form.on("BF Site Daily Report", {
 	setup(frm) {
-		const boq_line_query = () => ({
-			query: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_boq_items_query",
-			filters: { parent: frm.doc.boq },
-		});
-		["labour", "plant", "materials"].forEach((table) => {
-			frm.set_query("boq_item", table, boq_line_query);
-			frm.set_query("task", table, () => ({ filters: { project: frm.doc.project, is_template: 0 } }));
+		DAILY_TABLES.forEach((table) => {
+			// open tasks of this project
+			frm.set_query("task", table, () => ({
+				filters: { project: frm.doc.project, is_template: 0, status: ["not in", ["Completed", "Cancelled"]] },
+			}));
+			// BOQ lines of this contract, narrowed to the row's task when it has some
+			frm.set_query("boq_item", table, (doc, cdt, cdn) => ({
+				query: "consms.construction_management.doctype.bf_bill_of_quantities.bf_bill_of_quantities.get_boq_items_query",
+				filters: { parent: frm.doc.boq, task: locals[cdt][cdn].task },
+			}));
 		});
 		frm.set_query("item_code", "labour", () => ({ filters: { item_group: "Labour" } }));
 		frm.set_query("item_code", "plant", () => ({ filters: { item_group: "Plant & Equipment" } }));
@@ -22,52 +27,36 @@ frappe.ui.form.on("BF Site Daily Report", {
 		}
 	},
 
-	calculate(frm) {
-		let labour = 0, people = 0, plant = 0, fuel = 0, material = 0;
-		(frm.doc.labour || []).forEach((r) => {
-			r.amount = flt(r.headcount) * flt(r.days) * flt(r.rate);
-			labour += r.amount;
-			people += cint(r.headcount);
-		});
-		(frm.doc.plant || []).forEach((r) => {
-			r.amount = flt(r.hours) * flt(r.rate);
-			plant += r.amount;
-			fuel += flt(r.fuel_litres);
-		});
-		(frm.doc.materials || []).forEach((r) => (material += flt(r.amount)));
-		frm.refresh_fields(["labour", "plant"]);
+	set_summary(frm) {
+		const labour = frm.doc.labour || [];
 		frm.set_value({
-			labour_cost: labour,
-			total_headcount: people,
-			plant_cost: plant,
-			total_fuel: fuel,
-			material_cost: material,
-			total_cost: labour + plant + material,
+			total_headcount: labour.reduce((t, r) => t + cint(r.headcount), 0),
+			man_days: labour.reduce((t, r) => t + cint(r.headcount) * flt(r.days), 0),
+			machines_on_site: (frm.doc.plant || []).length,
 		});
 	},
 });
 
-function set_buying_rate(frm, cdt, cdn) {
-	const row = locals[cdt][cdn];
-	if (!row.item_code) return;
-	frappe.xcall("consms.construction_management.budget.get_item_buying_rate", { item_code: row.item_code }).then((rate) => {
-		frappe.model.set_value(cdt, cdn, "rate", rate || 0);
-		frm.events.calculate(frm);
-	});
-}
-
 frappe.ui.form.on("BF Daily Labour", {
-	item_code: set_buying_rate,
-	headcount: (frm) => frm.events.calculate(frm),
-	days: (frm) => frm.events.calculate(frm),
-	rate: (frm) => frm.events.calculate(frm),
-	labour_remove: (frm) => frm.events.calculate(frm),
+	employee(frm, cdt, cdn) {
+		if (locals[cdt][cdn].employee) frappe.model.set_value(cdt, cdn, "headcount", 1);
+	},
+	headcount: (frm) => frm.events.set_summary(frm),
+	days: (frm) => frm.events.set_summary(frm),
+	labour_remove: (frm) => frm.events.set_summary(frm),
 });
 
 frappe.ui.form.on("BF Daily Plant", {
-	item_code: set_buying_rate,
-	hours: (frm) => frm.events.calculate(frm),
-	fuel_litres: (frm) => frm.events.calculate(frm),
-	rate: (frm) => frm.events.calculate(frm),
-	plant_remove: (frm) => frm.events.calculate(frm),
+	plant_add: (frm) => frm.events.set_summary(frm),
+	plant_remove: (frm) => frm.events.set_summary(frm),
+});
+
+// a BOQ line chosen for another task is cleared when the task changes
+DAILY_TABLES.forEach((table) => {
+	const child = { labour: "BF Daily Labour", plant: "BF Daily Plant", materials: "BF Daily Material" }[table];
+	frappe.ui.form.on(child, {
+		task(frm, cdt, cdn) {
+			if (locals[cdt][cdn].boq_item) frappe.model.set_value(cdt, cdn, "boq_item", null);
+		},
+	});
 });

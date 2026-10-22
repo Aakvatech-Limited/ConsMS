@@ -69,7 +69,7 @@
    "read_only": 1
   },
   {
-   "description": "What it should cost Gemen to do the work.",
+   "description": "What it should cost us to do the work.",
    "fieldname": "total_budget_cost",
    "fieldtype": "Currency",
    "in_list_view": 1,

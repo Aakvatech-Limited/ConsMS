@@ -1,0 +1,28 @@
+{
+ "add_total_row": 1,
+ "creation": "2026-10-22 20:00:00.000000",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "modified": "2026-10-22 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Construction Management",
+ "name": "Task Activity",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Task",
+ "report_name": "Task Activity",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Projects Manager"
+  },
+  {
+   "role": "Projects User"
+  }
+ ]
+}

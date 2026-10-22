@@ -5,7 +5,7 @@ quantity and rate, and what each row is (item, bill heading, section, subtotal, 
 Quantities and rates are always copied by this code from the Excel cells, so the AI
 can never change a price. Totals are checked against the file before anything is saved.
 
-Any OpenAI-compatible provider works (Google Gemini, Groq...), with Gemen's own key from
+Any OpenAI-compatible provider works (Google Gemini, Groq...), with the company's own key from
 BF Construction Settings. Without a key, or when the provider fails, a built-in reader is used.
 """
 
@@ -37,7 +37,7 @@ class AIUnavailable(Exception):
 
 # ---------------------------------------------------------------- whitelisted API
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def preview_import(boq, file_url):
 	"""Start reading the Excel in the background; returns a token to poll with get_preview."""
 	frappe.get_doc("BF Bill of Quantities", boq).check_permission("write")
@@ -179,7 +179,7 @@ def call_ai(config, system, user):
 			timeout=120,
 		)
 	except requests.RequestException as e:
-		raise AIUnavailable(_("Could not reach the AI provider: {0}").format(e))
+		raise AIUnavailable(_("Could not reach the AI provider: {0}").format(str(e)))
 	if response.status_code == 429:
 		raise AIUnavailable(_("The AI provider's free limit is used up for now."))
 	if response.status_code >= 400:

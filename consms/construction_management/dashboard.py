@@ -88,26 +88,6 @@ def claims_not_invoiced(filters=None):
 
 
 @frappe.whitelist()
-def billed_percent(filters=None):
-	contract_value = flt(
-		frappe.db.sql(
-			"""
-			select sum(total_contract_amount) from `tabBF Contract`
-			where docstatus = 1 and contract_type = 'Main Contract'
-			"""
-		)[0][0]
-	)
-	certified = sum(flt(c.gross_valuation) for c in get_latest_client_claims())
-	return {
-		# The card has show_full_number on, so small percentages are not rounded away
-		"value": certified / contract_value * 100 if contract_value else 0,
-		"fieldtype": "Percent",
-		"precision": 2,
-		"route": ["query-report", "Contract Status Summary"],
-	}
-
-
-@frappe.whitelist()
 def expiring_documents(filters=None):
 	from consms.construction_management.reminders import get_expiring_submittals
 
@@ -121,19 +101,17 @@ def expiring_documents(filters=None):
 
 
 @frappe.whitelist()
-def open_works_execution_tasks(filters=None):
-	"""Tasks of any Works Execution (Mobilization, Construction...) that are not finished yet."""
-	names = frappe.db.sql_list(
-		"""
-		select distinct t.name from `tabBF Works Execution Task` row
-		join `tabBF Works Execution` wx on wx.name = row.parent and wx.docstatus < 2
-		join `tabTask` t on t.name = row.task
-		where t.status not in ('Completed', 'Cancelled')
-		"""
+def pending_submittals(filters=None):
+	"""Submittals still pending on submitted contracts the user may see (counted through the contract, not the child table)."""
+	contracts = frappe.get_list("BF Contract", filters={"docstatus": 1}, pluck="name") if frappe.has_permission("BF Contract") else []
+	rows = frappe.get_all(
+		"BF Contract Submittal",
+		filters={"parenttype": "BF Contract", "parent": ["in", contracts or [""]], "status": "Pending"},
+		pluck="parent",
 	)
 	return {
-		"value": len(names),
+		"value": len(rows),
 		"fieldtype": "Int",
-		"route": ["List", "Task"],
-		"route_options": {"name": ["in", names or [""]]},
+		"route": ["List", "BF Contract"],
+		"route_options": {"name": ["in", list(set(rows)) or [""]]},
 	}

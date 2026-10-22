@@ -5,17 +5,25 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "task",
   "item_code",
   "qty",
   "uom",
-  "rate",
-  "amount",
-  "boq_item",
-  "task"
+  "boq_item"
  ],
  "fields": [
   {
    "columns": 2,
+   "description": "The task this belongs to. Only open tasks of the project are listed.",
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Task",
+   "options": "Task"
+  },
+  {
+   "columns": 2,
+   "description": "Anything taken out of the Site Store, fuel included.",
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -24,7 +32,7 @@
    "reqd": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -32,51 +40,28 @@
    "reqd": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fetch_from": "item_code.stock_uom",
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "UOM",
+   "label": "Unit",
    "options": "UOM",
    "read_only": 1
   },
   {
-   "columns": 1,
-   "description": "Stock value per unit, set when the report is submitted.",
-   "fieldname": "rate",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Rate",
-   "read_only": 1
-  },
-  {
-   "columns": 1,
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Material Cost",
-   "read_only": 1
-  },
-  {
    "columns": 2,
-   "description": "The work this cost belongs to.",
+   "description": "Optional: the BOQ line within the task.",
    "fieldname": "boq_item",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "BOQ Line",
    "options": "BF BOQ Item"
-  },
-  {
-   "fieldname": "task",
-   "fieldtype": "Link",
-   "label": "Task",
-   "options": "Task"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-22 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Daily Material",

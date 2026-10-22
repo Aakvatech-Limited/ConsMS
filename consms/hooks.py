@@ -46,6 +46,7 @@ app_license = "mit"
 doctype_js = {
 	"Material Request": "public/js/material_request.js",
 	"Project": "public/js/project.js",
+	"Task": "public/js/task.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -141,9 +142,14 @@ jinja = {
 
 doc_events = {
 	"Material Request": {
-		"validate": "consms.material_request.warn_if_over_budget",
+		"validate": "consms.budget_control.warn",
+		"before_submit": "consms.budget_control.enforce",
 		"on_submit": "consms.material_request.update_budget_requested_qty",
 		"on_cancel": "consms.material_request.update_budget_requested_qty",
+	},
+	"Purchase Order": {
+		"validate": "consms.budget_control.warn",
+		"before_submit": "consms.budget_control.enforce",
 	},
 	"Task": {
 		"on_update": "consms.construction_management.tasks.update_works_execution_from_task",
@@ -266,5 +272,9 @@ scheduler_events = {
 
 override_doctype_dashboards = {
 	"Project": "consms.setup.get_project_dashboard",
-	"Material Request": "consms.setup.get_material_request_dashboard"
+	"Material Request": "consms.setup.get_material_request_dashboard",
+	"Customer": "consms.setup.get_customer_dashboard",
+	"Supplier": "consms.setup.get_supplier_dashboard",
+	"Stock Entry": "consms.setup.get_stock_entry_dashboard",
+	"Task": "consms.setup.get_task_dashboard",
 }

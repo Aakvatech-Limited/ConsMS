@@ -8,8 +8,10 @@
  "field_order": [
   "sb_billing",
   "default_progress_claim_item",
-  "sb_costing",
-  "track_costs_per_task",
+  "sb_budget_control",
+  "over_budget_action",
+  "cb_budget_control",
+  "over_budget_approver_role",
   "sb_templates",
   "default_certificate_template",
   "default_boq_summary_template",
@@ -35,16 +37,31 @@
    "options": "Item"
   },
   {
-   "fieldname": "sb_costing",
+   "fieldname": "sb_budget_control",
    "fieldtype": "Section Break",
-   "label": "Costing"
+   "label": "Budget Control",
+   "description": "What happens when a Material Request or Purchase Order asks for more of a material than is left on its budget line."
   },
   {
-   "default": "0",
-   "description": "Adds Task as an accounting dimension, so Material Requests, Purchase Orders, Purchase Invoices, Stock Entries and Journal Entries can be costed to a project task.",
-   "fieldname": "track_costs_per_task",
-   "fieldtype": "Check",
-   "label": "Track Costs per Task"
+   "default": "Warn",
+   "fieldname": "over_budget_action",
+   "fieldtype": "Select",
+   "label": "When a Purchase Is Over the Budget Quantity",
+   "options": "Warn\nStop\nStop unless approved",
+   "description": "Warn: a message, the document can still be submitted. Stop: it cannot be submitted; revise the budget first. Stop unless approved: only the role below can submit it, and the approval is recorded."
+  },
+  {
+   "fieldname": "cb_budget_control",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.over_budget_action == 'Stop unless approved'",
+   "fieldname": "over_budget_approver_role",
+   "fieldtype": "Link",
+   "label": "Who Can Approve Over-Budget Purchases",
+   "options": "Role",
+   "mandatory_depends_on": "eval:doc.over_budget_action == 'Stop unless approved'",
+   "description": "e.g. Projects Manager."
   },
   {
    "fieldname": "sb_templates",
@@ -98,7 +115,7 @@
    "fieldtype": "Password",
    "label": "API Key",
    "length": 255,
-   "description": "Gemen's own key. Gemini: aistudio.google.com > Get API key (free). Groq: console.groq.com > API Keys (free). Stored encrypted."
+   "description": "The company's own key. Gemini: aistudio.google.com > Get API key (free). Groq: console.groq.com > API Keys (free). Stored encrypted."
   },
   {
    "fieldname": "ai_help",
@@ -111,7 +128,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-15 23:00:00.000000",
+ "modified": "2026-10-23 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

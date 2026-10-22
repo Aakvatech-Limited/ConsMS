@@ -7,6 +7,7 @@ def get_data():
 		"non_standard_fieldnames": {
 			"BF Contract": "main_contract",
 			"Sales Invoice": "bf_contract",
+			"Purchase Invoice": "bf_contract",
 		},
 		"internal_links": {
 			"BF Tender": "tender",
@@ -19,6 +20,6 @@ def get_data():
 			{"label": _("Contract Changes"), "items": ["BF Variation Order", "BF Extension of Time"]},
 			{"label": _("Correspondence"), "items": ["BF Correspondence"]},
 			{"label": _("Subcontracts"), "items": ["BF Contract"]},
-			{"label": _("Billing"), "items": ["BF Progress Claim", "Sales Invoice"]},
+			{"label": _("Billing"), "items": ["BF Progress Claim", "Sales Invoice", "Purchase Invoice"]},
 		],
 	}

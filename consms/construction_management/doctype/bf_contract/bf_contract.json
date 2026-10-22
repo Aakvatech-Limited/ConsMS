@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:BF-CONTR-{YYYY}-{####}",
+ "autoname": "field:contract_no",
  "creation": "2026-06-26 17:47:18.105019",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -10,8 +10,10 @@
   "details_tab",
   "connections_tab",
   "contract_reference",
+  "contract_no",
   "tender",
   "project",
+  "construction_type",
   "contract_type",
   "main_contract",
   "site_warehouse",
@@ -78,6 +80,15 @@
    "label": "Contract Reference"
   },
   {
+   "bold": 1,
+   "description": "The client's contract number, e.g. TR201/CCP/P155759/2024/2025/W/02. Filled from the Tender No.; change it before saving if the client issued a different number. It becomes the name of this contract; to correct it later, use Rename.",
+   "fieldname": "contract_no",
+   "fieldtype": "Data",
+   "label": "Contract No.",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
    "description": "The awarded tender this contract comes from.",
    "fieldname": "tender",
    "fieldtype": "Link",
@@ -92,6 +103,14 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fetch_from": "project.construction_type",
+   "fieldname": "construction_type",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Construction Type",
+   "read_only": 1
   },
   {
    "default": "Main Contract",
@@ -185,7 +204,6 @@
   },
   {
    "description": "The Bill of Quantities (the list of work items, quantities and prices) this contract is based on.",
-   "fetch_from": "tender.boq",
    "fieldname": "boq",
    "fieldtype": "Link",
    "hidden": 1,
@@ -272,7 +290,7 @@
    "fieldtype": "Percent",
    "label": "Advance Payment (%)",
    "allow_on_submit": 1,
-   "description": "Of the Total Contract Value. Fills the Advance Payment Amount."
+   "description": "Of the Contract Sum (incl. VAT) on the Form of Tender, or of the Total Contract Value when the BOQ has no tender summary. Fills the Advance Payment Amount."
   },
   {
    "fieldname": "advance_payment_amount",
@@ -431,11 +449,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 19:00:00.000000",
+ "modified": "2026-10-22 20:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",
- "naming_rule": "Expression",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -456,7 +474,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "tender, project, total_contract_amount",
+ "search_fields": "project, customer, supplier, total_contract_amount",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
