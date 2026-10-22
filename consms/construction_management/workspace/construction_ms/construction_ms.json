@@ -29,7 +29,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 7,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -50,6 +50,17 @@
    "label": "BOQ Progress",
    "link_count": 0,
    "link_to": "BOQ Progress",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Task Activity",
+   "link_count": 0,
+   "link_to": "Task Activity",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -204,7 +215,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-22 10:30:00",
+ "modified": "2026-10-22 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",

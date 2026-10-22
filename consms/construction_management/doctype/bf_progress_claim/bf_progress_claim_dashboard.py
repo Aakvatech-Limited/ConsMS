@@ -12,6 +12,6 @@ def get_data():
 		"transactions": [
 			{"label": _("Source"), "items": ["BF Contract", "BF Bill of Quantities"]},
 			{"label": _("Variations"), "items": ["BF Variation Order"]},
-			{"label": _("Accounting"), "items": ["Sales Invoice"]},
+			{"label": _("Accounting"), "items": ["Sales Invoice", "Purchase Invoice"]},
 		],
 	}

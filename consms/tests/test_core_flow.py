@@ -280,6 +280,87 @@ class TestCoreFlow(FrappeTestCase):
 		)[0][0]
 		self.assertEqual(round(sum(cost.values()), 2), round(flt(booked), 2))
 
+	def test_7_task_shows_its_site_activity(self):
+		from frappe.desk.notifications import _get_linked_document_counts
+
+		from consms.construction_management.report.task_activity.task_activity import execute
+		from consms.construction_management.task_activity import get_task_site_activity
+
+		# the daily report of test 6: 6 masons, the mixer 5 units, 10 bags of cement at 20,000
+		task = frappe.db.get_value("Task", {"project": self.project.name, "subject": "Concrete lining"})
+		activity = get_task_site_activity(task)
+		self.assertEqual((activity["days_worked"], activity["man_days"], activity["materials_cost"]), (1, 6, 200_000))
+		self.assertEqual(activity["trades"], [{"trade": "ConsMS Test Mason", "man_days": 6}])
+		self.assertEqual(len(activity["reports"]), 1)
+
+		row = next(r for r in execute({"project": self.project.name})[1] if r["task"] == task)
+		self.assertEqual((row["days_worked"], row["man_days"], row["materials_cost"]), (1, 6, 200_000))
+
+		# the Task's Connections list the Stock Issue that charged materials to it
+		counts = _get_linked_document_counts("Task", task)["count"]["external_links_found"]
+		self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Stock Entry"), 1)
+
+	def test_8_recipe_must_be_in_the_boq_line_unit(self):
+		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
+
+		cement = make_item("ConsMS Test Cement", stock=True)
+
+		def recipe(unit):
+			ra = frappe.get_doc({
+				"doctype": "BF Rate Analysis", "rate_analysis_name": f"Concrete C25 test per {unit}", "uom": unit,
+				"items": [{"resource_type": "Material", "item_code": cement, "qty": 7, "rate": 20_000}],
+			}).insert()
+			ra.submit()
+			return ra.name
+
+		per_km, per_m3 = recipe("Kilometer"), recipe("Cubic Meter")
+		budget = make_bf_budget(self.contract.name)
+		line = next(l for l in budget.boq_lines if l.boq_item == self.items["2.2"])  # concrete, in m3
+
+		line.rate_analysis = per_km
+		with self.assertRaises(frappe.ValidationError):
+			budget.insert()  # a per-kilometre recipe on a m3 line is refused
+
+		line.rate_analysis = per_m3
+		budget.insert()
+		self.assertEqual(budget.get_unit_mismatches(), [])
+		self.assertEqual(flt(line.budget_cost), 200 * 7 * 20_000)  # 200 m3 x 7 bags x 20,000
+
+		# a budget that already holds a wrong-unit recipe (saved before this check) is flagged
+		frappe.db.set_value("BF Budget BOQ Line", line.name, "rate_analysis", per_km)
+		flagged = frappe.get_doc("BF Budget", budget.name).get_unit_mismatches()
+		self.assertEqual([(m["boq_unit"], m["recipe_unit"]) for m in flagged], [("Cubic Meter", "Kilometer")])
+
+	def test_9_advance_on_the_contract_sum_incl_vat(self):
+		# a second tender of the project, priced with a summary: bills + VAT 18% = the contract sum
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/CORE/002", "tender_name": "With VAT", "project": self.project.name}
+		).insert()
+		boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": self.project.name, "tender": tender.name,
+			"summary_template": "Bills + VAT 18%",
+			"items": [{"item_no": "1", "description": "Bridge deck", "uom": "Cubic Meter", "erp_uom": "Cubic Meter", "quantity": 100, "unit_rate": 1_000_000}],
+		}).insert()
+		boq.submit()
+		frappe.db.set_value("Project", self.project.name, "construction_type", "Bridge")
+
+		contract = make_bf_contract(tender.name)
+		contract.update({"customer": self.customer.name, "advance_payment_percentage": 20, "certificate_template": SEUWASA})
+		contract.insert()
+		self.assertEqual(flt(contract.contract_amount), 100_000_000)  # without VAT
+		self.assertEqual(flt(contract.contract_sum_incl_vat), 118_000_000)
+		self.assertEqual(flt(contract.advance_payment_amount), 23_600_000)  # 20% of the sum incl. VAT
+		self.assertEqual(contract.construction_type, "Bridge")  # from the project
+		contract.submit()
+
+		# after submit, an unrelated edit keeps the advance; changing the % recalculates it
+		contract.advance_guarantee_no = "AG-001"
+		contract.save()
+		self.assertEqual(flt(contract.advance_payment_amount), 23_600_000)
+		contract.advance_payment_percentage = 10
+		contract.save()
+		self.assertEqual(flt(contract.advance_payment_amount), 11_800_000)
+
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({
 			"doctype": "Supplier", "supplier_name": "ConsMS Test Subcontractor",
@@ -310,3 +391,12 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual(invoice.bf_contract, subcontract.name)
 		self.assertEqual(invoice.bf_progress_claim, claim.name)
 		self.assertEqual(flt(invoice.grand_total), 3_955_000)
+
+		# the subcontract and its IPC list the invoice under Connections
+		from frappe.desk.notifications import _get_linked_document_counts
+
+		invoice.supplier = supplier.name
+		invoice.insert()
+		for doctype, name in (("BF Contract", subcontract.name), ("BF Progress Claim", claim.name)):
+			counts = _get_linked_document_counts(doctype, name)["count"]["external_links_found"]
+			self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Purchase Invoice"), 1, doctype)

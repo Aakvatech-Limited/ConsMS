@@ -46,6 +46,7 @@ app_license = "mit"
 doctype_js = {
 	"Material Request": "public/js/material_request.js",
 	"Project": "public/js/project.js",
+	"Task": "public/js/task.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -266,5 +267,9 @@ scheduler_events = {
 
 override_doctype_dashboards = {
 	"Project": "consms.setup.get_project_dashboard",
-	"Material Request": "consms.setup.get_material_request_dashboard"
+	"Material Request": "consms.setup.get_material_request_dashboard",
+	"Customer": "consms.setup.get_customer_dashboard",
+	"Supplier": "consms.setup.get_supplier_dashboard",
+	"Stock Entry": "consms.setup.get_stock_entry_dashboard",
+	"Task": "consms.setup.get_task_dashboard",
 }

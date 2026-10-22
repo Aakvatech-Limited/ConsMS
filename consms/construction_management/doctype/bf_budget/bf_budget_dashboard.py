@@ -10,6 +10,6 @@ def get_data():
 		},
 		"transactions": [
 			{"label": _("Source"), "items": ["BF Contract", "BF Bill of Quantities"]},
-			{"label": _("Procurement"), "items": ["Material Request", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]},
+			{"label": _("Procurement"), "items": ["Material Request", "Request for Quotation", "Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]},
 		],
 	}

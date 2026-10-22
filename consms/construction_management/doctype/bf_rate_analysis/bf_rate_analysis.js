@@ -4,6 +4,22 @@
 frappe.ui.form.on("BF Rate Analysis", {
 	refresh(frm) {
 		frm.events.calculate(frm);
+		frm.events.show_unit(frm);
+	},
+
+	uom: (frm) => frm.events.show_unit(frm),
+
+	show_unit(frm) {
+		// quantities are per 1 unit of the BOQ line, never totals
+		const unit = frm.doc.uom;
+		frm.set_df_property("sb_resources", "label", unit ? __("Resources per 1 {0}", [unit]) : __("Resources per Unit"));
+		frm.set_df_property(
+			"items",
+			"description",
+			unit
+				? __("Quantities for 1 {0} of the BOQ line (not totals). The budget multiplies them by the BOQ quantity.", [unit])
+				: __("Set the unit above first: quantities are for 1 unit of the BOQ line.")
+		);
 	},
 
 	calculate(frm) {

@@ -10,11 +10,33 @@ frappe.ui.form.on("BF Budget", {
 		frm.set_df_property("overhead_lines", "cannot_delete_rows", true);
 	},
 	setup(frm) {
-		// only approved recipes
-		frm.set_query("rate_analysis", "boq_lines", () => ({ filters: { docstatus: 1 } }));
+		const unit_of = (row) => ((frm.doc.__onload || {}).boq_units || {})[row.boq_item];
+		// only approved recipes in the BOQ line's own unit
+		frm.set_query("rate_analysis", "boq_lines", (doc, cdt, cdn) => {
+			const unit = unit_of(locals[cdt][cdn]);
+			return { filters: unit ? { docstatus: 1, uom: unit } : { docstatus: 1 } };
+		});
+		// "Create a new Rate Analysis" from a line starts with the line's unit and description
+		frm.fields_dict.boq_lines.grid.get_field("rate_analysis").get_route_options_for_new_doc = (field) => {
+			const row = field.doc || {};
+			return { uom: unit_of(row), rate_analysis_name: row.description };
+		};
 	},
 
 	refresh(frm) {
+		const mismatches = (frm.doc.__onload || {}).unit_mismatches || [];
+		if (mismatches.length) {
+			frm.dashboard.add_comment(
+				__("These lines use a recipe in a different unit from the BOQ line, so their cost is wrong:") +
+					"<ul>" +
+					mismatches.map((m) => `<li>${__("Row {0}", [m.idx])}: ${frappe.utils.escape_html(m.description || "")} — ` +
+						__("BOQ in {0}, {1} per {2}", [m.boq_unit, m.rate_analysis, m.recipe_unit]) + "</li>").join("") +
+					"</ul>",
+				"red",
+				true
+			);
+		}
+
 		if (frm.doc.docstatus === 0 && !frm.is_new()) {
 			frm.add_custom_button(__("Rebuild All Resources"), () => {
 				frappe.confirm(__("Re-read the BOQ and rebuild every resource line from the chosen Rate Analyses? Manual changes to resource lines will be lost."), () => {

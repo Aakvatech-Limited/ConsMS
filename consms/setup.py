@@ -77,6 +77,31 @@ def ensure_tender_document_types():
                 "is_mandatory": mandatory, "description": description}).insert(ignore_permissions=True)
 
 
+def add_construction_links(data, links):
+    """Connections from an ERPNext document to the construction documents that point at it: {doctype: field}."""
+    data.setdefault("non_standard_fieldnames", {}).update(links)
+    data.setdefault("transactions", []).append({"label": "Construction", "items": list(links)})
+    return data
+
+
+def get_customer_dashboard(data):
+    return add_construction_links(data, {"BF Contract": "customer", "BF Progress Claim": "customer"})
+
+
+def get_supplier_dashboard(data):
+    return add_construction_links(data, {"BF Contract": "supplier", "BF Progress Claim": "supplier"})
+
+
+def get_stock_entry_dashboard(data):
+    # a Stock Issue made by a Site Daily Report links back to it
+    return add_construction_links(data, {"BF Site Daily Report": "stock_entry"})
+
+
+def get_task_dashboard(data):
+    # measurements of the task, and the Stock Issues that charged materials to it
+    return add_construction_links(data, {"BF Site Measurement Log": "task", "Stock Entry": "bf_task"})
+
+
 def get_project_dashboard(data):
     """Project Connections: the construction documents first, then ERPNext's own."""
     data["transactions"] = [

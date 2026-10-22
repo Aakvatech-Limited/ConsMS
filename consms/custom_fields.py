@@ -37,5 +37,16 @@ def create_custom_fields():
             }
         ],
         "Purchase Invoice": claim_links,
+        # the kind of work, for filters and reports only; shown on the contracts too
+        "Project": [
+            {
+                "fieldname": "construction_type",
+                "label": "Construction Type",
+                "fieldtype": "Select",
+                "options": "\nBuilding\nRoad\nBridge\nWater Supply\nIrrigation\nSewerage\nElectrical\nOther",
+                "insert_after": "project_type",
+                "in_standard_filter": 1,
+            }
+        ],
     }
     _create_custom_fields(custom_fields)

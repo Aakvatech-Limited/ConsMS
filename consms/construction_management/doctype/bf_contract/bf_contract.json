@@ -13,6 +13,7 @@
   "contract_no",
   "tender",
   "project",
+  "construction_type",
   "contract_type",
   "main_contract",
   "site_warehouse",
@@ -102,6 +103,14 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fetch_from": "project.construction_type",
+   "fieldname": "construction_type",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Construction Type",
+   "read_only": 1
   },
   {
    "default": "Main Contract",
@@ -281,7 +290,7 @@
    "fieldtype": "Percent",
    "label": "Advance Payment (%)",
    "allow_on_submit": 1,
-   "description": "Of the Total Contract Value. Fills the Advance Payment Amount."
+   "description": "Of the Contract Sum (incl. VAT) on the Form of Tender, or of the Total Contract Value when the BOQ has no tender summary. Fills the Advance Payment Amount."
   },
   {
    "fieldname": "advance_payment_amount",
@@ -440,7 +449,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-22 18:15:00.000000",
+ "modified": "2026-10-22 20:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",
