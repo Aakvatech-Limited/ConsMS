@@ -86,10 +86,42 @@ def get_actual_cost(contract):
 	return cost
 
 
+def get_committed_cost(contract):
+	"""Money promised on submitted Purchase Orders that is not in the books yet, per BOQ line.
+
+	Materials: the part not received yet (their cost reaches the books when issued on site).
+	Services and hire: the part not invoiced yet.
+	"""
+	project = frappe.db.get_value("BF Contract", contract, "project")
+	if not project:
+		return {}
+	rows = frappe.db.sql(
+		"""
+		select poi.bf_boq_item as boq_item, sum(
+			case when item.is_stock_item = 1
+				then greatest(poi.qty - poi.received_qty, 0) * poi.base_net_rate
+				else greatest(poi.base_net_amount - poi.billed_amt * po.conversion_rate, 0)
+			end) as amount
+		from `tabPurchase Order Item` poi
+		join `tabPurchase Order` po on po.name = poi.parent
+		join `tabItem` item on item.name = poi.item_code
+		where po.docstatus = 1 and po.status not in ('Closed', 'Completed')
+			and coalesce(poi.project, po.project) = %s and ifnull(poi.bf_boq_item, '') != ''
+		group by poi.bf_boq_item
+		""",
+		project,
+		as_dict=True,
+	)
+	return {r.boq_item: flt(r.amount) for r in rows if flt(r.amount)}
+
+
 def get_baseline_cost(contract):
-	"""Budget cost per BOQ line from the first (baseline) version of the contract's budget."""
+	"""Budget cost per BOQ line from the first approved (baseline) version of the contract's budget.
+
+	The first version stays as the baseline after it is cancelled and amended; a draft is not a baseline.
+	"""
 	baseline = frappe.db.get_value(
-		"BF Budget", {"contract": contract, "amended_from": ["is", "not set"]}, "name", order_by="creation asc"
+		"BF Budget", {"contract": contract, "amended_from": ["is", "not set"], "docstatus": ["!=", 0]}, "name", order_by="creation asc"
 	)
 	if not baseline:
 		return {}

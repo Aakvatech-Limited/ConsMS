@@ -8,6 +8,10 @@
  "field_order": [
   "sb_billing",
   "default_progress_claim_item",
+  "sb_budget_control",
+  "over_budget_action",
+  "cb_budget_control",
+  "over_budget_approver_role",
   "sb_templates",
   "default_certificate_template",
   "default_boq_summary_template",
@@ -31,6 +35,33 @@
    "fieldtype": "Link",
    "label": "Default Progress Claim Item",
    "options": "Item"
+  },
+  {
+   "fieldname": "sb_budget_control",
+   "fieldtype": "Section Break",
+   "label": "Budget Control",
+   "description": "What happens when a Material Request or Purchase Order asks for more of a material than is left on its budget line."
+  },
+  {
+   "default": "Warn",
+   "fieldname": "over_budget_action",
+   "fieldtype": "Select",
+   "label": "When a Purchase Is Over the Budget Quantity",
+   "options": "Warn\nStop\nStop unless approved",
+   "description": "Warn: a message, the document can still be submitted. Stop: it cannot be submitted; revise the budget first. Stop unless approved: only the role below can submit it, and the approval is recorded."
+  },
+  {
+   "fieldname": "cb_budget_control",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.over_budget_action == 'Stop unless approved'",
+   "fieldname": "over_budget_approver_role",
+   "fieldtype": "Link",
+   "label": "Who Can Approve Over-Budget Purchases",
+   "options": "Role",
+   "mandatory_depends_on": "eval:doc.over_budget_action == 'Stop unless approved'",
+   "description": "e.g. Projects Manager."
   },
   {
    "fieldname": "sb_templates",
@@ -97,7 +128,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-22 10:00:00.000000",
+ "modified": "2026-10-23 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

@@ -29,7 +29,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 8,
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -91,16 +91,6 @@
    "label": "BF Contract Profitability",
    "link_count": 0,
    "link_to": "BF Contract Profitability",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "BOQ Budget vs Expenditure",
-   "link_count": 0,
-   "link_to": "BOQ Budget vs Expenditure",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -215,7 +205,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-22 20:00:00.000000",
+ "modified": "2026-10-23 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "Construction MS",

@@ -324,6 +324,10 @@ class TestCoreFlow(FrappeTestCase):
 		line.rate_analysis = per_m3
 		budget.insert()
 		self.assertEqual(budget.get_unit_mismatches(), [])
+
+		from consms.construction_management.progress import get_baseline_cost
+
+		self.assertEqual(get_baseline_cost(self.contract.name), {})  # a draft budget is not a baseline
 		self.assertEqual(flt(line.budget_cost), 200 * 7 * 20_000)  # 200 m3 x 7 bags x 20,000
 
 		# a budget that already holds a wrong-unit recipe (saved before this check) is flagged
@@ -400,3 +404,124 @@ class TestCoreFlow(FrappeTestCase):
 		for doctype, name in (("BF Contract", subcontract.name), ("BF Progress Claim", claim.name)):
 			counts = _get_linked_document_counts(doctype, name)["count"]["external_links_found"]
 			self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Purchase Invoice"), 1, doctype)
+
+
+class TestBudgetControl(FrappeTestCase):
+	"""Budget of 700 bags of cement (100 m3 x 7 bags); Material Requests and Purchase Orders against it."""
+
+	@classmethod
+	def setUpClass(cls):
+		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
+
+		super().setUpClass()
+		company = frappe.db.get_value("Company", {}, "name")
+		project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS budget control test", "company": company}).insert()
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/BUDGET/001", "tender_name": "Budget control test", "project": project.name}
+		).insert()
+		boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": project.name, "tender": tender.name, "summary_template": None,
+			"items": [{"item_no": "1", "description": "Concrete C25", "uom": "Cubic Meter", "erp_uom": "Cubic Meter", "quantity": 100, "unit_rate": 450_000}],
+		}).insert()
+		boq.submit()
+		customer = frappe.db.get_value("Customer", {}, "name")
+		contract = make_bf_contract(tender.name)
+		contract.update({"customer": customer, "contingency_percentage": 0, "certificate_template": SEUWASA})
+		contract.insert()
+		contract.submit()
+
+		cls.cement = make_item("ConsMS Test Cement", stock=True)
+		recipe = frappe.get_doc({
+			"doctype": "BF Rate Analysis", "rate_analysis_name": "Concrete C25 budget control test", "uom": "Cubic Meter",
+			"items": [{"resource_type": "Material", "item_code": cls.cement, "qty": 7, "rate": 22_000}],
+		}).insert()
+		recipe.submit()
+		budget = make_bf_budget(contract.name)
+		budget.boq_lines[0].rate_analysis = recipe.name
+		budget.insert()
+		budget.submit()
+		cls.budget, cls.contract, cls.project = budget, contract.reload(), project
+		cls.line = budget.items[0].name
+		cls.supplier = frappe.get_doc({
+			"doctype": "Supplier", "supplier_name": "ConsMS Test Cement Supplier",
+			"supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}),
+		}).insert().name
+
+	def setting(self, action, role=None):
+		frappe.db.set_single_value("BF Construction Settings", {"over_budget_action": action, "over_budget_approver_role": role})
+
+	def request(self, qty):
+		"""A Material Request row on the budget line (typed, since Get Items From only offers what is left)."""
+		return frappe.get_doc({
+			"doctype": "Material Request", "material_request_type": "Purchase", "schedule_date": today(),
+			"company": frappe.db.get_value("Project", self.project.name, "company"),
+			"items": [{"item_code": self.cement, "qty": qty, "schedule_date": today(), "project": self.project.name,
+				"warehouse": self.contract.site_warehouse, "bf_budget": self.budget.name, "bf_budget_item": self.line,
+				"bf_boq": self.budget.boq, "bf_boq_item": self.budget.items[0].boq_item}],
+		}).insert()
+
+	def order(self, qty):
+		return frappe.get_doc({
+			"doctype": "Purchase Order", "supplier": self.supplier, "company": frappe.db.get_value("Project", self.project.name, "company"),
+			"project": self.project.name, "schedule_date": today(),
+			"items": [{"item_code": self.cement, "qty": qty, "rate": 22_000, "schedule_date": today(), "project": self.project.name,
+				"warehouse": self.contract.site_warehouse, "bf_budget": self.budget.name, "bf_budget_item": self.line,
+				"bf_boq": self.budget.boq, "bf_boq_item": self.budget.items[0].boq_item}],
+		}).insert()
+
+	def test_1_within_the_budget_always_passes(self):
+		from consms.construction_management.doctype.bf_budget.bf_budget import get_items_for_material_request
+
+		self.assertEqual(flt(self.budget.items[0].qty), 700)
+		self.setting("Stop")
+		mr = get_items_for_material_request(self.budget.name)  # Get Items From > Budget offers the 700 left
+		self.assertEqual(flt(mr.items[0].qty), 700)
+		mr.items[0].qty = 300
+		mr.insert().submit()  # 300 of 700
+
+	def test_2_stop_blocks_submit_but_keeps_the_draft(self):
+		self.setting("Stop")
+		mr = self.request(500)  # 300 already requested: only 400 left; saving the draft is allowed
+		with self.assertRaises(frappe.ValidationError):
+			mr.submit()
+
+	def test_3_warn_lets_it_through(self):
+		self.setting("Warn")
+		self.request(500).submit()  # 800 requested of 700, with a warning only
+
+	def test_4_stop_unless_approved(self):
+		from consms.budget_control import enforce
+
+		self.setting("Stop unless approved", "Projects Manager")
+		mr = self.request(100)  # already 800 of 700
+
+		# someone without the approver role is stopped (Guest: creating a test user would commit the database)
+		frappe.set_user("Guest")
+		try:
+			with self.assertRaises(frappe.ValidationError):
+				enforce(mr)
+		finally:
+			frappe.set_user("Administrator")
+
+		mr.submit()  # the approver can submit; the approval is recorded on the document
+		comment = frappe.db.get_value("Comment", {"reference_doctype": "Material Request", "reference_name": mr.name,
+			"content": ["like", "Submitted over the budget, approved by Administrator%"]})
+		self.assertTrue(comment)
+
+	def test_5_purchase_orders_are_counted_separately(self):
+		self.setting("Stop")
+		self.order(400).submit()  # requests already passed 700, but nothing has been ordered yet
+		with self.assertRaises(frappe.ValidationError):
+			self.order(400).submit()  # 800 ordered of 700
+
+	def test_6_open_orders_show_as_committed(self):
+		from consms.construction_management.progress import get_committed_cost
+		from consms.construction_management.report.running_cost_vs_budget.running_cost_vs_budget import execute
+
+		committed = get_committed_cost(self.contract.name)
+		self.assertEqual(committed[self.budget.items[0].boq_item], 400 * 22_000)  # test 5's order, nothing received
+
+		row = next(r for r in execute({"contract": self.contract.name})[1] if r["description"] == "Concrete C25")
+		self.assertEqual(row["budget"], 700 * 22_000)
+		self.assertEqual(row["committed"], 400 * 22_000)
+		self.assertEqual(row["remaining"], 300 * 22_000)

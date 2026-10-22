@@ -142,9 +142,14 @@ jinja = {
 
 doc_events = {
 	"Material Request": {
-		"validate": "consms.material_request.warn_if_over_budget",
+		"validate": "consms.budget_control.warn",
+		"before_submit": "consms.budget_control.enforce",
 		"on_submit": "consms.material_request.update_budget_requested_qty",
 		"on_cancel": "consms.material_request.update_budget_requested_qty",
+	},
+	"Purchase Order": {
+		"validate": "consms.budget_control.warn",
+		"before_submit": "consms.budget_control.enforce",
 	},
 	"Task": {
 		"on_update": "consms.construction_management.tasks.update_works_execution_from_task",

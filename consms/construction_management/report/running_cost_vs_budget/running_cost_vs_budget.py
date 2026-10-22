@@ -5,7 +5,13 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from consms.construction_management.progress import get_actual_cost, get_baseline_cost, get_budget_cost, get_measured_qty
+from consms.construction_management.progress import (
+	get_actual_cost,
+	get_baseline_cost,
+	get_budget_cost,
+	get_committed_cost,
+	get_measured_qty,
+)
 
 
 def execute(filters=None):
@@ -28,6 +34,10 @@ def get_columns():
 		 "description": "What the work done so far should have cost."},
 		{"label": _("Actual Cost"), "fieldname": "actual", "fieldtype": "Currency", "width": 130,
 		 "description": "From the books: materials issued on site, purchases and other project expenses."},
+		{"label": _("Committed (Open POs)"), "fieldname": "committed", "fieldtype": "Currency", "width": 140,
+		 "description": "Ordered but not in the books yet: materials not received, services not invoiced."},
+		{"label": _("Remaining"), "fieldname": "remaining", "fieldtype": "Currency", "width": 130,
+		 "description": "Current budget less actual cost and committed."},
 		{"label": _("% Budget Spent"), "fieldname": "percent_spent", "fieldtype": "Percent", "width": 110},
 		{"label": _("Variance"), "fieldname": "variance", "fieldtype": "Currency", "width": 130},
 		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 120},
@@ -41,12 +51,13 @@ def get_data(contract):
 	done = get_measured_qty(contract)
 	budget_name, budget = get_budget_cost(contract)
 	actual = get_actual_cost(contract)
+	committed = get_committed_cost(contract)
 	baseline = get_baseline_cost(contract)
 	data = []
 	for line in frappe.get_all("BF BOQ Item", filters={"parent": boq}, fields=["name", "description", "quantity", "revised_qty", "bill"], order_by="idx"):
 		qty = flt(line.revised_qty or line.quantity)
 		pct = done.get(line.name, 0) / qty * 100 if qty else 0
-		row = make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0))
+		row = make_row(line.description, budget.get(line.name, 0), min(pct, 100), actual.get(line.name, 0), committed.get(line.name, 0))
 		row["baseline"] = baseline.get(line.name, row["budget"])
 		row["budget_change"] = row["budget"] - row["baseline"]
 		row["bill"] = line.bill or _("General Items")
@@ -64,19 +75,19 @@ def group_by_bill(data):
 	groups = {}
 	for row in data:
 		key = row.get("bill") or row["description"]
-		g = groups.setdefault(key, {"budget": 0, "earned": 0, "actual": 0, "baseline": 0})
+		g = groups.setdefault(key, {"budget": 0, "earned": 0, "actual": 0, "committed": 0, "baseline": 0})
 		for k in g:
 			g[k] += row.get(k, 0)
 	out = []
 	for bill, g in groups.items():
-		row = make_row(bill, g["budget"], g["earned"] / g["budget"] * 100 if g["budget"] else 0, g["actual"])
+		row = make_row(bill, g["budget"], g["earned"] / g["budget"] * 100 if g["budget"] else 0, g["actual"], g["committed"])
 		row["baseline"] = g["baseline"]
 		row["budget_change"] = g["budget"] - g["baseline"]
 		out.append(row)
 	return out
 
 
-def make_row(description, budget, percent_done, actual):
+def make_row(description, budget, percent_done, actual, committed=0):
 	earned = budget * percent_done / 100
 	variance = earned - actual
 	if not actual and not percent_done:
@@ -91,6 +102,8 @@ def make_row(description, budget, percent_done, actual):
 		"percent_done": percent_done,
 		"earned": earned,
 		"actual": actual,
+		"committed": committed,
+		"remaining": budget - actual - committed,
 		"percent_spent": actual / budget * 100 if budget else 0,
 		"variance": variance,
 		"status": status,
@@ -119,11 +132,14 @@ def get_summary(data):
 	budget = sum(d["budget"] for d in data)
 	earned = sum(d["earned"] for d in data)
 	actual = sum(d["actual"] for d in data)
+	committed = sum(d["committed"] for d in data)
 	return [
 		{"value": budget, "indicator": "Blue", "label": _("Current Budget"), "datatype": "Currency"},
 		{"value": budget - sum(d.get("baseline", d["budget"]) for d in data), "indicator": "Orange", "label": _("Change vs Baseline"), "datatype": "Currency"},
 		{"value": earned / budget * 100 if budget else 0, "indicator": "Green", "label": _("% Work Done (by budget)"), "datatype": "Percent"},
 		{"value": actual / budget * 100 if budget else 0, "indicator": "Orange", "label": _("% Budget Spent"), "datatype": "Percent"},
 		{"value": actual, "indicator": "Red", "label": _("Actual Cost"), "datatype": "Currency"},
+		{"value": committed, "indicator": "Orange", "label": _("Committed (Open POs)"), "datatype": "Currency"},
+		{"value": budget - actual - committed, "indicator": "Blue", "label": _("Remaining"), "datatype": "Currency"},
 		{"value": earned - actual, "indicator": "Green" if earned >= actual else "Red", "label": _("Cost Variance"), "datatype": "Currency"},
 	]
