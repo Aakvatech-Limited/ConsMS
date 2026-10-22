@@ -84,7 +84,7 @@
    "fieldtype": "Password",
    "label": "API Key",
    "length": 255,
-   "description": "Gemen's own key. Gemini: aistudio.google.com > Get API key (free). Groq: console.groq.com > API Keys (free). Stored encrypted."
+   "description": "The company's own key. Gemini: aistudio.google.com > Get API key (free). Groq: console.groq.com > API Keys (free). Stored encrypted."
   },
   {
    "fieldname": "ai_help",

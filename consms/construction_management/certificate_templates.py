@@ -1,4 +1,4 @@
-"""Starter Certificate Templates, taken from real Gemen certificates (SEUWASA, TANROADS, FIDIC).
+"""Starter Certificate Templates, taken from real client certificates (SEUWASA, TANROADS, FIDIC).
 
 Each line: (label, Add/Less/Subtotal, amount from, rate, % of, options).
 Users copy a template and change the lines for a new client; nothing here is fixed in the code.

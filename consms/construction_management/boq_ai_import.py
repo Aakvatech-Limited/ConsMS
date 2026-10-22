@@ -5,7 +5,7 @@ quantity and rate, and what each row is (item, bill heading, section, subtotal, 
 Quantities and rates are always copied by this code from the Excel cells, so the AI
 can never change a price. Totals are checked against the file before anything is saved.
 
-Any OpenAI-compatible provider works (Google Gemini, Groq...), with Gemen's own key from
+Any OpenAI-compatible provider works (Google Gemini, Groq...), with the company's own key from
 BF Construction Settings. Without a key, or when the provider fails, a built-in reader is used.
 """
 
