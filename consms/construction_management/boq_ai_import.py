@@ -37,7 +37,7 @@ class AIUnavailable(Exception):
 
 # ---------------------------------------------------------------- whitelisted API
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def preview_import(boq, file_url):
 	"""Start reading the Excel in the background; returns a token to poll with get_preview."""
 	frappe.get_doc("BF Bill of Quantities", boq).check_permission("write")
@@ -179,7 +179,7 @@ def call_ai(config, system, user):
 			timeout=120,
 		)
 	except requests.RequestException as e:
-		raise AIUnavailable(_("Could not reach the AI provider: {0}").format(e))
+		raise AIUnavailable(_("Could not reach the AI provider: {0}").format(str(e)))
 	if response.status_code == 429:
 		raise AIUnavailable(_("The AI provider's free limit is used up for now."))
 	if response.status_code >= 400:

@@ -142,10 +142,10 @@ class BFBudget(Document):
 	def apply_rate_analyses(self, rebuild_all=False):
 		"""Rebuild resources only for BOQ lines whose recipe changed, so manual edits elsewhere are kept."""
 		company = frappe.db.get_value("Project", self.project, "company")
-		for line in self.boq_lines:
-			if not rebuild_all and line.rate_analysis == line.applied_rate_analysis:
-				continue
-			self.set("items", [row for row in self.items if row.boq_item != line.boq_item])
+		changed = [line for line in self.boq_lines if rebuild_all or line.rate_analysis != line.applied_rate_analysis]
+		changed_items = {line.boq_item for line in changed}
+		self.set("items", [row for row in self.items if row.boq_item not in changed_items])
+		for line in changed:
 			if line.rate_analysis:
 				for res in frappe.get_doc("BF Rate Analysis", line.rate_analysis).items:
 					self.append(

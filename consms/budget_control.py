@@ -13,11 +13,12 @@ from frappe.utils import flt
 
 WARN, STOP, APPROVAL = "Warn", "Stop", "Stop unless approved"
 
-# what each document is measured against: its own kind, submitted, other than itself
-USED = {
-	"Material Request": ("Material Request Item", "Material Request", _("requested")),
-	"Purchase Order": ("Purchase Order Item", "Purchase Order", _("ordered")),
-}
+def measured_against(doctype):
+	"""(child table, document, word) a document is measured against: its own kind, submitted, other than itself."""
+	return {
+		"Material Request": ("Material Request Item", "Material Request", _("requested")),
+		"Purchase Order": ("Purchase Order Item", "Purchase Order", _("ordered")),
+	}[doctype]
 
 
 def get_over_budget(doc):
@@ -29,7 +30,7 @@ def get_over_budget(doc):
 	if not asked:
 		return []
 
-	child, parent, _verb = USED[doc.doctype]
+	child, parent, _verb = measured_against(doc.doctype)
 	used = dict(frappe.db.sql(
 		f"""
 		select row.bf_budget_item, sum(row.stock_qty)
@@ -59,7 +60,7 @@ def qty(value):
 
 
 def over_budget_message(doc, over):
-	verb = USED[doc.doctype][2]
+	verb = measured_against(doc.doctype)[2]
 	return "<br>".join(
 		_("{0} for {1}: {2} {3} now, but only {4} left on budget {5} (budget {6}, already {7} {8}).").format(
 			frappe.bold(o.item_code), (o.boq_description or "")[:80], qty(o.asked), o.uom or "",
