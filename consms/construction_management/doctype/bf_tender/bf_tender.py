@@ -188,6 +188,9 @@ def make_bf_contract(source_name, target_doc=None):
         target_doc,
     )
 
+    # the contract number is usually the tender number; it can be changed before saving
+    doc.contract_no = doc.contract_no or source_name
+
     if not doc.get("submittals"):
         for doc_type in get_document_types("Contract"):
             doc.append("submittals", {"submittal_type": doc_type, "status": "Pending"})

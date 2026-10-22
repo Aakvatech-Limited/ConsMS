@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:BF-CONTR-{YYYY}-{####}",
+ "autoname": "field:contract_no",
  "creation": "2026-06-26 17:47:18.105019",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -10,6 +10,7 @@
   "details_tab",
   "connections_tab",
   "contract_reference",
+  "contract_no",
   "tender",
   "project",
   "contract_type",
@@ -76,6 +77,15 @@
    "fieldname": "contract_reference",
    "fieldtype": "Section Break",
    "label": "Contract Reference"
+  },
+  {
+   "bold": 1,
+   "description": "The client's contract number, e.g. TR201/CCP/P155759/2024/2025/W/02. Filled from the Tender No.; change it before saving if the client issued a different number. It becomes the name of this contract; to correct it later, use Rename.",
+   "fieldname": "contract_no",
+   "fieldtype": "Data",
+   "label": "Contract No.",
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "description": "The awarded tender this contract comes from.",
@@ -431,11 +441,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 19:00:00.000000",
+ "modified": "2026-10-22 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",
- "naming_rule": "Expression",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -456,7 +466,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "search_fields": "tender, project, total_contract_amount",
+ "search_fields": "project, customer, supplier, total_contract_amount",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

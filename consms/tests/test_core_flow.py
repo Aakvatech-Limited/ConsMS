@@ -151,6 +151,7 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual(flt(self.contract.contract_amount), 89_200_000)
 		self.assertEqual(flt(self.contract.advance_payment_amount), 17_840_000)
 		self.assertEqual(self.contract.tender, "TEST/CORE/001")
+		self.assertEqual(self.contract.name, "TEST/CORE/001")  # named by its Contract No., taken from the Tender No.
 
 	def test_2_first_ipc_and_invoice(self):
 		self.measure({"1.1": 0.5, "2.1": 500, "2.2": 50}, date=add_days(today(), -20))
@@ -198,6 +199,7 @@ class TestCoreFlow(FrappeTestCase):
 		}).insert()
 		subcontract = frappe.get_doc({
 			"doctype": "BF Contract",
+			"contract_no": "TEST/CORE/SUB-01",
 			"tender": self.tender.name,
 			"contract_type": "Subcontract",
 			"main_contract": self.contract.name,

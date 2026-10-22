@@ -3,6 +3,8 @@
 
 frappe.ui.form.on("BF Contract", {
 	refresh(frm) {
+		// Frappe hides the naming field once saved; the contract number should stay in view (read only)
+		frm.toggle_display("contract_no", true);
 		calculate_contingency(frm);
 		show_time_status(frm);
 		show_expiring_documents(frm);

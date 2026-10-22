@@ -20,3 +20,4 @@ consms.patches.v1_0.start_boq_variations
 consms.patches.v1_0.set_tender_numbers
 consms.patches.v1_0.move_tender_costs_to_comments
 consms.patches.v1_0.remove_unused_parts
+consms.patches.v1_0.set_contract_numbers
