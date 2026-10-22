@@ -7,7 +7,7 @@ from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
 from frappe.utils import flt, getdate
 
-from consms.construction_management.ipc import calculate, set_liquidated_damages, update_contract_balances
+from consms.construction_management.ipc import calculate, earlier_claims, set_liquidated_damages, update_contract_balances
 
 class BFProgressClaim(Document):
 	def validate(self):
@@ -117,11 +117,8 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 			period_qtys[mi.boq_item] = period_qtys.get(mi.boq_item, 0.0) + flt(mi.total_quantity)
 
 	# Earlier certificates
-	past_claims = frappe.get_all(
-		"BF Progress Claim",
-		filters={"contract": contract, "docstatus": 1, "name": ["!=", claim_name]},
-		pluck="name",
-	)
+	condition, values = earlier_claims(frappe._dict(doc.as_dict(), contract=contract, period_to=period_to or doc.period_to))
+	past_claims = frappe.db.sql_list(f"select name from `tabBF Progress Claim` claim where {condition}", values)
 	prev_qtys, prev_var_claims = {}, {}
 	if past_claims:
 		for pi in frappe.get_all("BF Progress Claim Item", filters={"parent": ["in", past_claims]}, fields=["boq_item", "this_period_qty"]):

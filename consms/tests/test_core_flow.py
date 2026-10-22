@@ -15,7 +15,7 @@ from consms.construction_management.doctype.bf_progress_claim.bf_progress_claim 
 	make_sales_invoice,
 )
 from consms.construction_management.doctype.bf_tender.bf_tender import make_bf_contract
-from consms.construction_management.ipc import LineHolder, build_lines, get_vat, get_vat_summary, money, run_lines
+from consms.construction_management.ipc import LineHolder, build_lines, calculate, get_vat, get_vat_summary, money, run_lines
 
 SEUWASA = "Ministry of Water (SEUWASA)"
 
@@ -256,6 +256,16 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual(rows["Less: VAT-exempt work"].to_date, 5_000_000)  # P&G of IPC 01
 		self.assertEqual(rows["VAT 18%"].to_date, 3_978_000 + 3_150_000)
 		self.assertEqual(rows["Amount due incl. VAT"].previous, 24_303_000)
+
+		# once IPC 02 is submitted, IPC 01 recalculated still counts only what came before it (nothing)
+		claim.submit()
+		first = frappe.get_doc("BF Progress Claim", {"contract": self.contract.name, "claim_title": "IPC 01"})
+		calculate(first)
+		self.assertEqual((first.advance_payment_recovery, first.advance_recovered_to_date), (5_420_000, 5_420_000))
+		self.assertEqual(first.amount_due, 24_303_000)
+		rows = {r.label: r for r in get_vat_summary(first, frappe.get_doc("BF Contract", self.contract.name)).rows}
+		self.assertEqual(rows["Work done (all bills)"].previous, 0)
+		claim.cancel()  # later tests measure against IPC 01 only
 
 	def test_4_measuring_more_than_the_boq_is_blocked(self):
 		# 1,000 m3 in the BOQ; 500 already measured

@@ -19,7 +19,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, date_diff, flt, getdate, money_in_words
+from frappe.utils import add_days, cint, date_diff, flt, getdate, money_in_words, now_datetime
 
 LINE_FIELDS = (
 	"label", "line_type", "calculation", "rate", "percentage_of", "line_no", "deduct_previous",
@@ -181,10 +181,33 @@ def default_certificate_template(contract=None):
 	)
 
 
+def earlier_claims(claim, alias="claim"):
+	"""SQL condition for the submitted certificates of the same contract and type that come before this one.
+
+	Earlier = an earlier period end (periods cannot overlap), or the same period end and created first.
+	A certificate recalculated later must not count the certificates that came after it.
+	"""
+	condition = f"""{alias}.contract = %(contract)s and {alias}.claim_type = %(claim_type)s and {alias}.docstatus = 1
+		and {alias}.name != %(name)s
+		and (coalesce({alias}.period_to, {alias}.posting_date, date({alias}.creation)) < %(period_end)s
+			or (coalesce({alias}.period_to, {alias}.posting_date, date({alias}.creation)) = %(period_end)s
+				and {alias}.creation < %(creation)s))"""
+	creation = claim.creation or now_datetime()
+	values = {
+		"contract": claim.contract,
+		"claim_type": claim.claim_type or "Client Claim",
+		"name": claim.name or "",
+		"period_end": getdate(claim.period_to or claim.posting_date or creation),
+		"creation": creation,
+	}
+	return condition, values
+
+
 def get_previous_totals(claim):
 	"""Totals of the submitted certificates of the same contract before this one."""
+	condition, values = earlier_claims(claim)
 	totals = frappe.db.sql(
-		"""
+		f"""
 		select
 			coalesce(sum(retention_deduction), 0) as retention,
 			coalesce(sum(retention_release), 0) as released,
@@ -193,26 +216,26 @@ def get_previous_totals(claim):
 			coalesce(sum(materials_on_site), 0) as materials,
 			coalesce(sum(vat_amount), 0) as vat,
 			coalesce(sum(net_amount_due), 0) as net
-		from `tabBF Progress Claim`
-		where contract = %s and claim_type = %s and docstatus = 1 and name != %s
+		from `tabBF Progress Claim` claim
+		where {condition}
 		""",
-		(claim.contract, claim.claim_type or "Client Claim", claim.name or ""),
+		values,
 		as_dict=True,
 	)[0]
 	return frappe._dict({k: flt(v) for k, v in totals.items()})
 
 
 def get_previous_by_label(claim):
+	condition, values = earlier_claims(claim)
 	rows = frappe.db.sql(
-		"""
+		f"""
 		select line.label, sum(line.amount) as amount
 		from `tabBF Certificate Line` line
 		join `tabBF Progress Claim` claim on claim.name = line.parent
-		where line.parenttype = 'BF Progress Claim' and claim.contract = %s and claim.claim_type = %s
-			and claim.docstatus = 1 and claim.name != %s
+		where line.parenttype = 'BF Progress Claim' and {condition}
 		group by line.label
 		""",
-		(claim.contract, claim.claim_type or "Client Claim", claim.name or ""),
+		values,
 		as_dict=True,
 	)
 	return {r.label: flt(r.amount) for r in rows}
@@ -508,8 +531,8 @@ def get_vat_summary(claim, contract=None):
 	this = certificate_vat_figures(claim)
 	previous = frappe._dict.fromkeys(this, 0.0)
 	if claim.contract:
-		for name in frappe.get_all("BF Progress Claim", pluck="name", filters={
-				"contract": claim.contract, "claim_type": claim.claim_type or "Client Claim", "docstatus": 1, "name": ["!=", claim.name or ""]}):
+		condition, values = earlier_claims(claim)
+		for name in frappe.db.sql_list(f"select name from `tabBF Progress Claim` claim where {condition}", values):
 			for key, value in certificate_vat_figures(frappe.get_doc("BF Progress Claim", name)).items():
 				previous[key] += value
 

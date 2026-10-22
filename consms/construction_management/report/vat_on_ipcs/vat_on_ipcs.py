@@ -20,7 +20,7 @@ def execute(filters=None):
 
 	invoice_doctype = "Sales Invoice" if claim_type == "Client Claim" else "Purchase Invoice"
 	data, to_date = [], {}
-	for name in frappe.get_all("BF Progress Claim", filters=conditions, pluck="name", order_by="contract, posting_date, creation"):
+	for name in frappe.get_all("BF Progress Claim", filters=conditions, pluck="name", order_by="contract, period_to, creation"):
 		claim = frappe.get_doc("BF Progress Claim", name)
 		f = certificate_vat_figures(claim)
 		to_date[claim.contract] = to_date.get(claim.contract, 0) + f.vat
