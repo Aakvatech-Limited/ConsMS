@@ -30,6 +30,11 @@ def after_migrate():
     create_custom_fields({
         **{dt: header_links for dt in buying},
         **{f"{dt} Item": row_links for dt in buying},
+        # Materials used on site (Site Daily Report -> Stock Issue): their cost in the books per task and BOQ line
+        "Stock Entry Detail": [
+            budget_link("bf_task", "Task", "Task", "project"),
+            budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "bf_task"),
+        ],
     })
 
     ensure_mobilization_task_type()

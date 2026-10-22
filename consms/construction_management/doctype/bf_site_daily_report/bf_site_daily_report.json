@@ -5,37 +5,39 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "sb_day",
   "contract",
   "project",
   "boq",
   "cb_1",
   "date",
   "weather",
-  "location",
   "cb_2",
+  "location",
   "source_warehouse",
-  "stock_entry",
-  "sb_work",
-  "work_done",
   "sb_labour",
   "labour",
   "sb_plant",
   "plant",
   "sb_materials",
   "materials",
-  "sb_totals",
-  "labour_cost",
+  "sb_work",
+  "work_done",
+  "sb_summary",
   "total_headcount",
-  "cb_3",
-  "plant_cost",
-  "total_fuel",
-  "cb_4",
-  "material_cost",
-  "total_cost",
+  "man_days",
+  "cb_summary_1",
+  "machines_on_site",
+  "cb_summary_2",
+  "stock_entry",
   "amended_from",
   "connections_tab"
  ],
  "fields": [
+  {
+   "fieldname": "sb_day",
+   "fieldtype": "Section Break"
+  },
   {
    "fieldname": "contract",
    "fieldtype": "Link",
@@ -58,6 +60,7 @@
    "fetch_from": "contract.boq",
    "fieldname": "boq",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Bill of Quantities",
    "options": "BF Bill of Quantities",
    "read_only": 1
@@ -81,16 +84,17 @@
    "options": "\nSunny\nCloudy\nRain - work continued\nRain - work stopped"
   },
   {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Chainage, block or structure, e.g. Km 2+300 or Tank 1500 m3.",
    "fieldname": "location",
    "fieldtype": "Data",
    "label": "Location on Site"
   },
   {
-   "fieldname": "cb_2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "Store the materials below are taken from.",
+   "description": "The store the materials below are taken from.",
    "fetch_from": "contract.site_warehouse",
    "fetch_if_empty": 1,
    "fieldname": "source_warehouse",
@@ -99,30 +103,11 @@
    "options": "Warehouse"
   },
   {
-   "description": "Created on submit: issues the materials to the project.",
-   "fieldname": "stock_entry",
-   "fieldtype": "Link",
-   "label": "Stock Issue",
-   "no_copy": 1,
-   "options": "Stock Entry",
-   "read_only": 1
-  },
-  {
-   "fieldname": "sb_work",
-   "fieldtype": "Section Break",
-   "label": "Work Done Today"
-  },
-  {
-   "fieldname": "work_done",
-   "fieldtype": "Text Editor",
-   "label": "Work Done / Remarks"
-  },
-  {
    "fieldname": "sb_labour",
-   "fieldtype": "Section Break",
-   "label": "Labour"
+   "fieldtype": "Section Break"
   },
   {
+   "description": "Who worked on which task. Pay is handled in payroll or accounts, not here.",
    "fieldname": "labour",
    "fieldtype": "Table",
    "label": "Labour",
@@ -130,10 +115,10 @@
   },
   {
    "fieldname": "sb_plant",
-   "fieldtype": "Section Break",
-   "label": "Machines"
+   "fieldtype": "Section Break"
   },
   {
+   "description": "Which machines worked on which task and for how long. Hire is paid through purchase invoices.",
    "fieldname": "plant",
    "fieldtype": "Table",
    "label": "Machines",
@@ -141,25 +126,30 @@
   },
   {
    "fieldname": "sb_materials",
-   "fieldtype": "Section Break",
-   "label": "Materials Used"
+   "fieldtype": "Section Break"
   },
   {
+   "description": "On submit these leave the Site Store through a Stock Issue, charged to the project at stock value.",
    "fieldname": "materials",
    "fieldtype": "Table",
    "label": "Materials Used",
    "options": "BF Daily Material"
   },
   {
-   "fieldname": "sb_totals",
+   "fieldname": "sb_work",
    "fieldtype": "Section Break",
-   "label": "Cost of the Day"
+   "label": "Diary"
   },
   {
-   "fieldname": "labour_cost",
-   "fieldtype": "Currency",
-   "label": "Labour Cost",
-   "read_only": 1
+   "description": "Work done, instructions received, delays and visitors, task by task.",
+   "fieldname": "work_done",
+   "fieldtype": "Text Editor",
+   "label": "What was done today"
+  },
+  {
+   "fieldname": "sb_summary",
+   "fieldtype": "Section Break",
+   "label": "Summary"
   },
   {
    "fieldname": "total_headcount",
@@ -169,37 +159,34 @@
    "read_only": 1
   },
   {
-   "fieldname": "cb_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "plant_cost",
-   "fieldtype": "Currency",
-   "label": "Plant Cost",
-   "read_only": 1
-  },
-  {
-   "fieldname": "total_fuel",
+   "description": "Headcount x days, all labour rows.",
+   "fieldname": "man_days",
    "fieldtype": "Float",
-   "label": "Fuel Used (Litres)",
+   "label": "Man-days",
+   "precision": "1",
    "read_only": 1
   },
   {
-   "fieldname": "cb_4",
+   "fieldname": "cb_summary_1",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "material_cost",
-   "fieldtype": "Currency",
-   "label": "Material Cost",
+   "fieldname": "machines_on_site",
+   "fieldtype": "Int",
+   "label": "Machines Used",
    "read_only": 1
   },
   {
-   "bold": 1,
-   "fieldname": "total_cost",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Total Cost",
+   "fieldname": "cb_summary_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Created on submit. Its value is the cost of the materials used today.",
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Issue",
+   "no_copy": 1,
+   "options": "Stock Entry",
    "read_only": 1
   },
   {
@@ -220,7 +207,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 00:30:00.000000",
+ "modified": "2026-10-22 16:30:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Site Daily Report",

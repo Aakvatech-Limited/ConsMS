@@ -1,31 +1,47 @@
 # Copyright (c) 2026, Sydney Kibanga and contributors
 # For license information, please see license.txt
 
+"""What happened on site in a day, task by task: who worked, which machines, what was used.
+
+It holds no money. Materials leave the Site Store through a Stock Issue on submit, which puts
+their cost in the books with the project, task and BOQ line; labour and machine hire are paid
+through payroll and accounts.
+"""
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
+
+TABLES = ("labour", "plant", "materials")
 
 
 class BFSiteDailyReport(Document):
 	def validate(self):
 		if self.materials and not self.source_warehouse:
 			frappe.throw(_("Select the Site Store the materials are taken from."))
-		self.calculate_totals()
-
-	def calculate_totals(self):
+		self.validate_tasks()
 		for row in self.labour:
-			row.amount = flt(row.headcount) * flt(row.days) * flt(row.rate)
-		for row in self.plant:
-			row.amount = flt(row.hours) * flt(row.rate)
-		for row in self.materials:
-			row.amount = flt(row.qty) * flt(row.rate)
-		self.labour_cost = sum(flt(r.amount) for r in self.labour)
-		self.total_headcount = sum(int(r.headcount or 0) for r in self.labour)
-		self.plant_cost = sum(flt(r.amount) for r in self.plant)
-		self.total_fuel = sum(flt(r.fuel_litres) for r in self.plant)
-		self.material_cost = sum(flt(r.amount) for r in self.materials)
-		self.total_cost = self.labour_cost + self.plant_cost + self.material_cost
+			if row.employee:
+				row.headcount = 1
+		self.set_summary()
+
+	def validate_tasks(self):
+		"""Every row belongs to a task, once the project has tasks to choose from."""
+		if not frappe.db.exists("Task", {"project": self.project, "is_template": 0}):
+			return
+		for table in TABLES:
+			for row in self.get(table):
+				if not row.task:
+					frappe.throw(
+						_("{0} row {1}: select the Task this belongs to.").format(_(self.meta.get_label(table)), row.idx),
+						title=_("Task missing"),
+					)
+
+	def set_summary(self):
+		self.total_headcount = sum(cint(row.headcount) for row in self.labour)
+		self.man_days = sum(cint(row.headcount) * flt(row.days) for row in self.labour)
+		self.machines_on_site = len(self.plant)
 
 	def on_submit(self):
 		self.issue_materials()
@@ -35,7 +51,7 @@ class BFSiteDailyReport(Document):
 			frappe.get_doc("Stock Entry", self.stock_entry).cancel()
 
 	def issue_materials(self):
-		"""Materials used today leave the site store and are charged to the project."""
+		"""Materials used today leave the site store, charged to the project, task and BOQ line."""
 		if not self.materials:
 			return
 		company = frappe.db.get_value("Project", self.project, "company")
@@ -50,7 +66,14 @@ class BFSiteDailyReport(Document):
 				"from_warehouse": self.source_warehouse,
 				"remarks": _("Materials used on site - {0}").format(self.name),
 				"items": [
-					{"item_code": row.item_code, "qty": row.qty, "s_warehouse": self.source_warehouse, "project": self.project}
+					{
+						"item_code": row.item_code,
+						"qty": row.qty,
+						"s_warehouse": self.source_warehouse,
+						"project": self.project,
+						"bf_task": row.task,
+						"bf_boq_item": row.boq_item,
+					}
 					for row in self.materials
 				],
 			}
@@ -58,11 +81,3 @@ class BFSiteDailyReport(Document):
 		entry.insert(ignore_permissions=True)
 		entry.submit()
 		self.db_set("stock_entry", entry.name)
-
-		# record the actual stock value used
-		rates = {row.item_code: flt(row.valuation_rate) for row in entry.items}
-		for row in self.materials:
-			row.db_set("rate", rates.get(row.item_code, 0))
-			row.db_set("amount", flt(row.qty) * rates.get(row.item_code, 0))
-		self.db_set("material_cost", sum(flt(r.qty) * rates.get(r.item_code, 0) for r in self.materials))
-		self.db_set("total_cost", flt(self.labour_cost) + flt(self.plant_cost) + flt(self.material_cost))

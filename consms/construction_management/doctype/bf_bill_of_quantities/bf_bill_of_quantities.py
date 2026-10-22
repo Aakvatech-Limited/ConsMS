@@ -93,6 +93,12 @@ def get_boq_items_query(doctype, txt, searchfield, start, page_len, filters):
 	conditions = ["parent = %s"]
 	params = [boq_name]
 
+	# narrow to the task's own lines, when the task has any
+	task = filters.get("task")
+	if task and frappe.db.exists("BF BOQ Item", {"parent": boq_name, "task": task}):
+		conditions.append("task = %s")
+		params.append(task)
+
 	if txt:
 		search_txt = f"%{txt}%"
 		conditions.append("(name LIKE %s OR IFNULL(description, '') LIKE %s)")

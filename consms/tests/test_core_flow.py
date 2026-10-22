@@ -20,6 +20,15 @@ from consms.construction_management.ipc import LineHolder, build_lines, money, r
 SEUWASA = "Ministry of Water (SEUWASA)"
 
 
+def make_item(item_code, stock):
+	if not frappe.db.exists("Item", item_code):
+		frappe.get_doc({
+			"doctype": "Item", "item_code": item_code, "item_group": frappe.db.get_value("Item Group", {"is_group": 0}),
+			"stock_uom": "Nos", "is_stock_item": int(stock),
+		}).insert()
+	return item_code
+
+
 class TestCertificateEngine(FrappeTestCase):
 	"""The certificate template reproduces the client's own Excel certificate."""
 
@@ -191,6 +200,56 @@ class TestCoreFlow(FrappeTestCase):
 		# 1,000 m3 in the BOQ; 500 already measured
 		with self.assertRaises(frappe.ValidationError):
 			self.measure({"2.1": 600})
+
+	def test_6_site_daily_report_puts_materials_in_the_books_per_task(self):
+		from consms.construction_management.progress import get_actual_cost
+
+		task = frappe.get_doc({"doctype": "Task", "subject": "Concrete lining", "project": self.project.name}).insert()
+		mason = make_item("ConsMS Test Mason", stock=False)
+		mixer = make_item("ConsMS Test Mixer Hire", stock=False)
+		cement = make_item("ConsMS Test Cement", stock=True)
+		store = self.contract.site_warehouse
+		receipt = frappe.get_doc({
+			"doctype": "Stock Entry", "stock_entry_type": "Material Receipt", "company": self.company,
+			"items": [{"item_code": cement, "qty": 100, "t_warehouse": store, "basic_rate": 20_000}],
+		}).insert()
+		receipt.submit()
+
+		def report(with_task):
+			return frappe.get_doc({
+				"doctype": "BF Site Daily Report",
+				"contract": self.contract.name,
+				"project": self.project.name,
+				"boq": self.boq.name,
+				"date": today(),
+				"source_warehouse": store,
+				"labour": [{"task": task.name if with_task else None, "item_code": mason, "headcount": 6, "days": 1}],
+				"plant": [{"task": task.name if with_task else None, "item_code": mixer, "hours": 5}],
+				"materials": [{"task": task.name if with_task else None, "item_code": cement, "qty": 10, "boq_item": self.items["2.2"]}],
+			})
+
+		# the project has tasks, so every row must say which task it belongs to
+		with self.assertRaises(frappe.ValidationError):
+			report(with_task=False).insert()
+
+		daily = report(with_task=True).insert()
+		self.assertEqual((daily.total_headcount, daily.man_days, daily.machines_on_site), (6, 6, 1))
+		daily.submit()
+
+		issue = frappe.get_doc("Stock Entry", daily.reload().stock_entry)
+		self.assertEqual(issue.items[0].bf_task, task.name)
+		self.assertEqual(issue.items[0].bf_boq_item, self.items["2.2"])
+		self.assertEqual(flt(issue.items[0].amount), 200_000)  # 10 bags at stock value 20,000
+
+		# Running Cost vs Budget: concrete's actual cost is the stock issue, and the total is the books' total
+		cost = get_actual_cost(self.contract.name)
+		self.assertEqual(cost[self.items["2.2"]], 200_000)
+		booked = frappe.db.sql(
+			"""select sum(gle.debit - gle.credit) from `tabGL Entry` gle join `tabAccount` a on a.name = gle.account
+			where gle.project = %s and gle.is_cancelled = 0 and a.root_type = 'Expense'""",
+			self.project.name,
+		)[0][0]
+		self.assertEqual(round(sum(cost.values()), 2), round(flt(booked), 2))
 
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({

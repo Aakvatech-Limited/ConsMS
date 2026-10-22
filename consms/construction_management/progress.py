@@ -33,22 +33,56 @@ def get_budget_cost(contract):
 
 
 def get_actual_cost(contract):
-	"""Actual cost per BOQ line from submitted Site Daily Reports (labour, machines, materials)."""
+	"""Actual cost per BOQ line, from the books.
+
+	Per BOQ line: materials issued on site (Stock Issues) and bought-in services or hire (Purchase
+	Invoices) that carry the line. Everything else booked to the project's expense accounts is
+	returned under None, so the total equals the project's expenses in the General Ledger.
+	"""
+	project = frappe.db.get_value("BF Contract", contract, "project")
+	if not project:
+		return {}
+
 	cost = {}
-	for table in ("BF Daily Labour", "BF Daily Plant", "BF Daily Material"):
-		rows = frappe.db.sql(
-			f"""
-			select t.boq_item, sum(t.amount) as amount
-			from `tab{table}` t
-			join `tabBF Site Daily Report` r on r.name = t.parent
-			where r.contract = %s and r.docstatus = 1
-			group by t.boq_item
+	linked = frappe.db.sql(
+		"""
+		select sed.bf_boq_item as boq_item, sum(sed.amount) as amount
+		from `tabStock Entry Detail` sed
+		join `tabStock Entry` se on se.name = sed.parent
+		where se.docstatus = 1 and se.purpose = 'Material Issue'
+			and coalesce(sed.project, se.project) = %(project)s and ifnull(sed.bf_boq_item, '') != ''
+		group by sed.bf_boq_item
+
+		union all
+
+		select pii.bf_boq_item, sum(pii.base_net_amount)
+		from `tabPurchase Invoice Item` pii
+		join `tabPurchase Invoice` pi on pi.name = pii.parent
+		join `tabItem` item on item.name = pii.item_code
+		where pi.docstatus = 1 and item.is_stock_item = 0 and pii.is_fixed_asset = 0
+			and coalesce(pii.project, pi.project) = %(project)s and ifnull(pii.bf_boq_item, '') != ''
+		group by pii.bf_boq_item
+		""",
+		{"project": project},
+		as_dict=True,
+	)
+	for r in linked:
+		cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
+
+	booked = flt(
+		frappe.db.sql(
+			"""
+			select sum(gle.debit - gle.credit)
+			from `tabGL Entry` gle
+			join `tabAccount` account on account.name = gle.account
+			where gle.project = %s and gle.is_cancelled = 0 and account.root_type = 'Expense'
 			""",
-			contract,
-			as_dict=True,
-		)
-		for r in rows:
-			cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
+			project,
+		)[0][0]
+	)
+	not_linked = booked - sum(cost.values())
+	if abs(not_linked) >= 0.01:
+		cost[None] = not_linked
 	return cost
 
 
