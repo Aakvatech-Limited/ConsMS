@@ -8,8 +8,6 @@
  "field_order": [
   "sb_billing",
   "default_progress_claim_item",
-  "sb_costing",
-  "track_costs_per_task",
   "sb_templates",
   "default_certificate_template",
   "default_boq_summary_template",
@@ -33,18 +31,6 @@
    "fieldtype": "Link",
    "label": "Default Progress Claim Item",
    "options": "Item"
-  },
-  {
-   "fieldname": "sb_costing",
-   "fieldtype": "Section Break",
-   "label": "Costing"
-  },
-  {
-   "default": "0",
-   "description": "Adds Task as an accounting dimension, so Material Requests, Purchase Orders, Purchase Invoices, Stock Entries and Journal Entries can be costed to a project task.",
-   "fieldname": "track_costs_per_task",
-   "fieldtype": "Check",
-   "label": "Track Costs per Task"
   },
   {
    "fieldname": "sb_templates",
@@ -111,7 +97,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-15 23:00:00.000000",
+ "modified": "2026-10-22 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Construction Settings",

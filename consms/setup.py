@@ -33,13 +33,6 @@ def after_migrate():
             "options": "BF BOQ Item",
             "insert_after": "bf_boq",
         },
-        {
-            "fieldname": "bf_boq_item_id",
-            "label": "BOQ Item ID",
-            "fieldtype": "Data",
-            "insert_after": "bf_boq_item",
-            "read_only": 1,
-        },
     ]
 
     create_custom_fields({
@@ -60,7 +53,7 @@ def after_migrate():
     ]
     item_budget_fields = [
         {"fieldname": "bf_budget", "label": "BF Budget", "fieldtype": "Link", "options": "BF Budget",
-         "insert_after": "bf_boq_item_id", "read_only": 1},
+         "insert_after": "bf_boq_item", "read_only": 1},
         {"fieldname": "bf_budget_item", "label": "Budget Line", "fieldtype": "Link", "options": "BF Budget Item",
          "insert_after": "bf_budget", "read_only": 1},
     ]
