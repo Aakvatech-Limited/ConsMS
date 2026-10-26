@@ -466,6 +466,40 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual((incoming.direction, incoming.attachment), ("Incoming", "/files/test-approval.pdf"))
 		self.assertEqual(frappe.db.get_value("BF Contract", self.contract.name, "approved_extension_days"), 20)
 
+	def test_9b_late_payment_interest(self):
+		from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+		from consms.construction_management.ipc import suggest_late_payment_interest
+		from consms.construction_management.report.late_payment_interest.late_payment_interest import execute
+
+		invoice = frappe.db.get_value("Sales Invoice", {"bf_contract": self.contract.name, "docstatus": 1}, "name")
+		if not invoice:
+			self.skipTest("IPC 01 has no invoice (no sales tax template), so payments cannot be read.")
+
+		# pay within 28 days of certification, 16% a year on late payments
+		self.contract.db_set({"payment_period_days": 28, "late_payment_interest_rate": 16, "interest_clause": "Clause 55 of GCC"})
+		first = frappe.get_doc("BF Progress Claim", {"contract": self.contract.name, "claim_title": "IPC 01"})
+		first.certified_date = add_days(today(), -60)  # certified after it was submitted
+		first.save()
+		self.assertEqual(str(first.due_date), add_days(today(), -32))
+
+		# 10,000,000 of the 24,303,000 paid today: 32 days late; the rest still unpaid 10 days from now
+		payment = get_payment_entry("Sales Invoice", invoice)
+		payment.update({"paid_amount": 10_000_000, "received_amount": 10_000_000, "reference_no": "TEST-LATE", "reference_date": today()})
+		payment.references[0].allocated_amount = 10_000_000
+		payment.insert()
+		payment.submit()
+
+		as_at = add_days(today(), 10)
+		expected = money(10_000_000 * 0.16 * 32 / 365 + 14_303_000 * 0.16 * 42 / 365)
+		row = next(r for r in execute({"contract": self.contract.name, "as_at": as_at})[1] if r.claim == first.name)
+		self.assertEqual((row.paid, row.unpaid, row.days_late), (10_000_000, 14_303_000, 42))
+		self.assertEqual(row.interest, expected)
+
+		# the next certificate is offered that interest (nothing was claimed before)
+		next_claim = frappe._dict(contract=self.contract.name, claim_type="Client Claim", name="", posting_date=as_at, period_to=as_at)
+		self.assertEqual(suggest_late_payment_interest(next_claim), expected)
+
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({
 			"doctype": "Supplier", "supplier_name": "ConsMS Test Subcontractor",
@@ -626,3 +660,106 @@ class TestBudgetControl(FrappeTestCase):
 		self.assertEqual(row["budget"], 700 * 22_000)
 		self.assertEqual(row["committed"], 400 * 22_000)
 		self.assertEqual(row["remaining"], 300 * 22_000)
+
+
+class TestBudgetAmounts(FrappeTestCase):
+	"""A budget typed as amounts per BOQ line, like a costing sheet, with a recipe made from one line."""
+
+	@classmethod
+	def setUpClass(cls):
+		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
+
+		super().setUpClass()
+		company = frappe.db.get_value("Company", {}, "name")
+		project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS budget amounts test", "company": company}).insert()
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/BUDGET/002", "tender_name": "Budget amounts test", "project": project.name}
+		).insert()
+		# stored out of bill order, as some imported BOQs are
+		boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": project.name, "tender": tender.name, "summary_template": None,
+			"items": [
+				{"item_no": "10.1", "bill": "Bill No. 10 - Concrete", "description": "Concrete C25", "uom": "m3", "erp_uom": "Cubic Meter",
+				 "quantity": 200, "unit_rate": 350_000},
+				{"item_no": "2.1", "bill": "Bill No. 2 - Earthworks", "description": "Excavation", "uom": "m3", "erp_uom": "Cubic Meter",
+				 "quantity": 1000, "unit_rate": 9_200},
+				{"item_no": "1.1", "bill": "Bill No. 1 - Preliminaries", "description": "Preliminaries and general", "uom": "Sum",
+				 "erp_uom": "Nos", "quantity": 1, "unit_rate": 10_000_000},
+			],
+		}).insert()
+		boq.submit()
+		contract = make_bf_contract(tender.name)
+		contract.update({"customer": frappe.db.get_value("Customer", {}, "name"), "contingency_percentage": 0, "certificate_template": SEUWASA})
+		contract.insert()
+		contract.submit()
+		cls.contract = contract
+		cls.budget = make_bf_budget(contract.name).insert()
+		cls.cement = make_item("ConsMS Test Cement", stock=True)
+
+	def line(self, item_no):
+		return next(line for line in self.budget.boq_lines if line.item_no == item_no)
+
+	def test_1_lines_in_bill_order(self):
+		self.assertEqual([line.item_no for line in self.budget.boq_lines], ["1.1", "2.1", "10.1"])
+
+	def test_2_amounts_typed_for_the_whole_line(self):
+		self.line("1.1").other_amount = 8_000_000  # P&G as a lump sum
+		self.line("2.1").update({"labour_amount": 4_000_000, "plant_amount": 3_500_000})
+		self.budget.save()
+
+		pg, excavation = self.line("1.1"), self.line("2.1")
+		self.assertEqual((pg.budget_cost, pg.margin_percent), (8_000_000, 20))
+		self.assertEqual((excavation.budget_cost, excavation.budget_rate), (7_500_000, 7_500))
+		self.assertEqual(self.budget.total_budget_cost, 15_500_000)
+		self.assertNotIn("Excavation", self.budget.missing_rate_analysis)
+		self.assertIn("Concrete C25", self.budget.missing_rate_analysis)
+
+	def test_2b_unplanned_site_costs(self):
+		self.budget.unplanned_percent = 10
+		self.budget.save()
+		self.assertEqual(self.budget.unplanned_amount, 1_550_000)  # 10% of 15,500,000
+		self.assertEqual(self.budget.expected_margin, 89_200_000 - 15_500_000 - 1_550_000)
+
+	def test_3_recipe_made_from_a_line(self):
+		from consms.construction_management.doctype.bf_budget.bf_budget import make_recipe
+		from consms.construction_management.progress import get_budget_cost
+
+		# typed for the whole line: 1,400 bags for 200 m3, labour 9,000,000
+		name = make_recipe(self.budget.name, self.line("10.1").name, "Concrete C25 amounts test",
+			materials=[{"item_code": self.cement, "qty": 1400, "rate": 20_000}], labour=9_000_000)
+		recipe = frappe.get_doc("BF Rate Analysis", name)
+		self.assertEqual((recipe.docstatus, recipe.uom), (1, "Cubic Meter"))  # the BOQ line's unit
+		self.assertEqual([(r.resource_type, r.item_code, flt(r.qty), flt(r.rate)) for r in recipe.items],
+			[("Material", self.cement, 7, 20_000), ("Labour", None, 1, 45_000)])  # kept per 1 m3
+
+		self.budget.reload()
+		concrete = self.line("10.1")
+		self.assertEqual((concrete.rate_analysis, concrete.materials_amount, concrete.labour_amount), (name, 28_000_000, 9_000_000))
+		self.assertEqual((concrete.budget_cost, concrete.budget_rate), (37_000_000, 185_000))
+		self.assertEqual(self.budget.total_budget_cost, 52_500_000)
+
+		# Running Cost vs Budget counts typed lines and recipe lines alike
+		self.budget.submit()
+		_budget, cost = get_budget_cost(self.contract.name)
+		self.assertEqual((cost[self.line("1.1").boq_item], cost[self.line("10.1").boq_item]), (8_000_000, 37_000_000))
+
+	def test_4_costs_on_no_boq_line_use_the_unplanned_budget(self):
+		from consms.construction_management.report.running_cost_vs_budget.running_cost_vs_budget import get_data
+
+		# an excavator repair: on the project, on no BOQ line
+		supplier = frappe.get_doc({"doctype": "Supplier", "supplier_name": "ConsMS Test Mechanic",
+			"supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0})}).insert()
+		company = frappe.db.get_value("Project", self.budget.project, "company")
+		invoice = frappe.get_doc({
+			"doctype": "Purchase Invoice", "supplier": supplier.name, "company": company, "project": self.budget.project,
+			"items": [{"item_code": make_item("ConsMS Test Repair", stock=False), "qty": 1, "rate": 2_000_000, "project": self.budget.project,
+				"expense_account": frappe.db.get_value("Account", {"company": company, "root_type": "Expense", "is_group": 0})}],
+		}).insert()
+		invoice.set("taxes", [])
+		invoice.save()
+		invoice.submit()
+
+		data, _budget = get_data(self.contract.name)
+		row = next(r for r in data if r.get("bill") == "Unplanned")
+		self.assertEqual((row["budget"], row["actual"], row["variance"]), (5_250_000, 2_000_000, 0))  # 10% of 52,500,000
+		self.assertEqual(row["status"], "Within the unplanned budget")

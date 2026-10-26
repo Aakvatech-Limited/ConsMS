@@ -25,3 +25,5 @@ consms.patches.v1_0.remove_old_ge_boq_fields
 consms.patches.v1_0.remove_boq_budget_vs_expenditure
 consms.patches.v1_0.vat_from_the_contract
 consms.patches.v1_0.task_as_accounting_dimension
+consms.patches.v1_0.budget_amounts_per_line
+consms.patches.v1_0.late_payment_interest_role

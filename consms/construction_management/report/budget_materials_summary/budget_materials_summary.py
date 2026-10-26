@@ -25,11 +25,13 @@ def execute(filters=None):
 		columns.insert(0, {"label": _("Bill / Structure"), "fieldname": "bill", "fieldtype": "Data", "width": 220})
 
 	conditions = "and bi.resource_type = %(resource_type)s" if filters.resource_type else ""
-	group = "boq.bill, bi.item_code" if filters.by_bill else "bi.item_code"
+	# labour, machines and other from a recipe have no item: they are grouped by their description
+	resource = "coalesce(bi.item_code, bi.description)"
+	group = f"boq.bill, {resource}" if filters.by_bill else resource
 	rows = frappe.db.sql(
 		f"""
 		select {"coalesce(boq.bill, '') as bill," if filters.by_bill else ""}
-			bi.item_code, max(bi.item_name) as item_name, max(bi.uom) as uom,
+			bi.item_code, coalesce(max(bi.item_name), max(bi.description)) as item_name, max(bi.uom) as uom,
 			sum(bi.qty) as qty, sum(bi.amount) as amount, sum(bi.requested_qty) as requested_qty,
 			group_concat(bi.name) as budget_items
 		from `tabBF Budget Item` bi

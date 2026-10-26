@@ -7,7 +7,14 @@ from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import get_default_taxes_and_charges
 from frappe.utils import flt, getdate
 
-from consms.construction_management.ipc import calculate, earlier_claims, set_liquidated_damages, update_contract_balances
+from consms.construction_management.ipc import (
+	calculate,
+	earlier_claims,
+	set_due_date,
+	set_late_payment_interest,
+	set_liquidated_damages,
+	update_contract_balances,
+)
 
 class BFProgressClaim(Document):
 	def validate(self):
@@ -34,6 +41,7 @@ class BFProgressClaim(Document):
 				frappe.throw(_("Row {0}: Cumulative Claimed Amount ({1}) cannot exceed the Approved Amount ({2}) for Variation {3}.").format(
 					var.idx, var.cumulative_amount, var.approved_amount, var.variation_order))
 
+		set_due_date(self)
 		self.calculate_totals()
 		self.set_documents()
 
@@ -68,6 +76,8 @@ class BFProgressClaim(Document):
 		old = [(l.label, flt(l.amount)) for l in before.certificate_lines] if before else []
 		if old != [(l.label, flt(l.amount)) for l in self.certificate_lines]:
 			frappe.throw(_("The lines of a submitted certificate cannot be changed. Cancel and amend it instead."))
+		# the engineer often certifies after the certificate is submitted
+		set_due_date(self)
 
 	def on_submit(self):
 		update_contract_balances(self.contract)
@@ -162,6 +172,7 @@ def fetch_measurements(claim_name, contract, period_from=None, period_to=None):
 	if not doc.certificate_lines:
 		calculate(doc)
 	set_liquidated_damages(doc)
+	set_late_payment_interest(doc)
 	doc.save()
 
 	return {"status": "success", "count": len(doc.claim_items)}
@@ -230,7 +241,13 @@ def make_sales_invoice(source_name, target_doc=None):
 	
 	doclist.set_missing_values()
 	doclist.disable_rounded_total = 1  # the invoice must equal the certificate to the cent
-	set_claim_vat(doclist, frappe.get_doc("BF Progress Claim", source_name), "Sales Taxes and Charges Template")
+	claim = frappe.get_doc("BF Progress Claim", source_name)
+	if claim.due_date and getdate(claim.due_date) >= getdate(doclist.posting_date):
+		# the client pays by the certificate's due date, not by the customer's usual terms
+		doclist.payment_terms_template = None
+		doclist.set("payment_schedule", [])
+		doclist.due_date = claim.due_date
+	set_claim_vat(doclist, claim, "Sales Taxes and Charges Template")
 	doclist.calculate_taxes_and_totals()
 	
 	return doclist

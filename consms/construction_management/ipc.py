@@ -165,7 +165,8 @@ def get_contract_terms(contract):
 		"BF Contract",
 		contract,
 		["total_contract_amount", "contract_amount", "advance_payment_amount", "certificate_template", "vat_status", "vat_basis",
-			"ld_rate_per_day", "original_completion_date", "revised_completion_date"],
+			"ld_rate_per_day", "original_completion_date", "revised_completion_date", "payment_period_days",
+			"late_payment_interest_rate"],
 		as_dict=True,
 	) or frappe._dict()
 
@@ -213,6 +214,7 @@ def get_previous_totals(claim):
 			coalesce(sum(retention_release), 0) as released,
 			coalesce(sum(advance_payment_recovery), 0) as advance,
 			coalesce(sum(liquidated_damages), 0) as liquidated_damages,
+			coalesce(sum(late_payment_interest), 0) as interest,
 			coalesce(sum(materials_on_site), 0) as materials,
 			coalesce(sum(vat_amount), 0) as vat,
 			coalesce(sum(net_amount_due), 0) as net
@@ -289,6 +291,7 @@ def calculate(claim):
 		"Retention Release": previous.released,
 		"Advance Recovery": previous.advance,
 		"Liquidated Damages": previous.liquidated_damages,
+		"Late Payment Interest": previous.interest,
 		"Materials on Site": previous.materials,
 		"VAT": previous.vat,
 	}
@@ -303,6 +306,7 @@ def calculate(claim):
 	claim.retention_release = money(roles["Retention Release"])
 	claim.advance_payment_recovery = money(roles["Advance Recovery"])
 	claim.liquidated_damages = money(roles["Liquidated Damages"])
+	claim.late_payment_interest = money(roles["Late Payment Interest"])
 	claim.vat_base, claim.vat_amount = get_vat(
 		taxable_work + this_variations, claim.retention_deduction + claim.advance_payment_recovery, terms)
 	claim.net_amount_due = total
@@ -347,6 +351,86 @@ def set_liquidated_damages(claim):
 	for line in claim.certificate_lines:
 		if line.role == "Liquidated Damages" and line.calculation == "Typed Amount":
 			line.amount = suggestion
+			return
+
+
+def set_due_date(claim):
+	"""Payment Due Date = Certified Date (or the Posting Date) + the contract's Payment Period."""
+	days = cint(frappe.db.get_value("BF Contract", claim.contract, "payment_period_days")) if claim.contract else 0
+	certified = claim.certified_date or claim.posting_date
+	claim.due_date = add_days(certified, days) if days and certified else None
+
+
+def get_late_payments(contract, as_at, before=None):
+	"""Each certificate's payment against its due date, and the simple interest owed up to `as_at`.
+
+	Payments are read from the books (whatever settled the certificate's Sales Invoice: Payment Entries,
+	journals, credit notes). A payment made after its due date earns interest for the days it was late;
+	what is still unpaid earns interest up to `as_at`. `before`: only certificates that come before this one.
+	"""
+	rate, period = frappe.db.get_value("BF Contract", contract, ["late_payment_interest_rate", "payment_period_days"])
+	rate, period = flt(rate), cint(period)
+	if before:
+		condition, values = earlier_claims(before)
+	else:
+		condition, values = "claim.contract = %(contract)s and claim.claim_type = 'Client Claim' and claim.docstatus = 1", {"contract": contract}
+	claims = frappe.db.sql(
+		f"""select claim.name, claim.certified_date, claim.posting_date, claim.due_date, claim.amount_due
+		from `tabBF Progress Claim` claim where {condition}
+		order by coalesce(claim.period_to, claim.posting_date), claim.creation""",
+		values,
+		as_dict=True,
+	)
+	as_at = getdate(as_at)
+	rows = []
+	for claim in claims:
+		# certificates submitted before the contract had a payment period get their due date here
+		due = claim.due_date or (add_days(claim.certified_date or claim.posting_date, period) if period else None)
+		if not due:
+			continue
+		invoice = frappe.db.get_value("Sales Invoice", {"bf_progress_claim": claim.name, "docstatus": 1}, ["name", "grand_total"], as_dict=True)
+		amount = flt(invoice.grand_total) if invoice else flt(claim.amount_due)
+		payments = frappe.db.sql(
+			"""select posting_date, -sum(amount) as amount from `tabPayment Ledger Entry`
+			where against_voucher_type = 'Sales Invoice' and against_voucher_no = %(invoice)s and voucher_no != %(invoice)s
+				and delinked = 0 and posting_date <= %(as_at)s
+			group by posting_date order by posting_date""",
+			{"invoice": invoice.name, "as_at": as_at},
+			as_dict=True,
+		) if invoice else []
+
+		due = getdate(due)
+		paid = interest = 0.0
+		last_paid = None
+		for payment in payments:
+			paid += flt(payment.amount)
+			last_paid = payment.posting_date
+			interest += flt(payment.amount) * rate / 100 * max(date_diff(payment.posting_date, due), 0) / 365
+		unpaid = max(amount - paid, 0)
+		if unpaid > 0.005:
+			interest += unpaid * rate / 100 * max(date_diff(as_at, due), 0) / 365
+		days_late = max(date_diff(as_at if unpaid > 0.005 else last_paid or due, due), 0)
+		rows.append(frappe._dict(claim=claim.name, certified_date=claim.certified_date or claim.posting_date, due_date=due,
+			amount=amount, invoice=invoice.name if invoice else None, paid=money(paid), last_paid=last_paid, unpaid=money(unpaid),
+			days_late=days_late, interest=money(interest)))
+	return rows
+
+
+def suggest_late_payment_interest(claim):
+	"""Interest owed on earlier certificates up to this certificate's date, less what earlier certificates already claimed."""
+	if not (claim.contract and (claim.claim_type or "Client Claim") == "Client Claim"):
+		return 0
+	if not flt(frappe.db.get_value("BF Contract", claim.contract, "late_payment_interest_rate")):
+		return 0
+	owed = sum(row.interest for row in get_late_payments(claim.contract, claim.posting_date or getdate(), before=claim))
+	return money(max(owed - get_previous_totals(claim).interest, 0))
+
+
+def set_late_payment_interest(claim):
+	"""Put the suggested interest on the template's typed Late Payment Interest line, if it has one."""
+	for line in claim.certificate_lines:
+		if line.role == "Late Payment Interest" and line.calculation == "Typed Amount":
+			line.amount = suggest_late_payment_interest(claim)
 			return
 
 

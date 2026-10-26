@@ -11,6 +11,7 @@
   "resource_type",
   "item_code",
   "item_name",
+  "description",
   "cb_1",
   "qty",
   "uom",
@@ -57,16 +58,24 @@
    "columns": 2,
    "fieldname": "item_code",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Item",
-   "options": "Item",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.resource_type=='Material'",
+   "options": "Item"
   },
   {
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
    "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Resource",
    "read_only": 1
   },
   {

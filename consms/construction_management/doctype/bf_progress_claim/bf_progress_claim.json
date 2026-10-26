@@ -21,6 +21,8 @@
   "certificate_template",
   "cb_dates",
   "posting_date",
+  "certified_date",
+  "due_date",
   "period_from",
   "period_to",
   "claim_items_sb",
@@ -40,6 +42,7 @@
   "advance_payment_recovery",
   "retention_release",
   "liquidated_damages",
+  "late_payment_interest",
   "vat_base",
   "sb_documents",
   "documents",
@@ -381,6 +384,28 @@
    "fieldtype": "Table",
    "label": "Documents",
    "options": "BF Tender Document"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "When the engineer certified it; the client's payment period runs from here. Defaults to the Posting Date.",
+   "fieldname": "certified_date",
+   "fieldtype": "Date",
+   "label": "Certified Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Certified Date + the contract's Payment Period.",
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Payment Due Date",
+   "read_only": 1
+  },
+  {
+   "description": "Interest on earlier certificates paid late, from the template's interest line.",
+   "fieldname": "late_payment_interest",
+   "fieldtype": "Currency",
+   "label": "Add: Late Payment Interest",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

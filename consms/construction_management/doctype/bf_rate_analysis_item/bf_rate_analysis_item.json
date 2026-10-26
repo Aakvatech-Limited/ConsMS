@@ -8,6 +8,7 @@
   "resource_type",
   "item_code",
   "item_name",
+  "description",
   "qty",
   "uom",
   "rate",
@@ -27,29 +28,40 @@
   },
   {
    "columns": 2,
+   "description": "Required for materials. Labour, machines and other need no item: describe them and type the cost.",
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item",
-   "options": "Item",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.resource_type=='Material'",
+   "options": "Item"
   },
   {
    "columns": 2,
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Item Name",
    "read_only": 1
   },
   {
+   "columns": 2,
+   "fetch_from": "item_code.item_name",
+   "fetch_if_empty": 1,
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
    "columns": 1,
-   "description": "How much of this resource one unit of work needs, e.g. 7 bags of cement per 1 m³ of concrete.",
+   "description": "How much of this resource one unit of work needs, e.g. 7 bags of cement per 1 m³ of concrete. For an amount (labour, machines), 1.",
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Qty per Unit",
+   "precision": "6",
    "reqd": 1
   },
   {
