@@ -102,7 +102,7 @@
    "fieldname": "role",
    "fieldtype": "Select",
    "label": "Role",
-   "options": "\nWork\nMaterials on Site\nRetention\nRetention Release\nAdvance Payment\nAdvance Recovery\nVAT\nLiquidated Damages",
+   "options": "\nWork\nMaterials on Site\nRetention\nRetention Release\nAdvance Payment\nAdvance Recovery\nVAT\nLiquidated Damages\nLate Payment Interest",
    "description": "Tells the system what the line is: retention and advance balances on the contract, VAT on the invoice, reports."
   },
   {

@@ -11,6 +11,7 @@ from consms.construction_management.progress import (
 	get_budget_cost,
 	get_committed_cost,
 	get_measured_qty,
+	get_unplanned_budget,
 )
 
 
@@ -62,10 +63,16 @@ def get_data(contract):
 		row["budget_change"] = row["budget"] - row["baseline"]
 		row["bill"] = line.bill or _("General Items")
 		data.append(row)
+	# costs on no BOQ line are measured against the budget's unplanned site costs
 	unallocated = actual.get(None, 0) + actual.get("", 0)
-	if unallocated:
-		row = make_row(_("Costs not linked to a BOQ line"), 0, 0, unallocated)
-		row["status"] = _("Not linked to BOQ")
+	unplanned = get_unplanned_budget(budget_name)
+	if unallocated or unplanned:
+		row = make_row(_("Unplanned site costs (not on a BOQ line)"), unplanned, 0, unallocated)
+		# spending within the unplanned budget is as planned; only what goes over it is a variance
+		earned = min(unallocated, unplanned)
+		row.update({"percent_done": None, "earned": earned, "variance": earned - unallocated, "baseline": unplanned,
+			"budget_change": 0, "bill": _("Unplanned"),
+			"status": _("Over the unplanned budget") if unallocated > unplanned else _("Within the unplanned budget")})
 		data.append(row)
 	return data, budget_name
 

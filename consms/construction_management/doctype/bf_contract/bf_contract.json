@@ -54,6 +54,9 @@
   "defects_cb",
   "defects_liability_months",
   "ld_rate_per_day",
+  "payment_period_days",
+  "late_payment_interest_rate",
+  "interest_clause",
   "measurement_tolerance",
   "sb_currencies",
   "payment_currencies",
@@ -492,6 +495,30 @@
    "default": "0",
    "allow_on_submit": 1,
    "description": "How far a BOQ line may be measured above its revised quantity before a Variation Order is needed. 0 = not at all."
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.contract_type!='Subcontract'",
+   "description": "Days after a certificate is certified that the client must pay, e.g. 28 or 56.",
+   "fieldname": "payment_period_days",
+   "fieldtype": "Int",
+   "label": "Payment Period (Days)"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.contract_type!='Subcontract'",
+   "description": "Simple interest on what is paid late, suggested on the next certificate.",
+   "fieldname": "late_payment_interest_rate",
+   "fieldtype": "Percent",
+   "label": "Late Payment Interest (% per Year)"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.contract_type!='Subcontract'",
+   "description": "E.g. Clause 55 of GCC.",
+   "fieldname": "interest_clause",
+   "fieldtype": "Data",
+   "label": "Interest Clause"
   }
  ],
  "grid_page_length": 50,

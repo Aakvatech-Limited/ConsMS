@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Sydney Kibanga and contributors
 # For license information, please see license.txt
 
+import json
+import re
 from types import SimpleNamespace
 
 import frappe
@@ -11,6 +13,10 @@ from frappe.utils import flt, nowdate
 from consms.construction_management.budget import get_expense_account
 from consms.construction_management.ipc import build_lines, run_lines
 
+
+# a recipe's resources fill the line's four amounts
+AMOUNT_FIELD = {"Material": "materials_amount", "Labour": "labour_amount", "Plant": "plant_amount"}
+AMOUNT_FIELDS = ("materials_amount", "labour_amount", "plant_amount", "other_amount")
 
 BUYING_DOCTYPES = (
 	"Material Request",
@@ -118,24 +124,28 @@ class BFBudget(Document):
 				)
 
 	def build_boq_lines(self):
-		"""One row per BOQ line, keeping recipes already chosen."""
-		chosen = {line.boq_item: line.rate_analysis for line in self.boq_lines}
-		applied = {line.boq_item: (line.applied_rate_analysis, flt(line.boq_qty)) for line in self.boq_lines}
+		"""One row per BOQ line in bill order, keeping recipes and amounts already typed."""
+		previous = {line.boq_item: line for line in self.boq_lines}
 		self.set("boq_lines", [])
-		for item in frappe.get_doc("BF Bill of Quantities", self.boq).items:
+		items = sorted(frappe.get_doc("BF Bill of Quantities", self.boq).items, key=lambda item: line_order(item.bill, item.item_no, item.idx))
+		for item in items:
+			old = previous.get(item.name)
+			qty = flt(item.revised_qty or item.quantity)
 			self.append(
 				"boq_lines",
 				{
 					"boq_item": item.name,
+					"item_no": item.item_no,
 					"description": item.description,
 					"bill": item.bill,
-					"rate_analysis": chosen.get(item.name),
+					"rate_analysis": old.rate_analysis if old else None,
 					# a line whose quantity did not change keeps its resources (and any manual edits)
-					"applied_rate_analysis": applied[item.name][0]
-						if item.name in applied and applied[item.name][1] == flt(item.revised_qty or item.quantity) else None,
-					"boq_qty": flt(item.revised_qty or item.quantity),
+					"applied_rate_analysis": old.applied_rate_analysis if old and flt(old.boq_qty) == qty else None,
+					"boq_qty": qty,
 					"boq_unit": item.uom,
+					"boq_rate": flt(item.unit_rate),
 					"boq_amount": flt(item.revised_amount or item.amount),
+					**{field: old.get(field) for field in AMOUNT_FIELDS if old},
 				},
 			)
 
@@ -156,30 +166,40 @@ class BFBudget(Document):
 							"rate_analysis": line.rate_analysis,
 							"resource_type": res.resource_type,
 							"item_code": res.item_code,
+							"description": res.description or res.item_name,
 							"qty": flt(line.boq_qty) * flt(res.qty) * (1 + flt(res.wastage_percent) / 100),
 							"uom": res.uom,
 							"rate": res.rate,
-							"expense_account": get_expense_account(res.item_code, company),
+							"expense_account": get_expense_account(res.item_code, company) if res.item_code
+								else frappe.get_cached_value("Company", company, "default_expense_account"),
 						},
 					)
 			line.applied_rate_analysis = line.rate_analysis
-		self.missing_rate_analysis = "\n".join(line.description for line in self.boq_lines if not line.rate_analysis)
 
 	def calculate_totals(self):
-		cost_per_line = {}
+		"""Each line's budget is its four amounts: typed, or added up from its recipe's resources."""
+		from_recipe = {}
 		for row in self.items:
 			row.amount = flt(row.qty) * flt(row.rate)
-			cost_per_line[row.boq_item] = cost_per_line.get(row.boq_item, 0) + row.amount
+			amounts = from_recipe.setdefault(row.boq_item, dict.fromkeys(AMOUNT_FIELDS, 0))
+			amounts[AMOUNT_FIELD.get(row.resource_type, "other_amount")] += row.amount
 
 		for line in self.boq_lines:
-			line.budget_cost = cost_per_line.get(line.boq_item, 0)
+			if line.rate_analysis:
+				line.update(from_recipe.get(line.boq_item) or dict.fromkeys(AMOUNT_FIELDS, 0))
+			line.budget_cost = sum(flt(line.get(field)) for field in AMOUNT_FIELDS)
+			line.budget_rate = line.budget_cost / flt(line.boq_qty) if flt(line.boq_qty) else 0
 			line.margin = flt(line.boq_amount) - line.budget_cost
 			line.margin_percent = line.margin / flt(line.boq_amount) * 100 if flt(line.boq_amount) else 0
 
 		self.contract_value = sum(flt(line.boq_amount) for line in self.boq_lines)
-		self.total_budget_cost = sum(cost_per_line.values())
+		self.total_budget_cost = sum(flt(line.budget_cost) for line in self.boq_lines)
+		self.missing_rate_analysis = "\n".join(line.description or "" for line in self.boq_lines if not flt(line.budget_cost))
 		self.calculate_overheads()
-		self.expected_margin = flt(self.contract_value) - (flt(self.total_with_overheads) or self.total_budget_cost)
+		if flt(self.unplanned_percent):
+			self.unplanned_amount = flt(self.total_budget_cost) * flt(self.unplanned_percent) / 100
+		self.expected_margin = (flt(self.contract_value) - (flt(self.total_with_overheads) or self.total_budget_cost)
+			- flt(self.unplanned_amount))
 		self.margin_percent = self.expected_margin / self.contract_value * 100 if self.contract_value else 0
 
 	def calculate_overheads(self):
@@ -208,8 +228,56 @@ def make_bf_budget(source_name, target_doc=None):
 	budget = frappe.new_doc("BF Budget")
 	budget.update({"contract": contract.name, "project": contract.project, "boq": contract.boq})
 	budget.build_boq_lines()
-	budget.missing_rate_analysis = "\n".join(line.description for line in budget.boq_lines)
+	budget.missing_rate_analysis = "\n".join(line.description or "" for line in budget.boq_lines)
 	return budget
+
+
+def line_order(bill, item_no, idx):
+	"""BOQ lines in bill order: Bill No. 2 before Bill No. 10, then by Item No. (1.1.2 before 1.2.1)."""
+	number = re.search(r"\d+", bill or "")
+	return (int(number.group()) if number else 10**6, [int(n) for n in re.findall(r"\d+", item_no or "")], idx or 0)
+
+
+@frappe.whitelist(methods=["POST"])
+def make_recipe(budget_name, line_name, recipe_name, per_unit=0, materials=None, labour=0, plant=0, other=0):
+	"""A recipe made from a budget line, in the line's unit, then used on the line.
+
+	Quantities and amounts can be for the whole line (as in a costing sheet) or for 1 unit; the
+	recipe always stores them per 1 unit, so it can be reused on other lines.
+	"""
+	budget = frappe.get_doc("BF Budget", budget_name)
+	budget.check_permission("write")
+	if budget.docstatus != 0:
+		frappe.throw(_("Recipes can only be added to a draft budget."))
+	line = next((row for row in budget.boq_lines if row.name == line_name), None)
+	if not line:
+		frappe.throw(_("The BOQ line was not found on this budget. Save the budget and try again."))
+
+	unit = frappe.db.get_value("BF BOQ Item", line.boq_item, "erp_uom")
+	if not unit:
+		frappe.throw(_("BOQ line {0} has no ERP unit. Set it on the Bill of Quantities first.").format(line.item_no or line.description))
+	divide_by = 1 if frappe.utils.cint(per_unit) else flt(line.boq_qty)
+	if divide_by <= 0:
+		frappe.throw(_("The BOQ line has no quantity, so the whole-line amounts cannot be turned into a rate."))
+
+	recipe = frappe.get_doc({"doctype": "BF Rate Analysis", "rate_analysis_name": recipe_name, "uom": unit,
+		"description": _("Made from budget {0}, BOQ line {1}.").format(budget.name, line.item_no or line.description)})
+	for row in json.loads(materials) if isinstance(materials, str) else (materials or []):
+		row = frappe._dict(row)
+		if row.item_code and flt(row.qty):
+			recipe.append("items", {"resource_type": "Material", "item_code": row.item_code, "qty": flt(row.qty) / divide_by,
+				"rate": flt(row.rate), "wastage_percent": flt(row.wastage_percent)})
+	for resource_type, label, amount in (("Labour", _("Labour"), labour), ("Plant", _("Machines"), plant), ("Other", _("Other costs"), other)):
+		if flt(amount):
+			recipe.append("items", {"resource_type": resource_type, "description": label, "qty": 1, "rate": flt(amount) / divide_by})
+	if not recipe.items:
+		frappe.throw(_("Add at least one material or amount."))
+	recipe.insert()
+	recipe.submit()
+
+	line.rate_analysis = recipe.name
+	budget.save()
+	return recipe.name
 
 
 @frappe.whitelist()
@@ -240,6 +308,8 @@ def reprice_from_price_list(budget_name):
 
 	changed = []
 	for row in budget.items:
+		if not row.item_code:
+			continue
 		new_price = get_item_buying_rate(row.item_code, row.uom)
 		if not new_price or flt(new_price) == flt(row.rate):
 			continue

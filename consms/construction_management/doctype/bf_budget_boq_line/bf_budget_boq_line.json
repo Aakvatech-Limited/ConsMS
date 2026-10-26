@@ -6,14 +6,28 @@
  "engine": "InnoDB",
  "field_order": [
   "boq_item",
-  "description",
+  "item_no",
   "bill",
-  "rate_analysis",
-  "applied_rate_analysis",
+  "description",
+  "cb_boq",
   "boq_qty",
   "boq_unit",
+  "boq_rate",
   "boq_amount",
+  "sb_amounts",
+  "materials_amount",
+  "labour_amount",
+  "cb_amounts",
+  "plant_amount",
+  "other_amount",
+  "sb_recipe",
+  "rate_analysis",
+  "make_recipe",
+  "applied_rate_analysis",
+  "sb_result",
   "budget_cost",
+  "budget_rate",
+  "cb_result",
   "margin",
   "margin_percent"
  ],
@@ -27,7 +41,7 @@
    "read_only": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "description",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -36,10 +50,10 @@
   },
   {
    "columns": 2,
-   "description": "Choose the approved recipe for this work. Saving rebuilds this line's resources.",
+   "description": "Optional. Pick an approved recipe in this line's unit, or click Make Recipe below. A recipe fills the amounts.",
    "fieldname": "rate_analysis",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Rate Analysis",
    "options": "BF Rate Analysis"
   },
@@ -65,27 +79,29 @@
    "read_only": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "description": "What the client pays for this line (BOQ qty x BOQ rate).",
    "fieldname": "boq_amount",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "BOQ Value",
+   "label": "BOQ Amount",
+   "precision": "0",
    "read_only": 1
   },
   {
    "columns": 1,
    "fieldname": "budget_cost",
-   "fieldtype": "Currency",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Budget Cost",
+   "label": "Budget",
+   "precision": "0",
    "read_only": 1
   },
   {
    "columns": 1,
    "fieldname": "margin",
    "fieldtype": "Currency",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Margin",
    "read_only": 1
   },
@@ -95,6 +111,7 @@
    "fieldtype": "Percent",
    "in_list_view": 1,
    "label": "Margin %",
+   "precision": "1",
    "read_only": 1
   },
   {
@@ -102,6 +119,100 @@
    "fieldtype": "Data",
    "label": "Bill / Section",
    "read_only": 1
+  },
+  {
+   "fieldname": "item_no",
+   "fieldtype": "Data",
+   "label": "Item No.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "boq_rate",
+   "fieldtype": "Currency",
+   "label": "BOQ Rate",
+   "read_only": 1
+  },
+  {
+   "description": "Type the total cost of this line, as in your costing sheet. With a recipe these are filled from it.",
+   "fieldname": "sb_amounts",
+   "fieldtype": "Section Break",
+   "label": "Budget for the Whole Line"
+  },
+  {
+   "columns": 1,
+   "description": "Cement, sand, steel, pipes... for the whole line.",
+   "fieldname": "materials_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Materials",
+   "precision": "0",
+   "read_only_depends_on": "eval:doc.rate_analysis"
+  },
+  {
+   "columns": 1,
+   "description": "Gangs, fundis and casual labour for the whole line.",
+   "fieldname": "labour_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Labour",
+   "precision": "0",
+   "read_only_depends_on": "eval:doc.rate_analysis"
+  },
+  {
+   "fieldname": "cb_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "description": "Machine hire and fuel for the whole line.",
+   "fieldname": "plant_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Machines",
+   "precision": "0",
+   "read_only_depends_on": "eval:doc.rate_analysis"
+  },
+  {
+   "columns": 1,
+   "description": "Subcontracts, transport, P&G or any other cost. Use this alone for a lump sum.",
+   "fieldname": "other_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Other",
+   "precision": "0",
+   "read_only_depends_on": "eval:doc.rate_analysis"
+  },
+  {
+   "fieldname": "sb_recipe",
+   "fieldtype": "Section Break",
+   "label": "Recipe (optional)"
+  },
+  {
+   "depends_on": "eval:!doc.rate_analysis",
+   "description": "Make a recipe from this line: its unit is the line's unit, and you can type the quantities for the whole line.",
+   "fieldname": "make_recipe",
+   "fieldtype": "Button",
+   "label": "Make Recipe"
+  },
+  {
+   "fieldname": "sb_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "description": "Budget ÷ BOQ quantity, to compare with the BOQ rate.",
+   "fieldname": "budget_rate",
+   "fieldtype": "Currency",
+   "label": "Budget Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cb_boq",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,

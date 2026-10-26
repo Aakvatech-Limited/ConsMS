@@ -21,15 +21,24 @@ def get_measured_qty(contract):
 
 
 def get_budget_cost(contract):
-	"""Budget cost per BOQ line from the contract's current submitted budget."""
+	"""Budget per BOQ line from the contract's current submitted budget."""
 	budget = frappe.db.get_value("BF Budget", {"contract": contract, "docstatus": 1}, "name", order_by="creation desc")
 	if not budget:
 		return None, {}
-	rows = frappe.get_all("BF Budget Item", filters={"parent": budget}, fields=["boq_item", "amount"])
-	cost = {}
-	for r in rows:
-		cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
-	return budget, cost
+	return budget, get_line_budgets(budget)
+
+
+def get_unplanned_budget(budget):
+	"""The budget's amount for unplanned site costs (breakdowns, accidents, rework...)."""
+	return flt(frappe.db.get_value("BF Budget", budget, "unplanned_amount")) if budget else 0
+
+
+def get_line_budgets(budget):
+	"""{BOQ line: budget} - typed amounts or a recipe, both end in the line's Budget."""
+	return {
+		r.boq_item: flt(r.budget_cost)
+		for r in frappe.get_all("BF Budget BOQ Line", filters={"parent": budget}, fields=["boq_item", "budget_cost"])
+	}
 
 
 def get_actual_cost(contract):
@@ -125,7 +134,4 @@ def get_baseline_cost(contract):
 	)
 	if not baseline:
 		return {}
-	cost = {}
-	for r in frappe.get_all("BF Budget Item", filters={"parent": baseline}, fields=["boq_item", "amount"]):
-		cost[r.boq_item] = cost.get(r.boq_item, 0) + flt(r.amount)
-	return cost
+	return get_line_budgets(baseline)

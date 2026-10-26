@@ -38,7 +38,7 @@ PAYMENT_TEMPLATES = {
 				{"role": "Retention Release", "applies_to": "Substantial Completion"}),
 			("Add: Release of the remaining retention", "Add", P, 100, "Retention Held",
 				{"role": "Retention Release", "applies_to": "Final"}),
-			("Add: Interest for late payment", "Add", T, 0, None, {}),
+			("Add: Interest for late payment", "Add", T, 0, None, {"role": "Late Payment Interest"}),
 			("Less: Liquidated damages", "Less", T, 0, None, {"role": "Liquidated Damages"}),
 		],
 	),
@@ -56,7 +56,7 @@ PAYMENT_TEMPLATES = {
 			("Add: Advance payment (Clause 49.1)", "Add", T, 0, None, {"role": "Advance Payment"}),
 			("Less: Repayment of advance 15%", "Less", P, 15, "Total at Line", {"line_no": 7, "role": "Advance Recovery", "limit": "Advance Payment"}),
 			("Sub-total 3", "Subtotal", None, 0, None, {}),
-			("Add: Interest for delayed payment", "Add", T, 0, None, {}),
+			("Add: Interest for delayed payment", "Add", T, 0, None, {"role": "Late Payment Interest"}),
 		],
 	),
 }

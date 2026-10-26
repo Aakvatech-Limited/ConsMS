@@ -14,6 +14,10 @@
   "cb_2",
   "expected_margin",
   "margin_percent",
+  "sb_unplanned",
+  "unplanned_percent",
+  "cb_unplanned",
+  "unplanned_amount",
   "sb_overheads",
   "overhead_template",
   "cb_overheads",
@@ -22,6 +26,7 @@
   "overhead_lines",
   "revision_reason",
   "sb_lines",
+  "bill_summary",
   "boq_lines",
   "missing_rate_analysis",
   "sb_items",
@@ -82,6 +87,7 @@
   },
   {
    "bold": 1,
+   "description": "BOQ value less the budget, overheads and unplanned site costs.",
    "fieldname": "expected_margin",
    "fieldtype": "Currency",
    "label": "Expected Margin",
@@ -102,13 +108,14 @@
    "mandatory_depends_on": "amended_from"
   },
   {
+   "description": "For each line type the cost of the whole line (materials, labour, machines, other), or open the line to use a recipe. Lines are in bill order.",
    "fieldname": "sb_lines",
    "fieldtype": "Section Break",
    "label": "Budget per BOQ Line"
   },
   {
    "cannot_delete_rows": 1,
-   "description": "Pick a Rate Analysis for each BOQ line, then Save: its resources are built below.",
+   "description": "Type the amounts in the table, or open a line (pencil) to see its BOQ details, pick a recipe or make one.",
    "fieldname": "boq_lines",
    "fieldtype": "Table",
    "label": "BOQ Lines",
@@ -119,13 +126,16 @@
    "description": "These BOQ lines have no Rate Analysis, so they have no budget yet.",
    "fieldname": "missing_rate_analysis",
    "fieldtype": "Small Text",
-   "label": "BOQ Lines Without Rate Analysis",
+   "hidden": 1,
+   "label": "BOQ Lines Not Budgeted Yet",
    "read_only": 1
   },
   {
+   "collapsible": 1,
+   "description": "Built from the recipes on the lines above. Materials here can be ordered with Create > Material Request.",
    "fieldname": "sb_items",
    "fieldtype": "Section Break",
-   "label": "Resources"
+   "label": "Recipe Resources"
   },
   {
    "fieldname": "items",
@@ -149,11 +159,11 @@
    "show_dashboard": 1
   },
   {
+   "collapsible": 1,
+   "description": "Optional: contingency, supervision fee, equipment wear and tear... from a Budget Overheads template. The margin then uses the total with overheads.",
    "fieldname": "sb_overheads",
    "fieldtype": "Section Break",
-   "label": "Overheads",
-   "collapsible": 1,
-   "description": "Optional: contingency, supervision fee, equipment wear and tear... from a Budget Overheads template. The margin then uses the total with overheads."
+   "label": "Overheads"
   },
   {
    "fieldname": "overhead_template",
@@ -172,15 +182,42 @@
    "read_only": 1
   },
   {
+   "description": "From the template. Type amounts only on 'Typed Amount' lines (e.g. F. variation of prices), then Save.",
    "fieldname": "overhead_lines",
    "fieldtype": "Table",
    "label": "Overhead Lines",
-   "options": "BF Certificate Line",
-   "description": "From the template. Type amounts only on 'Typed Amount' lines (e.g. F. variation of prices), then Save."
+   "options": "BF Certificate Line"
   },
   {
    "fieldname": "sb_overhead_lines",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "bill_summary",
+   "fieldtype": "HTML",
+   "label": "Summary by Bill"
+  },
+  {
+   "description": "Money kept aside for what cannot be planned: machine breakdowns, accidents, theft, rain damage, rework. Project costs that are not on any BOQ line are measured against it in Running Cost vs Budget. If your Overheads template already has a contingency line, leave this empty.",
+   "fieldname": "sb_unplanned",
+   "fieldtype": "Section Break",
+   "label": "Unplanned Site Costs"
+  },
+  {
+   "description": "E.g. 3 for 3% of the Total Budget Cost. Leave empty to type an amount instead.",
+   "fieldname": "unplanned_percent",
+   "fieldtype": "Percent",
+   "label": "% of Direct Cost"
+  },
+  {
+   "fieldname": "cb_unplanned",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unplanned_amount",
+   "fieldtype": "Currency",
+   "label": "Unplanned Amount",
+   "read_only_depends_on": "eval:doc.unplanned_percent"
   }
  ],
  "is_submittable": 1,
