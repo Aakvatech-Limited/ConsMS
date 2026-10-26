@@ -500,6 +500,18 @@ class TestCoreFlow(FrappeTestCase):
 		next_claim = frappe._dict(contract=self.contract.name, claim_type="Client Claim", name="", posting_date=as_at, period_to=as_at)
 		self.assertEqual(suggest_late_payment_interest(next_claim), expected)
 
+	def test_9c_contract_profitability(self):
+		from consms.construction_management.progress import get_actual_cost
+		from consms.construction_management.report.contract_profitability.contract_profitability import execute
+
+		row = next(r for r in execute({"project": self.project.name})[1] if r["contract"] == self.contract.name)
+		cost = sum(get_actual_cost(self.contract.name).values())
+		self.assertEqual(row["contract_value"], 89_200_000)
+		self.assertEqual(round(row["cost_to_date"], 2), round(cost, 2))  # every project expense, as in Running Cost vs Budget
+		if frappe.db.exists("Sales Invoice", {"bf_contract": self.contract.name, "docstatus": 1}):
+			self.assertEqual(row["billed"], 20_325_000)  # IPC 01 without VAT
+			self.assertEqual(round(row["profit_to_date"], 2), round(20_325_000 - cost, 2))
+
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({
 			"doctype": "Supplier", "supplier_name": "ConsMS Test Subcontractor",

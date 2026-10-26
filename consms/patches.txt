@@ -27,3 +27,4 @@ consms.patches.v1_0.vat_from_the_contract
 consms.patches.v1_0.task_as_accounting_dimension
 consms.patches.v1_0.budget_amounts_per_line
 consms.patches.v1_0.late_payment_interest_role
+consms.patches.v1_0.rename_contract_profitability
