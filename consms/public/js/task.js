@@ -1,14 +1,14 @@
 // Copyright (c) 2026, Sydney Kibanga and contributors
 // For license information, please see license.txt
 
-// Site Activity: what happened on this task across days (daily reports, and materials from the books)
+// Site Activity: what happened on this task across days (daily reports), and its cost from the books
 frappe.ui.form.on("Task", {
 	refresh(frm) {
 		if (frm.is_new() || frm.doc.is_template) return;
 		frappe
 			.xcall("consms.construction_management.task_activity.get_task_site_activity", { task: frm.doc.name })
 			.then((a) => {
-				if (!a || (!a.days_worked && !a.materials.length)) return;
+				if (!a || (!a.days_worked && !a.materials.length && !a.other_costs.length)) return;
 				frm.dashboard.add_section(site_activity_html(a), __("Site Activity"));
 			});
 	},
@@ -22,9 +22,9 @@ function site_activity_html(a) {
 		[__("Done"), `${num(a.progress)}%`],
 		[__("Days on Site"), a.days_worked],
 		[__("Period"), a.first_day ? `${date(a.first_day)} – ${date(a.last_day)}` : "–"],
-		[__("Man-days"), num(a.man_days)],
-		[__("Machine Hours"), num(a.machine_hours) + (a.machine_days ? ` · ${num(a.machine_days)} ${__("days")}` : "")],
 		[__("Materials Cost"), format_currency(a.materials_cost)],
+		[__("Other Costs"), format_currency(a.other_cost)],
+		[__("Total Cost"), format_currency(a.total_cost)],
 	];
 	const list = (title, rows) =>
 		rows.length
@@ -42,9 +42,8 @@ function site_activity_html(a) {
 				</div>`).join("")}
 		</div>
 		<div class="row mb-2">
-			${list(__("Labour (man-days)"), a.trades.map((r) => line(esc(r.trade), num(r.man_days))))}
-			${list(__("Machines"), a.machines.map((r) => line(esc(r.machine), num(r.used))))}
 			${list(__("Materials Issued"), a.materials.map((r) => line(esc(r.item_code), `${num(r.qty)} ${esc(r.uom || "")} · ${format_currency(r.amount)}`)))}
+			${list(__("Other Costs (labour, hire, services)"), a.other_costs.map((r) => line(esc(r.account), format_currency(r.amount))))}
 		</div>
 		<div class="small text-muted">
 			${__("Daily reports")}:

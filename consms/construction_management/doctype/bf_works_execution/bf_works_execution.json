@@ -18,8 +18,6 @@
   "planned_end_date",
   "tasks_section",
   "tasks",
-  "sb_resources",
-  "resources",
   "amended_from",
   "connections_tab"
  ],
@@ -96,19 +94,6 @@
    "fieldtype": "Table",
    "label": "Tasks",
    "options": "BF Works Execution Task"
-  },
-  {
-   "fieldname": "sb_resources",
-   "fieldtype": "Section Break",
-   "label": "Labour & Equipment"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "Crews and machines sent to site: how many, when they arrive and when they are released.",
-   "fieldname": "resources",
-   "fieldtype": "Table",
-   "label": "Labour & Equipment",
-   "options": "BF Works Execution Resource"
   },
   {
    "fieldname": "amended_from",

@@ -276,8 +276,6 @@ class TestCoreFlow(FrappeTestCase):
 		from consms.construction_management.progress import get_actual_cost
 
 		task = frappe.get_doc({"doctype": "Task", "subject": "Concrete lining", "project": self.project.name}).insert()
-		mason = make_item("ConsMS Test Mason", stock=False)
-		mixer = make_item("ConsMS Test Mixer Hire", stock=False)
 		cement = make_item("ConsMS Test Cement", stock=True)
 		store = self.contract.site_warehouse
 		receipt = frappe.get_doc({
@@ -294,8 +292,6 @@ class TestCoreFlow(FrappeTestCase):
 				"boq": self.boq.name,
 				"date": today(),
 				"source_warehouse": store,
-				"labour": [{"task": task.name if with_task else None, "item_code": mason, "headcount": 6, "days": 1}],
-				"plant": [{"task": task.name if with_task else None, "item_code": mixer, "hours": 5}],
 				"materials": [{"task": task.name if with_task else None, "item_code": cement, "qty": 10, "boq_item": self.items["2.2"]}],
 			})
 
@@ -304,13 +300,29 @@ class TestCoreFlow(FrappeTestCase):
 			report(with_task=False).insert()
 
 		daily = report(with_task=True).insert()
-		self.assertEqual((daily.total_headcount, daily.man_days, daily.machines_on_site), (6, 6, 1))
 		daily.submit()
 
 		issue = frappe.get_doc("Stock Entry", daily.reload().stock_entry)
-		self.assertEqual(issue.items[0].bf_task, task.name)
+		self.assertEqual((issue.task, issue.items[0].task), (task.name, task.name))  # Task is an accounting dimension
 		self.assertEqual(issue.items[0].bf_boq_item, self.items["2.2"])
 		self.assertEqual(flt(issue.items[0].amount), 200_000)  # 10 bags at stock value 20,000
+
+		# a labour gang is a Supplier: its invoice carries the project and the task
+		gang = frappe.get_doc({
+			"doctype": "Supplier", "supplier_name": "ConsMS Test Masons Gang",
+			"supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}),
+		}).insert()
+		invoice = frappe.get_doc({
+			"doctype": "Purchase Invoice", "supplier": gang.name, "company": self.company, "project": self.project.name, "task": task.name,
+			"items": [{
+				"item_code": make_item("ConsMS Test Masonry Labour", stock=False), "qty": 6, "rate": 25_000,
+				"project": self.project.name, "task": task.name,
+				"expense_account": frappe.db.get_value("Account", {"company": self.company, "root_type": "Expense", "is_group": 0}),
+			}],
+		}).insert()
+		invoice.set("taxes", [])
+		invoice.save()
+		invoice.submit()
 
 		# Running Cost vs Budget: concrete's actual cost is the stock issue, and the total is the books' total
 		cost = get_actual_cost(self.contract.name)
@@ -328,19 +340,19 @@ class TestCoreFlow(FrappeTestCase):
 		from consms.construction_management.report.task_activity.task_activity import execute
 		from consms.construction_management.task_activity import get_task_site_activity
 
-		# the daily report of test 6: 6 masons, the mixer 5 units, 10 bags of cement at 20,000
+		# test 6: 10 bags of cement at 20,000 on one daily report, and the masons gang's invoice of 150,000
 		task = frappe.db.get_value("Task", {"project": self.project.name, "subject": "Concrete lining"})
 		activity = get_task_site_activity(task)
-		self.assertEqual((activity["days_worked"], activity["man_days"], activity["materials_cost"]), (1, 6, 200_000))
-		self.assertEqual(activity["trades"], [{"trade": "ConsMS Test Mason", "man_days": 6}])
+		self.assertEqual((activity["days_worked"], activity["materials_cost"], activity["other_cost"]), (1, 200_000, 150_000))
+		self.assertEqual(activity["total_cost"], 350_000)
 		self.assertEqual(len(activity["reports"]), 1)
 
 		row = next(r for r in execute({"project": self.project.name})[1] if r["task"] == task)
-		self.assertEqual((row["days_worked"], row["man_days"], row["materials_cost"]), (1, 6, 200_000))
+		self.assertEqual((row["days_worked"], row["materials_cost"], row["other_cost"], row["total_cost"]), (1, 200_000, 150_000, 350_000))
 
-		# the Task's Connections list the Stock Issue that charged materials to it
-		counts = _get_linked_document_counts("Task", task)["count"]["external_links_found"]
-		self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Stock Entry"), 1)
+		# the Task's Connections list the Stock Issue and the supplier invoice charged to it
+		counts = {c["doctype"]: c["count"] for c in _get_linked_document_counts("Task", task)["count"]["external_links_found"]}
+		self.assertEqual((counts.get("Stock Entry"), counts.get("Purchase Invoice")), (1, 1))
 
 	def test_8_recipe_must_be_in_the_boq_line_unit(self):
 		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
