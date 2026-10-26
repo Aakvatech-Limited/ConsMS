@@ -30,12 +30,10 @@ def after_migrate():
     create_custom_fields({
         **{dt: header_links for dt in buying},
         **{f"{dt} Item": row_links for dt in buying},
-        # Materials used on site (Site Daily Report -> Stock Issue): their cost in the books per task and BOQ line
-        "Stock Entry Detail": [
-            budget_link("bf_task", "Task", "Task", "project"),
-            budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "bf_task"),
-        ],
+        # Materials used on site (Site Daily Report -> Stock Issue): their cost in the books per BOQ line
+        "Stock Entry Detail": [budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "project")],
     })
+    ensure_task_dimension()
 
     ensure_mobilization_task_type()
     ensure_standard_uom_mappings()
@@ -44,6 +42,8 @@ def after_migrate():
     ensure_activity_types()
     add_customer_types()
     ensure_certificate_templates()
+    if not frappe.db.get_single_value("BF Construction Settings", "vat_rate"):
+        frappe.db.set_single_value("BF Construction Settings", "vat_rate", 18)
 
 def get_material_request_dashboard(data):
     if "internal_links" not in data:
@@ -97,9 +97,38 @@ def get_stock_entry_dashboard(data):
     return add_construction_links(data, {"BF Site Daily Report": "stock_entry"})
 
 
+def ensure_task_dimension():
+    """Task is an accounting dimension: every cost (stock issue, supplier invoice, journal) can carry it.
+
+    Labour gangs, fundis and hired machines are Suppliers paid by Purchase Invoice with the project and task.
+    The Task fields are added here rather than by ERPNext's background job, so they exist right after migrate
+    (that job also fails on newer Frappe versions, which reject its "distinct" query).
+    """
+    from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_doctypes_with_dimensions
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+    if not frappe.db.exists("Accounting Dimension", {"document_type": "Task"}):
+        # saved without its after_insert hook, which only queues ERPNext's job (the fields are added below)
+        dimension = frappe.get_doc({"doctype": "Accounting Dimension", "document_type": "Task"})
+        dimension.run_method("before_insert")
+        dimension.set_new_name()
+        dimension.db_insert()
+
+    for doctype in get_doctypes_with_dimensions():
+        meta = frappe.get_meta(doctype, cached=False)
+        if meta.has_field("task"):
+            continue
+        insert_after = next((f for f in ("dimension_col_break", "accounting_dimensions_section", "cost_center") if meta.has_field(f)), None)
+        create_custom_field(doctype, {"fieldname": "task", "label": "Task", "fieldtype": "Link", "options": "Task",
+            "insert_after": insert_after}, ignore_validate=True)
+        frappe.clear_cache(doctype=doctype)
+
+
 def get_task_dashboard(data):
-    # measurements of the task, and the Stock Issues that charged materials to it
-    return add_construction_links(data, {"BF Site Measurement Log": "task", "Stock Entry": "bf_task"})
+    data = add_construction_links(data, {"BF Site Measurement Log": "task"})
+    # the costs charged to the task: materials issued on site, supplier invoices, journals
+    data["transactions"].append({"label": "Costs", "items": ["Stock Entry", "Purchase Invoice", "Journal Entry"]})
+    return data
 
 
 def get_project_dashboard(data):

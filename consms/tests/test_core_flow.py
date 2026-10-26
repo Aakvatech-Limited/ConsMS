@@ -15,7 +15,7 @@ from consms.construction_management.doctype.bf_progress_claim.bf_progress_claim 
 	make_sales_invoice,
 )
 from consms.construction_management.doctype.bf_tender.bf_tender import make_bf_contract
-from consms.construction_management.ipc import LineHolder, build_lines, money, run_lines
+from consms.construction_management.ipc import LineHolder, build_lines, calculate, get_vat, get_vat_summary, money, run_lines
 
 SEUWASA = "Ministry of Water (SEUWASA)"
 
@@ -36,6 +36,7 @@ class TestCertificateEngine(FrappeTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_certificate_templates()
+		frappe.db.set_single_value("BF Construction Settings", "vat_rate", 18)
 
 	def test_money_rounds_half_up_like_excel(self):
 		self.assertEqual(money(116334289.925), 116334289.93)
@@ -50,11 +51,27 @@ class TestCertificateEngine(FrappeTestCase):
 			"Work This Certificate (excl. VAT-Exempt)": money(1320414801.955),
 		}
 		total, roles = run_lines(lines.get("certificate_lines"), bases, contract_value=13742895491.14, advance=2748579098.23)
+		# VAT is added by the system from the contract: Standard Rated, on the gross work without P&G
+		_base, vat = get_vat(bases["Work This Certificate (excl. VAT-Exempt)"], 0, frappe._dict(vat_status="Standard Rated", vat_basis="Gross Work"))
 
 		self.assertEqual(roles["Retention"], 66464490.10)
 		self.assertEqual(roles["Advance Recovery"], 265857960.39)
-		self.assertEqual(roles["VAT"], 237674664.35)
-		self.assertEqual(total, 1234642015.82)  # amount due on the signed certificate
+		self.assertEqual(vat, 237674664.35)
+		self.assertEqual(money(total + vat), 1234642015.82)  # amount due on the signed certificate
+
+	def test_vat_follows_the_contract(self):
+		net = frappe._dict(vat_status="Standard Rated", vat_basis="Net after Deductions")
+		self.assertEqual(get_vat(1_000_000, 300_000, net), (700_000, 126_000))  # 18% after retention and advance
+		self.assertEqual(get_vat(1_000_000, 300_000, frappe._dict(vat_status="Exempt")), (0, 0))
+		self.assertEqual(get_vat(1_000_000, 300_000, frappe._dict(vat_status="Zero Rated")), (0, 0))
+
+	def test_payment_templates_cannot_define_vat(self):
+		template = frappe.get_doc("BF Certificate Template", SEUWASA)
+		self.assertFalse([l for l in template.lines if l.role == "VAT"])
+		template.append("lines", {"label": "Add: VAT 18%", "line_type": "Add", "calculation": "Percentage", "rate": 18,
+			"percentage_of": "Work This Certificate", "role": "VAT"})
+		with self.assertRaises(frappe.ValidationError):
+			template.save()
 
 	def test_retention_stops_at_its_limit(self):
 		# 5% retention may not pass 5% of the contract value in total
@@ -213,6 +230,14 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual(flt(invoice.net_total), 20_325_000)
 		self.assertEqual(flt(invoice.total_taxes_and_charges), 3_978_000)
 		self.assertEqual(flt(invoice.grand_total), 24_303_000)  # the invoice equals the certificate
+		invoice.insert()
+		invoice.submit()
+
+		from consms.construction_management.report.vat_on_ipcs.vat_on_ipcs import execute
+
+		row = execute({"contract": self.contract.name})[1][0]
+		self.assertEqual((row["work"], row["exempt"], row["taxable"], row["vat"]), (27_100_000, 5_000_000, 22_100_000, 3_978_000))
+		self.assertEqual(row["invoice"], invoice.name)
 
 	def test_3_second_ipc_counts_the_first(self):
 		self.measure({"2.2": 50}, date=add_days(today(), -5))
@@ -225,6 +250,23 @@ class TestCoreFlow(FrappeTestCase):
 		self.assertEqual(claim.previous_certified_amount, 20_325_000)
 		self.assertEqual(claim.amount_due, 17_500_000 - 875_000 - 3_500_000 + 3_150_000)
 
+		# the VAT summary on the certificate: previous (IPC 01) / this / to date
+		rows = {r.label: r for r in get_vat_summary(claim, frappe.get_doc("BF Contract", self.contract.name)).rows}
+		self.assertEqual((rows["Work done (all bills)"].previous, rows["Work done (all bills)"].this), (27_100_000, 17_500_000))
+		self.assertEqual(rows["Less: VAT-exempt work"].to_date, 5_000_000)  # P&G of IPC 01
+		self.assertEqual(rows["VAT 18%"].to_date, 3_978_000 + 3_150_000)
+		self.assertEqual(rows["Amount due incl. VAT"].previous, 24_303_000)
+
+		# once IPC 02 is submitted, IPC 01 recalculated still counts only what came before it (nothing)
+		claim.submit()
+		first = frappe.get_doc("BF Progress Claim", {"contract": self.contract.name, "claim_title": "IPC 01"})
+		calculate(first)
+		self.assertEqual((first.advance_payment_recovery, first.advance_recovered_to_date), (5_420_000, 5_420_000))
+		self.assertEqual(first.amount_due, 24_303_000)
+		rows = {r.label: r for r in get_vat_summary(first, frappe.get_doc("BF Contract", self.contract.name)).rows}
+		self.assertEqual(rows["Work done (all bills)"].previous, 0)
+		claim.cancel()  # later tests measure against IPC 01 only
+
 	def test_4_measuring_more_than_the_boq_is_blocked(self):
 		# 1,000 m3 in the BOQ; 500 already measured
 		with self.assertRaises(frappe.ValidationError):
@@ -234,8 +276,6 @@ class TestCoreFlow(FrappeTestCase):
 		from consms.construction_management.progress import get_actual_cost
 
 		task = frappe.get_doc({"doctype": "Task", "subject": "Concrete lining", "project": self.project.name}).insert()
-		mason = make_item("ConsMS Test Mason", stock=False)
-		mixer = make_item("ConsMS Test Mixer Hire", stock=False)
 		cement = make_item("ConsMS Test Cement", stock=True)
 		store = self.contract.site_warehouse
 		receipt = frappe.get_doc({
@@ -252,8 +292,6 @@ class TestCoreFlow(FrappeTestCase):
 				"boq": self.boq.name,
 				"date": today(),
 				"source_warehouse": store,
-				"labour": [{"task": task.name if with_task else None, "item_code": mason, "headcount": 6, "days": 1}],
-				"plant": [{"task": task.name if with_task else None, "item_code": mixer, "hours": 5}],
 				"materials": [{"task": task.name if with_task else None, "item_code": cement, "qty": 10, "boq_item": self.items["2.2"]}],
 			})
 
@@ -262,13 +300,29 @@ class TestCoreFlow(FrappeTestCase):
 			report(with_task=False).insert()
 
 		daily = report(with_task=True).insert()
-		self.assertEqual((daily.total_headcount, daily.man_days, daily.machines_on_site), (6, 6, 1))
 		daily.submit()
 
 		issue = frappe.get_doc("Stock Entry", daily.reload().stock_entry)
-		self.assertEqual(issue.items[0].bf_task, task.name)
+		self.assertEqual((issue.task, issue.items[0].task), (task.name, task.name))  # Task is an accounting dimension
 		self.assertEqual(issue.items[0].bf_boq_item, self.items["2.2"])
 		self.assertEqual(flt(issue.items[0].amount), 200_000)  # 10 bags at stock value 20,000
+
+		# a labour gang is a Supplier: its invoice carries the project and the task
+		gang = frappe.get_doc({
+			"doctype": "Supplier", "supplier_name": "ConsMS Test Masons Gang",
+			"supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}),
+		}).insert()
+		invoice = frappe.get_doc({
+			"doctype": "Purchase Invoice", "supplier": gang.name, "company": self.company, "project": self.project.name, "task": task.name,
+			"items": [{
+				"item_code": make_item("ConsMS Test Masonry Labour", stock=False), "qty": 6, "rate": 25_000,
+				"project": self.project.name, "task": task.name,
+				"expense_account": frappe.db.get_value("Account", {"company": self.company, "root_type": "Expense", "is_group": 0}),
+			}],
+		}).insert()
+		invoice.set("taxes", [])
+		invoice.save()
+		invoice.submit()
 
 		# Running Cost vs Budget: concrete's actual cost is the stock issue, and the total is the books' total
 		cost = get_actual_cost(self.contract.name)
@@ -286,19 +340,19 @@ class TestCoreFlow(FrappeTestCase):
 		from consms.construction_management.report.task_activity.task_activity import execute
 		from consms.construction_management.task_activity import get_task_site_activity
 
-		# the daily report of test 6: 6 masons, the mixer 5 units, 10 bags of cement at 20,000
+		# test 6: 10 bags of cement at 20,000 on one daily report, and the masons gang's invoice of 150,000
 		task = frappe.db.get_value("Task", {"project": self.project.name, "subject": "Concrete lining"})
 		activity = get_task_site_activity(task)
-		self.assertEqual((activity["days_worked"], activity["man_days"], activity["materials_cost"]), (1, 6, 200_000))
-		self.assertEqual(activity["trades"], [{"trade": "ConsMS Test Mason", "man_days": 6}])
+		self.assertEqual((activity["days_worked"], activity["materials_cost"], activity["other_cost"]), (1, 200_000, 150_000))
+		self.assertEqual(activity["total_cost"], 350_000)
 		self.assertEqual(len(activity["reports"]), 1)
 
 		row = next(r for r in execute({"project": self.project.name})[1] if r["task"] == task)
-		self.assertEqual((row["days_worked"], row["man_days"], row["materials_cost"]), (1, 6, 200_000))
+		self.assertEqual((row["days_worked"], row["materials_cost"], row["other_cost"], row["total_cost"]), (1, 200_000, 150_000, 350_000))
 
-		# the Task's Connections list the Stock Issue that charged materials to it
-		counts = _get_linked_document_counts("Task", task)["count"]["external_links_found"]
-		self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Stock Entry"), 1)
+		# the Task's Connections list the Stock Issue and the supplier invoice charged to it
+		counts = {c["doctype"]: c["count"] for c in _get_linked_document_counts("Task", task)["count"]["external_links_found"]}
+		self.assertEqual((counts.get("Stock Entry"), counts.get("Purchase Invoice")), (1, 1))
 
 	def test_8_recipe_must_be_in_the_boq_line_unit(self):
 		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
@@ -364,6 +418,53 @@ class TestCoreFlow(FrappeTestCase):
 		contract.advance_payment_percentage = 10
 		contract.save()
 		self.assertEqual(flt(contract.advance_payment_amount), 11_800_000)
+
+	def test_10_eot_request_by_email_and_the_decision_letter(self):
+		from consms.construction_management.doctype.bf_extension_of_time.bf_extension_of_time import get_eot_request, set_decision
+
+		self.contract.db_set({"consultant": "Test Engineer Ltd", "consultant_email": "engineer@example.com"})
+		eot = frappe.get_doc({
+			"doctype": "BF Extension of Time", "contract": self.contract.name, "request_date": today(),
+			"days_requested": 30, "reason": "Heavy rains", "reference_no": "TEST/EOT/01",
+		}).insert()
+		eot.submit()
+
+		request = get_eot_request(eot.name)
+		self.assertEqual(request["recipients"], "engineer@example.com")
+		self.assertIn(self.contract.name, request["subject"])
+		self.assertIn("Heavy rains", request["message"])
+		self.assertIn(frappe.utils.formatdate(add_days(today(), 330)), request["message"])  # completion + 30 days
+		self.assertEqual(request["files"][0]["file_name"], f"EOT Request {eot.name}.pdf")
+
+		def email(subject):
+			# what the email dialog saves; inserting it does not send anything
+			frappe.get_doc({
+				"doctype": "Communication", "communication_medium": "Email", "sent_or_received": "Sent", "subject": subject,
+				"content": "Request", "recipients": request["recipients"],
+				"reference_doctype": "BF Extension of Time", "reference_name": eot.name,
+			}).insert(ignore_permissions=True)
+
+		email(request["subject"])
+		eot.reload()
+		outgoing = frappe.get_doc("BF Correspondence", eot.correspondence)
+		self.assertEqual((outgoing.direction, outgoing.status), ("Outgoing", "Awaiting Response"))
+		self.assertEqual(outgoing.response_due_date, frappe.utils.getdate(add_days(today(), 28)))
+		self.assertEqual([(row.document_type, row.reference) for row in eot.documents], [("Request Letter", outgoing.name)])
+
+		# a reminder is logged on the request, not as a new letter
+		email(get_eot_request(eot.name, reminder=1)["subject"])
+		self.assertEqual(frappe.db.count("BF Correspondence", {"contract": self.contract.name, "direction": "Outgoing"}), 1)
+
+		with self.assertRaises(frappe.ValidationError):
+			set_decision(eot.name, "Approved", days_approved=20)  # no approval letter
+		set_decision(eot.name, "Approved", days_approved=20, reference="ENG/EOT/07", letter="/files/test-approval.pdf")
+		eot.reload()
+		self.assertEqual(eot.status, "Approved")
+		self.assertEqual([row.document_type for row in eot.documents], ["Request Letter", "Approval Letter"])
+		self.assertEqual(frappe.db.get_value("BF Correspondence", outgoing.name, "status"), "Responded")
+		incoming = frappe.db.get_value("BF Correspondence", {"reply_to": outgoing.name}, ["direction", "attachment"], as_dict=True)
+		self.assertEqual((incoming.direction, incoming.attachment), ("Incoming", "/files/test-approval.pdf"))
+		self.assertEqual(frappe.db.get_value("BF Contract", self.contract.name, "approved_extension_days"), 20)
 
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({

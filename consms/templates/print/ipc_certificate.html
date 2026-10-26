@@ -22,6 +22,7 @@
 
 	<p style="margin:10px 0 4px">{{ _("Now this Payment Certificate reads as hereunder stated:") }}</p>
 	{% include "consms/templates/print/ipc_lines.html" %}
+	{% include "consms/templates/print/ipc_vat.html" %}
 	<p style="margin:6px 0"><b>{{ _("Amount in Words") }}:</b> {{ ipc.amount_in_words }}</p>
 	{% if ipc.currencies %}
 	<table class="grid small" style="margin:4px 0">

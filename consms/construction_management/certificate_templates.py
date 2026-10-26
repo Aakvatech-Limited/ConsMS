@@ -11,7 +11,7 @@ W, P, T = "Work This Certificate", "Percentage", "Typed Amount"
 PAYMENT_TEMPLATES = {
 	"Ministry of Water (SEUWASA)": (
 		"Retention 5% up to 5% of the contract, advance recovered 20% per certificate, 50% retention back on the last "
-		"certificate, VAT 18% on the work excluding P&G (IPC No. 02 Seuwasa).",
+		"certificate (IPC No. 02 Seuwasa). VAT: contract Standard Rated, Gross Work, P&G as VAT-exempt bills.",
 		[
 			("Completed execution of the works (this certificate)", "Add", W, 0, None, {"role": "Work"}),
 			("Less: Retention 5% (to a maximum of 5% of the contract sum)", "Less", P, 5, W,
@@ -20,14 +20,13 @@ PAYMENT_TEMPLATES = {
 			("Add: Value of materials on site", "Add", T, 0, None, {"role": "Materials on Site"}),
 			("Add: 50% of retention (last certificate)", "Add", P, 50, "Retention Held",
 				{"role": "Retention Release", "applies_to": "Final"}),
-			("Add: VAT 18% (excluding P&G items)", "Add", P, 18, "Work This Certificate (excl. VAT-Exempt)", {"role": "VAT"}),
 			("Less: Liquidated damages", "Less", T, 0, None,
 				{"role": "Liquidated Damages", "limit": "% of Contract Value", "limit_rate": 10}),
 		],
 	),
 	"TANROADS": (
 		"Retention 10%, advance recovered as 30% of the work to date, the rest at substantial completion; 50% retention "
-		"released at substantial completion and 50% at the final certificate; no VAT on the certificate (Msangazi Bridge).",
+		"released at substantial completion and 50% at the final certificate (Msangazi Bridge). VAT: contract Exempt.",
 		[
 			("Work done (this certificate)", "Add", W, 0, None, {"role": "Work"}),
 			("Less: Retention 10%", "Less", P, 10, W, {"role": "Retention"}),
@@ -45,7 +44,7 @@ PAYMENT_TEMPLATES = {
 	),
 	"FIDIC (Price Adjustment, VAT on Net)": (
 		"Retention 10% on work + price adjustment + contingencies, advance repaid 15% of the amount after retention, "
-		"VAT 18% on the net (Kagera bridges).",
+		"(Kagera bridges). VAT: contract Standard Rated, Net after Deductions.",
 		[
 			("Work done (this certificate)", "Add", W, 0, None, {"role": "Work"}),
 			("Add: Price adjustment (Clause 45.1)", "Add", T, 0, None, {}),
@@ -57,7 +56,6 @@ PAYMENT_TEMPLATES = {
 			("Add: Advance payment (Clause 49.1)", "Add", T, 0, None, {"role": "Advance Payment"}),
 			("Less: Repayment of advance 15%", "Less", P, 15, "Total at Line", {"line_no": 7, "role": "Advance Recovery", "limit": "Advance Payment"}),
 			("Sub-total 3", "Subtotal", None, 0, None, {}),
-			("Add: VAT 18%", "Add", P, 18, "Running Total", {"role": "VAT"}),
 			("Add: Interest for delayed payment", "Add", T, 0, None, {}),
 		],
 	),

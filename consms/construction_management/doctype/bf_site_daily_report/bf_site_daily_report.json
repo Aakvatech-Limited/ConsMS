@@ -15,20 +15,11 @@
   "cb_2",
   "location",
   "source_warehouse",
-  "sb_labour",
-  "labour",
-  "sb_plant",
-  "plant",
   "sb_materials",
   "materials",
   "sb_work",
   "work_done",
   "sb_summary",
-  "total_headcount",
-  "man_days",
-  "cb_summary_1",
-  "machines_on_site",
-  "cb_summary_2",
   "stock_entry",
   "amended_from",
   "connections_tab"
@@ -103,28 +94,6 @@
    "options": "Warehouse"
   },
   {
-   "fieldname": "sb_labour",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Who worked on which task. Pay is handled in payroll or accounts, not here.",
-   "fieldname": "labour",
-   "fieldtype": "Table",
-   "label": "Labour",
-   "options": "BF Daily Labour"
-  },
-  {
-   "fieldname": "sb_plant",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Which machines worked on which task and for how long. Hire is paid through purchase invoices.",
-   "fieldname": "plant",
-   "fieldtype": "Table",
-   "label": "Machines",
-   "options": "BF Daily Plant"
-  },
-  {
    "fieldname": "sb_materials",
    "fieldtype": "Section Break"
   },
@@ -150,35 +119,6 @@
    "fieldname": "sb_summary",
    "fieldtype": "Section Break",
    "label": "Summary"
-  },
-  {
-   "fieldname": "total_headcount",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "People on Site",
-   "read_only": 1
-  },
-  {
-   "description": "Headcount x days, all labour rows.",
-   "fieldname": "man_days",
-   "fieldtype": "Float",
-   "label": "Man-days",
-   "precision": "1",
-   "read_only": 1
-  },
-  {
-   "fieldname": "cb_summary_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "machines_on_site",
-   "fieldtype": "Int",
-   "label": "Machines Used",
-   "read_only": 1
-  },
-  {
-   "fieldname": "cb_summary_2",
-   "fieldtype": "Column Break"
   },
   {
    "description": "Created on submit. Its value is the cost of the materials used today.",

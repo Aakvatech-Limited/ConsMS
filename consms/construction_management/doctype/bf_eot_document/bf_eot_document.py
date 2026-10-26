@@ -4,5 +4,5 @@
 from frappe.model.document import Document
 
 
-class BFWorksExecutionResource(Document):
+class BFEOTDocument(Document):
 	pass

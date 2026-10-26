@@ -19,17 +19,7 @@ class BFWorksExecution(Document):
 		self.create_tasks_from_template()
 		self.validate_task_projects()
 		self.sync_task_statuses()
-		self.validate_resources()
 		self.status = get_execution_status([row.status for row in self.tasks])
-
-	def validate_resources(self):
-		for row in self.resources:
-			if row.resource_type != "Labour":
-				row.employee = None
-			if row.resource_type != "Plant":
-				row.asset = None
-			if row.employee:
-				row.quantity = 1
 
 	def before_submit(self):
 		if self.status != "Completed":

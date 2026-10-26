@@ -18,6 +18,8 @@
   "main_contract",
   "site_warehouse",
   "customer",
+  "consultant",
+  "consultant_email",
   "supplier",
   "cb_885ac733",
   "contract_amount",
@@ -40,6 +42,9 @@
   "actual_completion_date",
   "sb_payment_terms",
   "certificate_template",
+  "vat_status",
+  "vat_exemption_reference",
+  "vat_basis",
   "advance_payment_percentage",
   "advance_payment_amount",
   "cb_advance",
@@ -145,6 +150,23 @@
    "label": "Client (Customer)",
    "mandatory_depends_on": "eval:doc.contract_type=='Main Contract';",
    "options": "Customer"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.contract_type=='Main Contract';",
+   "fieldname": "consultant",
+   "fieldtype": "Data",
+   "label": "Consultant / Engineer",
+   "description": "The client's engineer or supervising consultant, e.g. TANROADS Engineering Consulting Unit."
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.contract_type=='Main Contract';",
+   "fieldname": "consultant_email",
+   "fieldtype": "Data",
+   "label": "Consultant Email",
+   "options": "Email",
+   "description": "Extension of Time requests and other letters are sent here and to the client."
   },
   {
    "depends_on": "eval:doc.contract_type=='Subcontract';",
@@ -395,6 +417,33 @@
    "description": "The client's rules, e.g. Ministry of Water (SEUWASA) or TANROADS. Used by every Progress Claim of this contract."
   },
   {
+   "allow_on_submit": 1,
+   "default": "Standard Rated",
+   "fieldname": "vat_status",
+   "fieldtype": "Select",
+   "label": "VAT Status",
+   "options": "Standard Rated\nExempt\nZero Rated",
+   "description": "Standard Rated: VAT is added to every certificate. Exempt or Zero Rated: no VAT, and the certificate says why."
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.vat_status == 'Exempt'",
+   "fieldname": "vat_exemption_reference",
+   "fieldtype": "Data",
+   "label": "VAT Exemption Reference",
+   "description": "e.g. the Government Notice or TRA letter number. Printed on the certificates."
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Gross Work",
+   "depends_on": "eval:doc.vat_status == 'Standard Rated'",
+   "fieldname": "vat_basis",
+   "fieldtype": "Select",
+   "label": "VAT Basis",
+   "options": "Gross Work\nNet after Deductions",
+   "description": "Gross Work: VAT on the taxable work of the certificate. Net after Deductions: VAT after retention and advance recovery are taken off."
+  },
+  {
    "fieldname": "defects_cb",
    "fieldtype": "Column Break"
   },
@@ -449,7 +498,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-22 20:30:00.000000",
+ "modified": "2026-10-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Construction Management",
  "name": "BF Contract",
