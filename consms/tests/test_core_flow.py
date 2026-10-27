@@ -444,26 +444,28 @@ class TestCoreFlow(FrappeTestCase):
 				"reference_doctype": "BF Extension of Time", "reference_name": eot.name,
 			}).insert(ignore_permissions=True)
 
+		# the email stays on the EOT's timeline; the request letter is filed and a follow-up ToDo is set
 		email(request["subject"])
 		eot.reload()
-		outgoing = frappe.get_doc("BF Correspondence", eot.correspondence)
-		self.assertEqual((outgoing.direction, outgoing.status), ("Outgoing", "Awaiting Response"))
-		self.assertEqual(outgoing.response_due_date, frappe.utils.getdate(add_days(today(), 28)))
-		self.assertEqual([(row.document_type, row.reference) for row in eot.documents], [("Request Letter", outgoing.name)])
+		self.assertEqual([(row.document_type, row.reference) for row in eot.documents], [("Request Letter", "TEST/EOT/01")])
+		follow_up = {"reference_type": "BF Extension of Time", "reference_name": eot.name, "status": "Open"}
+		self.assertEqual(str(frappe.db.get_value("ToDo", follow_up, "date")), add_days(today(), 28))
+		self.assertEqual(frappe.db.count("Communication", {"reference_doctype": "BF Extension of Time", "reference_name": eot.name}), 1)
 
-		# a reminder is logged on the request, not as a new letter
+		# a reminder is another email on the timeline, not a new request
 		email(get_eot_request(eot.name, reminder=1)["subject"])
-		self.assertEqual(frappe.db.count("BF Correspondence", {"contract": self.contract.name, "direction": "Outgoing"}), 1)
+		eot.reload()
+		self.assertEqual([row.document_type for row in eot.documents], ["Request Letter"])
+		self.assertEqual(frappe.db.count("ToDo", follow_up), 1)
 
 		with self.assertRaises(frappe.ValidationError):
 			set_decision(eot.name, "Approved", days_approved=20)  # no approval letter
 		set_decision(eot.name, "Approved", days_approved=20, reference="ENG/EOT/07", letter="/files/test-approval.pdf")
 		eot.reload()
 		self.assertEqual(eot.status, "Approved")
-		self.assertEqual([row.document_type for row in eot.documents], ["Request Letter", "Approval Letter"])
-		self.assertEqual(frappe.db.get_value("BF Correspondence", outgoing.name, "status"), "Responded")
-		incoming = frappe.db.get_value("BF Correspondence", {"reply_to": outgoing.name}, ["direction", "attachment"], as_dict=True)
-		self.assertEqual((incoming.direction, incoming.attachment), ("Incoming", "/files/test-approval.pdf"))
+		self.assertEqual([(row.document_type, row.attachment) for row in eot.documents],
+			[("Request Letter", f"/private/files/EOT Request {eot.name}.pdf"), ("Approval Letter", "/files/test-approval.pdf")])
+		self.assertFalse(frappe.db.exists("ToDo", follow_up))  # the client answered: follow-up closed
 		self.assertEqual(frappe.db.get_value("BF Contract", self.contract.name, "approved_extension_days"), 20)
 
 	def test_9b_late_payment_interest(self):

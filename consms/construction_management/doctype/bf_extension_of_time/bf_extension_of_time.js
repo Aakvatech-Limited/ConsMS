@@ -6,15 +6,13 @@ const EOT_METHOD = "consms.construction_management.doctype.bf_extension_of_time.
 frappe.ui.form.on("BF Extension of Time", {
 	setup(frm) {
 		frm.set_query("contract", () => ({ filters: { docstatus: 1 } }));
-		frm.set_query("correspondence", () => ({ filters: { contract: frm.doc.contract } }));
 	},
 
 	refresh(frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status !== "Requested") return;
 
-		const request = (frm.doc.documents || []).find((row) => row.document_type === "Request Letter");
-		const sent = Boolean(request);
-		if (request) show_response_due(frm, request.reference);
+		const sent = (frm.doc.documents || []).some((row) => row.document_type === "Request Letter");
+		if (sent) show_follow_up(frm);
 		frm.add_custom_button(sent ? __("Send Reminder") : __("Send Request"), () => send_request(frm, sent), __("Email"));
 
 		frm.add_custom_button(__("Approve"), () => {
@@ -53,17 +51,17 @@ function decide(frm, decision, values) {
 	frappe.call({ method: `${EOT_METHOD}.set_decision`, args: { name: frm.doc.name, decision, ...values }, freeze: true }).then(() => frm.reload_doc());
 }
 
-function show_response_due(frm, correspondence) {
-	frappe.db.get_value("BF Correspondence", correspondence, ["status", "response_due_date"]).then(({ message: c }) => {
-		if (!c || c.status !== "Awaiting Response" || !c.response_due_date) return;
-		const days = frappe.datetime.get_diff(c.response_due_date, frappe.datetime.get_today());
-		const due = frappe.datetime.str_to_user(c.response_due_date);
-		if (days < 0) {
-			frm.dashboard.add_comment(__("No decision yet: the response was due on {0} ({1} days ago). Send a reminder.", [due, -days]), "red", true);
-		} else {
-			frm.dashboard.add_comment(__("Request sent; response due on {0}.", [due]), "blue", true);
-		}
-	});
+// the request's follow-up ToDo: when the client should have answered
+function show_follow_up(frm) {
+	const due_date = (frm.doc.__onload || {}).follow_up_due;
+	if (!due_date) return;
+	const days = frappe.datetime.get_diff(due_date, frappe.datetime.get_today());
+	const due = frappe.datetime.str_to_user(due_date);
+	if (days < 0) {
+		frm.dashboard.add_comment(__("No decision yet: the client's answer was due on {0} ({1} days ago). Send a reminder.", [due, -days]), "red", true);
+	} else {
+		frm.dashboard.add_comment(__("Request sent; follow up by {0}.", [due]), "blue", true);
+	}
 }
 
 function send_request(frm, reminder) {
