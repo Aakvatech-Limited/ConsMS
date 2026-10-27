@@ -7,6 +7,5 @@ def get_data():
 		"transactions": [
 			{"label": _("Source"), "items": ["BF Bill of Quantities"]},
 			{"label": _("Contract"), "items": ["BF Contract"]},
-			{"label": _("Correspondence"), "items": ["BF Correspondence"]},
 		],
 	}

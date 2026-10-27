@@ -3,11 +3,13 @@
 
 import frappe
 from frappe import _
+from frappe.desk.form.assign_to import add as add_assignment
+from frappe.desk.form.assign_to import close_all_assignments
 from frappe.model.document import Document
 from frappe.utils import add_days, cint, formatdate, today
 
 LETTER_FORMAT = "Extension of Time Request"
-RESPONSE_DAYS = 28  # reply due on the request letter's correspondence; the user can change it there
+RESPONSE_DAYS = 28  # follow-up ToDo after the request is sent; the user can change its date
 
 
 class BFExtensionofTime(Document):
@@ -20,6 +22,11 @@ class BFExtensionofTime(Document):
 			frappe.throw(_("Days Requested must be more than zero."))
 		if frappe.db.get_value("BF Contract", self.contract, "docstatus") != 1:
 			frappe.throw(_("Extensions of Time can only be requested on a submitted contract."))
+
+	def onload(self):
+		# the open follow-up ToDo of the request (shown on the form whoever it is assigned to)
+		self.set_onload("follow_up_due", frappe.db.get_value(
+			"ToDo", {"reference_type": self.doctype, "reference_name": self.name, "status": "Open"}, "date", order_by="date asc"))
 
 	def on_submit(self):
 		self.db_set("status", "Requested")
@@ -52,44 +59,23 @@ def set_decision(name, decision, days_approved=None, decision_date=None, referen
 		"decision_remarks": remarks,
 	})
 	if letter:
-		record_decision_letter(eot, letter)
+		eot.append("documents", {
+			"document_type": "Approval Letter" if decision == "Approved" else "Rejection Letter",
+			"document_date": eot.decision_date,
+			"reference": reference,
+			"attachment": letter,
+		})
 	eot.save(ignore_permissions=True)
+	# the client answered: the follow-up is done
+	close_all_assignments("BF Extension of Time", eot.name, ignore_permissions=True)
 	eot.add_comment("Info", _("{0}: {1} of {2} days").format(decision, days, eot.days_requested))
 	update_contract_extensions(eot.contract)
 	return decision
 
 
-def record_decision_letter(eot, letter):
-	"""The client's letter: an incoming correspondence that answers the request, and a row in Documents."""
-	contract = frappe.db.get_value("BF Contract", eot.contract, ["customer", "consultant"], as_dict=True)
-	correspondence = frappe.get_doc({
-		"doctype": "BF Correspondence",
-		"direction": "Incoming",
-		"correspondence_type": "Letter",
-		"date": eot.decision_date,
-		"reference_no": eot.decision_reference,
-		"party_type": "Consultant / Engineer" if contract.consultant else "Client",
-		"from_party": contract.consultant or contract.customer,
-		"project": eot.project,
-		"contract": eot.contract,
-		"subject": _("Extension of Time {0}: {1}").format(eot.name, _(eot.status)),
-		"details": eot.decision_remarks,
-		"attachment": letter,
-		"reply_to": get_request_correspondence(eot),
-	}).insert(ignore_permissions=True)
-	eot.append("documents", {
-		"document_type": "Approval Letter" if eot.status == "Approved" else "Rejection Letter",
-		"document_date": eot.decision_date,
-		"reference": eot.decision_reference or correspondence.name,
-		"attachment": letter,
-	})
-
-
-def get_request_correspondence(eot):
-	"""The outgoing correspondence made when the request was emailed."""
-	for row in eot.documents:
-		if row.document_type == "Request Letter" and frappe.db.exists("BF Correspondence", row.reference):
-			return row.reference
+def request_sent(eot):
+	"""The request was emailed once already: later emails are reminders."""
+	return any(row.document_type == "Request Letter" for row in eot.documents)
 
 
 @frappe.whitelist()
@@ -111,12 +97,6 @@ def get_eot_request(name, reminder=0):
 		filters={"attached_to_doctype": "BF Extension of Time", "attached_to_name": eot.name, "file_url": ["in", [u for u in urls if u] or [""]]},
 		fields=["name", "file_name", "file_url"],
 	)
-	if eot.correspondence and eot.correspondence != get_request_correspondence(eot):
-		files += frappe.get_all(
-			"File",
-			filters={"attached_to_doctype": "BF Correspondence", "attached_to_name": eot.correspondence},
-			fields=["name", "file_name", "file_url"],
-		)
 	files = list({f.file_url: f for f in files}.values())
 	if letter:
 		files.insert(0, {"name": letter.name, "file_name": letter.file_name, "file_url": letter.file_url})
@@ -162,7 +142,7 @@ def get_or_create_letter_pdf(eot):
 		pluck="name",
 		order_by="creation asc",
 	)
-	if existing and get_request_correspondence(eot):
+	if existing and request_sent(eot):
 		return frappe.get_doc("File", existing[0])
 	for old in existing:
 		frappe.delete_doc("File", old, ignore_permissions=True)
@@ -183,47 +163,39 @@ def get_or_create_letter_pdf(eot):
 
 
 def record_sent_request(communication, method=None):
-	"""An email sent from an extension of time: the first one is the request, later ones are reminders."""
+	"""An email sent from an extension of time: the first one is the request, later ones are reminders.
+
+	The email itself stays on the EOT's timeline. The first one adds the Request Letter to the EOT's
+	documents and a follow-up ToDo for the sender, due when the client should have answered.
+	"""
 	if communication.reference_doctype != "BF Extension of Time" or communication.sent_or_received != "Sent":
 		return
 	eot = frappe.get_doc("BF Extension of Time", communication.reference_name)
 	if eot.docstatus != 1 or eot.status != "Requested":
 		return
-	if get_request_correspondence(eot):
+	if request_sent(eot):
 		eot.add_comment("Info", _("Reminder sent to {0}").format(communication.recipients))
 		return
 
-	contract = frappe.db.get_value("BF Contract", eot.contract, ["customer", "consultant"], as_dict=True)
 	letter = frappe.db.get_value(
 		"File", {"attached_to_doctype": "BF Extension of Time", "attached_to_name": eot.name, "file_name": f"EOT Request {eot.name}.pdf"}, "file_url"
 	)
-	correspondence = frappe.get_doc({
-		"doctype": "BF Correspondence",
-		"direction": "Outgoing",
-		"correspondence_type": "Email",
-		"date": today(),
-		"reference_no": eot.reference_no or eot.name,
-		"party_type": "Consultant / Engineer" if contract.consultant else "Client",
-		"to_party": contract.consultant or contract.customer,
-		"from_party": frappe.db.get_value("Project", eot.project, "company") if eot.project else None,
-		"project": eot.project,
-		"contract": eot.contract,
-		"subject": communication.subject,
-		"details": communication.content,
-		"attachment": letter,
-		"response_required": 1,
-		"response_due_date": add_days(today(), RESPONSE_DAYS),
-	}).insert(ignore_permissions=True)
-
-	if not eot.correspondence:
-		eot.correspondence = correspondence.name
 	eot.append("documents", {
 		"document_type": "Request Letter",
 		"document_date": today(),
-		"reference": correspondence.name,
+		"reference": eot.reference_no,
 		"attachment": letter,
 	})
 	eot.save(ignore_permissions=True)
+
+	add_assignment({
+		"assign_to": [frappe.session.user],
+		"doctype": "BF Extension of Time",
+		"name": eot.name,
+		"date": add_days(today(), RESPONSE_DAYS),
+		"description": _("Follow up the client's decision on Extension of Time {0} ({1} days on contract {2}).").format(
+			eot.name, eot.days_requested, eot.contract),
+	})
 
 
 def update_contract_extensions(contract_name):

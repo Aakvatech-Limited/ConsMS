@@ -136,7 +136,7 @@ def get_project_dashboard(data):
     data["transactions"] = [
         {"label": "Construction", "items": ["BF Tender", "BF Bill of Quantities", "BF Contract"]},
         {"label": "Site & Budget", "items": ["BF Budget", "BF Works Execution", "BF Site Daily Report", "BF Site Measurement Log"]},
-        {"label": "Commercial", "items": ["BF Variation Order", "BF Extension of Time", "BF Progress Claim", "BF Correspondence"]},
+        {"label": "Commercial", "items": ["BF Variation Order", "BF Extension of Time", "BF Progress Claim"]},
     ] + data["transactions"]
     return data
 
