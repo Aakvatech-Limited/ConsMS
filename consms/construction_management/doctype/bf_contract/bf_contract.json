@@ -455,7 +455,7 @@
    "fieldtype": "Currency",
    "label": "Contract Sum (incl. VAT)",
    "read_only": 1,
-   "description": "The BOQ bid price, as on the Form of Tender."
+   "description": "The BOQ bid price as on the Form of Tender, plus any Contingency added here with its VAT."
   },
   {
    "fieldname": "sb_currencies",

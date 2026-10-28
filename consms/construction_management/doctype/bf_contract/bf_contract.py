@@ -17,6 +17,7 @@ class BFContract(Document):
 		self.set_value_from_boq()
 		self.contingency_amount = flt(self.contract_amount) * (flt(self.contingency_percentage) / 100.0)
 		self.total_contract_amount = flt(self.contract_amount) + flt(self.contingency_amount)
+		self.set_contract_sum()
 		self.validate_submittals()
 		self.calculate_period()
 		self.set_payment_terms()
@@ -35,13 +36,25 @@ class BFContract(Document):
 		if boq.summary_lines:
 			vat = sum(flt(l.amount) for l in boq.summary_lines if l.role == "VAT" and not l.calculation_only)
 			self.contract_amount = flt(boq.bid_price) - vat
-			self.contract_sum_incl_vat = boq.bid_price
-			# the tender summary already holds the contingency
+			# the tender summary usually holds the contingency already
 			if self.is_new():
 				self.contingency_percentage = 0
 		else:
 			self.contract_amount = boq.total_amount
+
+	def set_contract_sum(self):
+		"""Contract Sum incl. VAT = the BOQ bid price, plus a contingency added on the contract with its VAT.
+
+		Only a BOQ with a tender summary has a bid price; without one the advance uses the Total Contract Value.
+		"""
+		if self.docstatus or not self.boq:
+			return
+		bid_price = flt(frappe.db.get_value("BF Bill of Quantities", self.boq, "bid_price"))
+		if not frappe.db.exists("BF Certificate Line", {"parenttype": "BF Bill of Quantities", "parent": self.boq}):
 			self.contract_sum_incl_vat = 0
+			return
+		vat_rate = flt(frappe.db.get_single_value("BF Construction Settings", "vat_rate")) if (self.vat_status or "Standard Rated") == "Standard Rated" else 0
+		self.contract_sum_incl_vat = flt(bid_price + flt(self.contingency_amount) * (1 + vat_rate / 100), 2)
 
 	def on_submit(self):
 		self.create_site_store()
