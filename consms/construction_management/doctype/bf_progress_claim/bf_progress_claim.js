@@ -8,6 +8,8 @@ frappe.ui.form.on("BF Progress Claim", {
 		frm.set_df_property("certificate_lines", "cannot_delete_rows", true);
 	},
 	setup: function(frm) {
+		// only the templates made for this form
+		frm.set_query("certificate_template", () => ({ filters: { used_for: "Payment Certificate" } }));
 		// only the certificate documents for this kind of certificate (the same scopes the server adds rows for)
 		frm.set_query("document_type", "documents", function() {
 			let scopes = {

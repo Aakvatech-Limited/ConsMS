@@ -3,6 +3,8 @@
 
 frappe.ui.form.on("BF Contract", {
 	setup(frm) {
+		// only the templates made for this form
+		frm.set_query("certificate_template", () => ({ filters: { used_for: "Payment Certificate" } }));
 		// only the document types meant for a contract
 		frm.set_query("submittal_type", "submittals", () => ({ filters: { applies_to: ["in", ["Contract", "Both"]] } }));
 	},

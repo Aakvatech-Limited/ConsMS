@@ -14,6 +14,8 @@ frappe.ui.form.on("BF Budget", {
 		frm.set_df_property("boq_lines", "cannot_delete_rows", true);
 	},
 	setup(frm) {
+		// only the templates made for this form
+		frm.set_query("overhead_template", () => ({ filters: { used_for: "Budget Overheads" } }));
 		const unit_of = (row) => ((frm.doc.__onload || {}).boq_units || {})[row.boq_item];
 		// only approved recipes in the BOQ line's own unit
 		frm.set_query("rate_analysis", "boq_lines", (doc, cdt, cdn) => {
