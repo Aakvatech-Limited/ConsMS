@@ -199,22 +199,6 @@ def make_site_measurement_log(source_name, target_doc=None):
 	return doc
 
 @frappe.whitelist()
-def make_site_daily_report(source_name, target_doc=None):
-	validate_mobilized(source_name, _("daily reports"))
-
-	def set_missing_values(source, target):
-		target.date = frappe.utils.today()
-		target.source_warehouse = source.site_warehouse or frappe.db.get_single_value("Stock Settings", "default_warehouse")
-
-	return get_mapped_doc("BF Contract", source_name, {
-		"BF Contract": {
-			"doctype": "BF Site Daily Report",
-			"field_map": {"project": "project", "boq": "boq", "name": "contract"},
-			"field_no_map": ["amended_from"],
-		}
-	}, target_doc, set_missing_values)
-
-@frappe.whitelist()
 def make_extension_of_time(source_name, target_doc=None):
 	return get_mapped_doc("BF Contract", source_name, {
 		"BF Contract": {

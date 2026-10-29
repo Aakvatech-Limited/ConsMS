@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Construction Settings", {
+	setup(frm) {
+		// only the templates made for this form
+		frm.set_query("default_certificate_template", () => ({ filters: { used_for: "Payment Certificate" } }));
+		frm.set_query("default_boq_summary_template", () => ({ filters: { used_for: "BOQ Summary" } }));
+	},
 	refresh(frm) {
 		frm.add_custom_button(__("Test AI Connection"), () => {
 			if (frm.is_dirty()) {

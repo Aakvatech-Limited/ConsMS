@@ -8,6 +8,8 @@ frappe.ui.form.on("BF Bill of Quantities", {
 		frm.set_df_property("summary_lines", "cannot_delete_rows", true);
 	},
 	setup(frm) {
+		// only the templates made for this form
+		frm.set_query("summary_template", () => ({ filters: { used_for: "BOQ Summary" } }));
 		frm.set_query("task", "items", () => ({
 			filters: { project: frm.doc.project, is_template: 0 },
 		}));

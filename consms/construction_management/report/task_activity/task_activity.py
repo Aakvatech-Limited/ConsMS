@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Sydney Kibanga and contributors
 # For license information, please see license.txt
 
-"""One row per task of a project: % done, days on site, and its cost from the books."""
+"""One row per task of a project: % done and its cost from the books."""
 
 import frappe
 from frappe import _
@@ -28,9 +28,6 @@ def execute(filters=None):
 			"subject": t.subject,
 			"status": t.status,
 			"progress": t.progress,
-			"days_worked": a.days_worked,
-			"first_day": a.first_day,
-			"last_day": a.last_day,
 			"materials_cost": a.materials_cost,
 			"other_cost": a.other_cost,
 			"total_cost": a.total_cost,
@@ -45,9 +42,6 @@ def get_columns():
 		{"label": _("Subject"), "fieldname": "subject", "fieldtype": "Data", "width": 220},
 		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 100},
 		{"label": _("% Done"), "fieldname": "progress", "fieldtype": "Percent", "width": 90},
-		{"label": _("Days on Site"), "fieldname": "days_worked", "fieldtype": "Int", "width": 100},
-		{"label": _("First Day"), "fieldname": "first_day", "fieldtype": "Date", "width": 100},
-		{"label": _("Last Day"), "fieldname": "last_day", "fieldtype": "Date", "width": 100},
 		{"label": _("Materials Cost"), "fieldname": "materials_cost", "fieldtype": "Currency", "width": 130,
 		 "description": "Materials issued from the site store to the task, at the value the books hold."},
 		{"label": _("Other Costs"), "fieldname": "other_cost", "fieldtype": "Currency", "width": 130,
@@ -59,7 +53,7 @@ def get_columns():
 
 def get_summary(data):
 	return [
-		{"value": sum(1 for d in data if d["days_worked"]), "indicator": "Blue", "label": _("Tasks with Site Work"), "datatype": "Int"},
+		{"value": sum(1 for d in data if d["total_cost"]), "indicator": "Blue", "label": _("Tasks with Costs"), "datatype": "Int"},
 		{"value": sum(d["materials_cost"] for d in data), "indicator": "Green", "label": _("Materials Cost"), "datatype": "Currency"},
 		{"value": sum(d["other_cost"] for d in data), "indicator": "Orange", "label": _("Other Costs"), "datatype": "Currency"},
 		{"value": sum(d["total_cost"] for d in data), "indicator": "Red", "label": _("Total Cost"), "datatype": "Currency"},

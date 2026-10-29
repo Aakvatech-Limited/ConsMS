@@ -3,6 +3,8 @@
 
 frappe.ui.form.on("BF Contract", {
 	setup(frm) {
+		// only the templates made for this form
+		frm.set_query("certificate_template", () => ({ filters: { used_for: "Payment Certificate" } }));
 		// only the document types meant for a contract
 		frm.set_query("submittal_type", "submittals", () => ({ filters: { applies_to: ["in", ["Contract", "Both"]] } }));
 	},
@@ -73,12 +75,6 @@ frappe.ui.form.on("BF Contract", {
 				contract: frm.doc.name,
 			}).then((mobilized) => {
 				if (!mobilized) return;
-				frm.add_custom_button(__("Site Daily Report"), function() {
-					frappe.model.open_mapped_doc({
-						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_daily_report",
-						frm: frm
-					});
-				}, __("Create"));
 				frm.add_custom_button(__("Site Measurement Log"), function() {
 					frappe.model.open_mapped_doc({
 						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_measurement_log",

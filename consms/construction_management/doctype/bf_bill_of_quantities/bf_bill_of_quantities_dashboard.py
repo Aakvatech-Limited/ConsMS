@@ -15,7 +15,7 @@ def get_data():
 		"transactions": [
 			{"label": _("Tender & Contract"), "items": ["BF Tender", "BF Contract"]},
 			{"label": _("Budget & Changes"), "items": ["BF Budget", "BF Variation Order"]},
-			{"label": _("Execution"), "items": ["BF Site Daily Report", "BF Site Measurement Log", "BF Progress Claim"]},
+			{"label": _("Execution"), "items": ["BF Site Measurement Log", "BF Progress Claim"]},
 			{"label": _("Procurement"), "items": ["Material Request", "Request for Quotation", "Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]},
 		],
 	}
