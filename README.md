@@ -1,760 +1,59 @@
-# ConsMS — Construction Management for Frappe / ERPNext
+# ConsMS: Construction Management for ERPNext
 
-ConsMS is a construction contract-management application built on the Frappe Framework and designed to work with ERPNext business documents.
+ConsMS is a Frappe app for construction contractors. It runs on top of ERPNext.
 
-The current `master` branch focuses on the commercial and execution lifecycle of construction projects: Bills of Quantities (BOQs), tenders, contracts, mobilization, site measurements, progress claims / IPCs, variation orders, procurement linkage, invoicing linkage, budget tracking, profitability analysis, dashboards, and project workspace navigation.
-
-> This README documents the current `master` branch. It is materially different from the older ConsMS codebase that focused mainly on daily site progress, labour, materials, equipment logs, repairs, and handover records.
+It follows a contract from the Bill of Quantities to the payment certificate and the invoice. Money and stock stay in ERPNext. ConsMS adds the construction documents and links them to the ERPNext documents.
 
 ---
 
-## Business Summary
+## Contents
 
-Construction projects require commercial, project, procurement, site, and finance teams to work from the same contract quantities and values.
+1. [How the app works](#how-the-app-works)
+2. [Installation](#installation)
+3. [First setup](#first-setup)
+4. [Bill of Quantities](#bill-of-quantities)
+5. [Tender](#tender)
+6. [Contract](#contract)
+7. [Budget and Rate Analysis](#budget-and-rate-analysis)
+8. [Buying against the budget](#buying-against-the-budget)
+9. [Site work and measurements](#site-work-and-measurements)
+10. [Variation Orders](#variation-orders)
+11. [Payment certificates (IPC)](#payment-certificates-ipc)
+12. [Certificate Templates: how to configure them](#certificate-templates-how-to-configure-them)
+13. [Invoices](#invoices)
+14. [Tasks and costs](#tasks-and-costs)
+15. [Reports](#reports)
+16. [Reminders](#reminders)
+17. [Troubleshooting](#troubleshooting)
+18. [For developers](#for-developers)
 
-ConsMS is designed to provide that connection inside Frappe/ERPNext.
+---
 
-The application establishes a structured flow from:
+## How the app works
+
+A contract moves through these documents:
 
 ```text
-Project / BOQ
+Bill of Quantities (BOQ)
     ↓
 Tender
     ↓
-Contract
+Contract  ──→  Budget  ──→  Material Request / Purchase Order
     ↓
-Mobilization
+Site Measurement Log  ──→  Variation Order (when the work goes beyond the BOQ)
     ↓
-Site Measurements
+Progress Claim (the payment certificate, IPC)
     ↓
-Progress Claim / IPC
-    ↓
-Sales Invoice or Purchase Invoice
+Sales Invoice (client) or Purchase Invoice (subcontractor)
 ```
 
-Variation Orders can adjust the commercial value during execution, while purchasing transactions can be linked to BOQ lines to support budget-versus-expenditure control.
+All ConsMS documents start with "BF". All of them are in the **Construction MS** workspace.
 
 ---
 
-## Business Problems This App Addresses
+## Installation
 
-| Business problem | ConsMS capability |
-| --- | --- |
-| Contract quantities and rates are maintained outside ERP | Structured Bills of Quantities with quantity, rate and amount calculations |
-| Tender information is disconnected from awarded contracts | BOQ → Tender → Contract document mapping |
-| Multiple contracts may accidentally be created for one tender | Backend validation enforces one active contract per tender |
-| Contract mobilization is managed through spreadsheets or checklists | Configurable mobilization templates and site mobilization tracking |
-| Site work measurement is difficult to reconcile with contract quantities | Site Measurement Logs reference BOQ items |
-| Interim certificates are manually recalculated | Progress Claims calculate previous, current and cumulative quantities and values |
-| Variations are disconnected from progress certification | Submitted variation orders are incorporated into progress claim calculations |
-| Retention and certification calculations are spreadsheet-based | Progress Claim calculation logic includes retention, previous certification, VAT and net amount due |
-| Construction purchasing cannot be compared cleanly to BOQ budgets | Procurement transaction items can carry BOQ and BOQ-line references |
-| Management cannot easily see project commercial performance | BOQ Budget vs Expenditure and Contract Profitability reports |
-| Construction processes are scattered across menus | Dedicated Construction MS workspace |
-
----
-
-## Who This App Is For
-
-ConsMS is designed for organizations involved in project and contract-based construction operations, including:
-
-- Main contractors
-- Civil and infrastructure contractors
-- Building contractors
-- Engineering companies
-- Quantity surveying teams
-- Commercial and contracts departments
-- Project managers
-- Site engineers
-- Procurement teams
-- Finance teams handling progress billing
-- Organizations already using ERPNext for Projects, Buying, Selling and Accounts
-
----
-
-## Who This App Is Not For
-
-The current codebase should not automatically be treated as a complete replacement for every specialist construction platform.
-
-Additional development or validation may be required for:
-
-- tender evaluation and bid comparison
-- subcontractor tendering
-- advanced cost-code structures
-- resource scheduling
-- daily labour attendance
-- plant fleet maintenance
-- quality inspections
-- HSE management
-- document transmittals
-- RFIs
-- drawings and revision control
-- extension-of-time claims
-- liquidated damages
-- defects liability management
-- project cash-flow forecasting
-- earned value management
-- mobile offline site capture
-
----
-
-# Core Construction Lifecycle
-
-## 1. Bill of Quantities
-
-**DocType:** `BF Bill of Quantities`
-
-The BOQ provides the commercial baseline for the project.
-
-Supported behavior includes:
-
-- Project linkage
-- BOQ line items
-- quantity
-- UOM
-- unit rate
-- line amount
-- automatic BOQ total calculation
-- import support
-- submit / cancel / amend lifecycle
-- creation of Material Request
-- creation of Tender
-- lookup of BOQ line items for downstream transactions
-
-The BOQ controller recalculates each line as:
-
-```text
-Amount = Quantity × Unit Rate
-```
-
-and aggregates the total BOQ value.
-
----
-
-## 2. Tender Management
-
-**DocType:** `BF Tender`
-
-Tenders can be generated from a BOQ.
-
-The current application supports a controlled BOQ-to-contract path:
-
-```text
-BOQ → Tender → Contract
-```
-
-### Contract creation control
-
-The backend prevents more than one active contract from being created for the same Tender.
-
-Cancelled contracts are excluded from this restriction.
-
-### Contract submittals
-
-When a Contract is created from a Tender, the application can populate required contract submittals using configured `BF Document Type` records.
-
-This provides a starting checklist for documents required during contract execution.
-
----
-
-## 3. Contract Management
-
-**DocType:** `BF Contract`
-
-Contracts support both:
-
-- Main Contract
-- Subcontract
-
-### Main contracts
-
-A Main Contract can reference:
-
-- Tender
-- Project
-- Client / Customer
-- BOQ
-- Contract amount
-- Contingency percentage
-- Contingency amount
-- Retention percentage
-- Total contract value
-- Required submittals
-
-### Subcontracts
-
-Subcontracts can reference:
-
-- Parent Main Contract
-- Supplier / Subcontractor
-
-This provides the basis for relating subcontractor commercial activity to the main contract.
-
-### Contract value calculation
-
-The application calculates:
-
-```text
-Contingency Amount = Contract Amount × Contingency %
-Total Contract Value = Contract Amount + Contingency Amount
-```
-
-If contingency exceeds 15%, the application displays a warning for review.
-
-### Downstream actions
-
-From a Contract, users can create:
-
-- Works Execution (Mobilization, Construction, ...)
-- Variation Order
-- Progress Claim
-
----
-
-# Works Execution
-
-## BF Works Execution
-
-Works Execution tracks each stage of the works for a Contract. The stage is set by its **Activity Type**:
-
-- Mobilization
-- Construction
-- Testing & Commissioning
-- Demobilization
-- Handover
-
-Activity Types (`BF Activity Type`) are configurable. Each type can set a default Project Template, and the
-**Is Mobilization** box marks the type that opens the site: Site Daily Reports and Site Measurement Logs can only be
-created after a Works Execution of that type is submitted for the contract.
-
-Each Works Execution has:
-
-- tasks, created from a Project Template as ERPNext Tasks (typed with the activity type); Task and row statuses stay in step
-- Labour & Equipment: trades or named employees, machines or assets, with arrival and release dates
-- planned start and finish dates
-- status Not Started / In Progress / Completed, calculated from the tasks
-
-### Submission control
-
-A Works Execution cannot be submitted until **all its tasks are completed**.
-
-Typical Mobilization tasks: site possession, insurance, permits, temporary utilities, site offices, safety setup,
-equipment and staff deployment. Template content is configurable by the organization.
-
----
-
-# Site Measurement
-
-## BF Site Measurement Log
-
-Site Measurement Logs are used to capture measured work against BOQ items.
-
-The application supports:
-
-- Contract linkage
-- BOQ-based item selection
-- measurement items
-- retrieval of BOQ descriptions and UOM
-- controlled BOQ-item lookup
-
-These measurements feed the progress-claim process.
-
----
-
-# Progress Claims / IPC
-
-## BF Progress Claim
-
-Progress Claims are one of the main commercial controls in ConsMS.
-
-A claim can be generated from a Contract.
-
-The current logic supports:
-
-- Claim period
-- BOQ claim items
-- Previous quantity
-- This-period quantity
-- Cumulative quantity
-- Unit rate
-- This-period value
-- Cumulative value
-- Materials on site
-- Approved variations
-- Retention
-- Advance payment recovery
-- Previous certified amount
-- Net amount due
-- VAT
-- Total amount certified
-
----
-
-## Measurement-Based Claim Generation
-
-The Progress Claim can fetch submitted Site Measurement Logs for a selected period.
-
-The application:
-
-1. Loads the Contract BOQ.
-2. Retrieves BOQ items.
-3. Finds submitted Site Measurement Logs for the Contract and claim period.
-4. Aggregates measured quantities.
-5. Retrieves quantities already claimed in earlier submitted claims.
-6. Calculates current and cumulative quantities.
-7. Retrieves approved Variation Orders.
-8. Calculates previous variation certification.
-9. Calculates the resulting claim values.
-
-This creates a direct operational link:
-
-```text
-BOQ
-  ↓
-Site Measurement
-  ↓
-Progress Claim / IPC
-```
-
----
-
-## Claim Period Control
-
-The application prevents:
-
-- `Period From` being later than `Period To`
-- overlapping active Progress Claim periods for the same Contract
-
-This reduces duplicate certification periods.
-
----
-
-## Variation Claim Control
-
-For each Variation Order:
-
-```text
-Cumulative Variation Claim
-=
-Previously Certified
-+
-This Period Amount
-```
-
-The application prevents cumulative claimed value from exceeding the approved/requested variation amount.
-
----
-
-## Progress Claim Calculations
-
-The application calculates values approximately as follows:
-
-```text
-This Period Work Value
-=
-This Period Quantity × Unit Rate
-```
-
-```text
-Cumulative Quantity
-=
-Previous Quantity + This Period Quantity
-```
-
-```text
-Cumulative Work Value
-=
-Cumulative Quantity × Unit Rate
-```
-
-```text
-Gross Valuation
-=
-Work Executed
-+ Approved Variations
-+ Materials on Site
-```
-
-```text
-Retention Deduction
-=
-Gross Valuation × Retention %
-```
-
-```text
-Net Amount Due
-=
-Gross Valuation
-- Retention
-- Advance Recovery
-- Previous Certified Amount
-```
-
-```text
-VAT
-=
-Net Amount Due × VAT %
-```
-
-```text
-Total Amount Certified
-=
-Net Amount Due + VAT
-```
-
----
-
-# ERPNext Invoice Integration
-
-The Progress Claim controller includes mappings for:
-
-- Sales Invoice
-- Purchase Invoice
-
-### Main-contract billing
-
-A Progress Claim can generate a Sales Invoice conceptually linked to:
-
-- Project
-- Construction Contract
-- Progress Claim
-
-### Subcontractor claims
-
-A Progress Claim can also generate a Purchase Invoice for subcontractor-side certification.
-
-The default invoice item is read from **BF Construction Settings**.
-
-> Deployment note: the current `master` branch contains intended Sales Invoice custom-field definitions in `consms/custom_fields.py`, but `hooks.py` assigns `after_migrate` twice. In Python, the later assignment takes precedence. The active hook currently points to `consms.setup.after_migrate`. Deployments should verify the intended invoice linkage fields exist before relying on invoice generation.
-
----
-
-# Variation Orders
-
-## BF Variation Order
-
-Variation Orders provide structured control of additions or changes to contract scope.
-
-They support:
-
-- Project
-- Contract
-- Variation items
-- Quantity
-- Unit rate
-- Amount
-- Requested amount
-- Reason / justification
-- submit / cancel / amend lifecycle
-
-The requested amount is calculated automatically from the variation lines.
-
-Variation Orders are also incorporated into Progress Claim calculations.
-
----
-
-# BOQ-Linked Procurement
-
-The application extends ERPNext procurement documents to support BOQ linkage.
-
-The active `consms.setup.after_migrate` routine creates BOQ fields on:
-
-### Parent transactions
-
-- Material Request
-- Purchase Order
-- Purchase Receipt
-- Purchase Invoice
-
-### Child transaction rows
-
-- Material Request Item
-- Purchase Order Item
-- Purchase Receipt Item
-- Purchase Invoice Item
-
-Child rows can reference:
-
-- BF Bill of Quantities
-- BF BOQ Item
-- BOQ Item ID
-
-This establishes the basis for tracing procurement commitments and expenditures back to individual BOQ lines.
-
----
-
-## Material Request Integration
-
-The app includes custom JavaScript for Material Request and extends the Material Request dashboard.
-
-A BOQ can generate a Material Request with:
-
-- Purchase request type
-- Project
-- BOQ reference
-
-The Material Request dashboard also receives a Construction section linking back to the BOQ.
-
----
-
-# Reporting and Management Visibility
-
-## BOQ Budget vs Expenditure
-
-**Report:** `BOQ Budget vs Expenditure`
-
-The report compares each BOQ line against ERPNext procurement values.
-
-It includes:
-
-- BOQ
-- Project
-- BOQ Item
-- Description
-- UOM
-- Budget Quantity
-- Unit Rate
-- Budget Amount
-- Committed Cost from submitted Purchase Orders
-- Actual Spend from submitted Purchase Invoices
-- Remaining Budget
-- Utilization %
-
-This provides a construction-specific view of:
-
-```text
-BOQ Budget
-vs
-Purchase Commitment
-vs
-Actual Purchase Cost
-```
-
----
-
-## Contract Profitability
-
-**Report:** `BF Contract Profitability`
-
-For submitted Main Contracts, the report calculates:
-
-- Base Contract Value
-- Submitted Variations
-- Revised Contract Value
-- Client Billing
-- Subcontractor Costs
-- Estimated Profit
-- Actual Profit to Date
-- Actual Margin %
-
-The report derives client billing from submitted Sales Invoices linked to the Contract.
-
-Subcontractor cost is derived from submitted Purchase Invoices linked either to:
-
-- the Main Contract, or
-- submitted Subcontracts belonging to that Main Contract
-
-This creates a high-level commercial performance view by Contract.
-
----
-
-## Variation vs Budget Report
-
-The repository also includes a `Variation vs Budget Report` definition for construction variance visibility.
-
-Review its final business logic against the organization's reporting requirements before production rollout.
-
----
-
-# Construction Workspace
-
-The app includes a public **Construction MS** workspace.
-
-It groups functionality into:
-
-## Pre-Construction
-
-- Bill of Quantities
-- Tenders
-- Contracts
-
-## Execution
-
-- Mobilization
-- Variation Orders
-- Measurement Logs
-- Progress Claims (IPC)
-
-## Configuration
-
-- Document Types
-- Mobilization Templates
-- Construction Settings
-
-The workspace also includes construction dashboard content such as Monthly Contract Awards.
-
----
-
-# Dashboard Components
-
-The repository contains dashboard resources including:
-
-### Dashboard Charts
-
-- Monthly Contract Awards
-- Submittal Approval Rate
-
-### Number Cards
-
-- Active Tenders
-- Pending Submittals
-- Total Awarded Contracts
-- Total Variation Value
-
-These provide management-level visibility directly from the Construction workspace.
-
----
-
-# Contract Submittals
-
-Contracts contain a submittal table.
-
-Configured `BF Document Type` records can be automatically copied into newly created contracts as required submittals.
-
-This can support tracking of required contract documentation such as:
-
-- insurance documents
-- drawings
-- method statements
-- bonds
-- permits
-- material approvals
-- certificates
-
-The exact document types are organization-configurable.
-
----
-
-# FIDIC-Oriented Output
-
-The repository includes a print format:
-
-```text
-FIDIC IPC Certificate
-```
-
-This indicates an intended construction certification workflow aligned with interim payment certificate usage.
-
-The presence of the print format should not be interpreted as legal or contractual compliance with every FIDIC contract form; each deployment should validate terminology, deductions, taxes and certificate format against the actual contract.
-
----
-
-# Construction Settings
-
-**DocType:** `BF Construction Settings`
-
-The application includes construction-level configuration.
-
-One known use is the default Item used when converting a Progress Claim into an ERPNext invoice.
-
-Review Construction Settings during implementation before users begin generating invoices.
-
----
-
-# Main DocTypes
-
-| DocType | Purpose |
-| --- | --- |
-| BF Bill of Quantities | Commercial baseline and BOQ lines |
-| BF BOQ Item | BOQ detail row |
-| BF Tender | Tender linked to BOQ and Project |
-| BF Contract | Main Contract or Subcontract |
-| BF Contract Submittal | Required contract documents |
-| BF Document Type | Configurable submittal/document categories |
-| BF Works Execution | Stage of the works (Mobilization, Construction, ...) with tasks and completion control |
-| BF Works Execution Task | Task row linked to an ERPNext Task |
-| BF Works Execution Resource | Labour and equipment on site |
-| BF Activity Type | Configurable Works Execution stages |
-| BF Site Measurement Log | Site measurement transaction |
-| BF Measurement Item | BOQ measurement row |
-| BF Progress Claim | Interim progress claim / IPC |
-| BF Progress Claim Item | BOQ certification detail |
-| BF Progress Claim Variation | Variation certification detail |
-| BF Variation Order | Contract variation |
-| BF Variation Item | Variation detail |
-| BF Construction Settings | Construction configuration |
-
----
-
-# ERPNext Integration
-
-ConsMS relies heavily on standard ERPNext master and transaction DocTypes.
-
-Current references include:
-
-- Project
-- Customer
-- Supplier
-- Item
-- UOM
-- Material Request
-- Material Request Item
-- Purchase Order
-- Purchase Order Item
-- Purchase Receipt
-- Purchase Receipt Item
-- Purchase Invoice
-- Purchase Invoice Item
-- Sales Invoice
-
-Because these are core ERPNext objects, this branch should be treated as an **ERPNext-integrated Frappe application**, even though `required_apps` is not currently enforced in `hooks.py`.
-
----
-
-# App Mode
-
-**ERPNext-integrated Frappe application**
-
-The app technically declares itself as a Frappe package, but its operational workflows depend on ERPNext DocTypes and accounting/procurement transactions.
-
-Production deployment should therefore assume ERPNext is required unless the code is refactored to remove these dependencies.
-
----
-
-# Compatibility
-
-## Current repository evidence
-
-- Python: `>=3.10`
-- Packaging: modern `pyproject.toml` / Flit
-- App package: `consms`
-- Project package name: `construction_ms`
-- Module: `Construction Management`
-- License: MIT
-- Development tooling:
-  - Ruff
-  - ESLint
-  - Prettier
-  - Pyupgrade
-  - pre-commit
-
-## Frappe / ERPNext version
-
-The current `pyproject.toml` does not declare an explicit supported Frappe version.
-
-Before production installation, confirm compatibility with the target:
-
-- Frappe version
-- ERPNext version
-- Python version
-- MariaDB version
-- Node version
-
----
-
-# Installation
-
-From a Frappe Bench:
+You need a Frappe bench with ERPNext version 15 or 16.
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
@@ -763,662 +62,568 @@ bench --site <site-name> install-app consms
 bench --site <site-name> migrate
 ```
 
-For production deployments, pin a tested commit or release rather than installing an unpinned moving branch.
+After each update, always run `bench --site <site-name> migrate`. The migrate adds the custom fields, the starter templates and the document types.
 
 ---
 
-# Configuration Checklist
+## First setup
 
-Before using ConsMS:
+Do these steps once, before the first contract.
 
-1. Configure Company and ERPNext accounting.
-2. Create Customers and Suppliers.
-3. Configure Projects.
-4. Create Items and UOMs.
-5. Configure the default Progress Claim invoice Item in BF Construction Settings.
-6. Configure BF Document Types for required contract submittals.
-7. Configure Mobilization Templates where applicable.
-8. Review Contract retention and contingency defaults.
-9. Validate VAT handling against local tax requirements.
-10. Confirm invoice integration custom fields exist.
-11. Test permissions for each business role.
-12. Validate print formats, especially IPC certification.
-13. Validate procurement-to-BOQ linkage before live purchasing.
+1. Open **BF Construction Settings**.
+2. Set **VAT Rate**, for example 18. The system adds VAT to certificates with this rate.
+3. Set **Default Progress Claim Item**. This is a service Item. The Sales Invoice of a certificate uses it.
+4. Set **Default Certificate Template**, for example "TANROADS".
+5. Set **Default BOQ Summary Template**, for example "Tender Summary A-I".
+6. Set **When a Purchase Is Over the Budget Quantity**: Warn, Stop, or Stop unless approved.
+7. Optional: set the **AI BOQ Import** provider and API key, to read BOQs from PDF or Excel files.
+8. In ERPNext, make sure the company has a default **Sales Taxes and Charges Template** with the VAT account. The certificate invoice uses its VAT account.
 
----
+The migrate also adds these starter records. You can change them or add your own:
 
-# Permissions
-
-Most construction DocTypes in the current repository expose broad permissions to **System Manager**.
-
-This is suitable for development but is not sufficient as a final production authorization model.
-
-Before go-live, define operational roles such as:
-
-- Quantity Surveyor
-- Contracts Manager
-- Commercial Manager
-- Project Manager
-- Site Engineer
-- Procurement User
-- Procurement Manager
-- Finance User
-- Finance Manager
-- Construction Administrator
-
-Then assign create, write, submit, cancel and amend privileges according to segregation-of-duties requirements.
-
----
-
-# Business Controls Already Present
-
-The current code includes several useful business controls:
-
-- One active Contract per Tender
-- Works Execution cannot submit until all tasks are completed
-- Site Daily Reports and Measurement Logs need a submitted Mobilization
-- Progress Claim periods cannot overlap for the same Contract
-- Progress Claim date ranges must be valid
-- Variation claims cannot exceed approved variation values
-- BOQ amounts recalculate from quantity × rate
-- Variation Order amounts recalculate from quantity × rate
-- Contract contingency is calculated automatically
-- High contingency values generate a warning
-- Progress Claims derive quantities from submitted Site Measurement Logs
-- Previous certified quantities are carried forward into later claims
-
----
-
-# Reports and Dashboards
-
-| Component | Type |
+| Record | Starter values |
 | --- | --- |
-| BF Contract Profitability | Script Report |
-| BOQ Budget vs Expenditure | Script Report |
-| Variation vs Budget Report | Report definition |
-| Monthly Contract Awards | Dashboard Chart |
-| Submittal Approval Rate | Dashboard Chart |
-| Active Tenders | Number Card |
-| Pending Submittals | Number Card |
-| Total Awarded Contracts | Number Card |
-| Total Variation Value | Number Card |
+| Certificate Templates | Ministry of Water (SEUWASA), TANROADS, FIDIC (Price Adjustment, VAT on Net), Tender Summary A-I, Bills + VAT 18%, Budget Overheads (Sengerema) |
+| BF Document Type | Tender documents (BRELA, CRB, TRA, Bid Security...), contract submittals (CAR Insurance, HSE Plan...), certificate documents (Taking-Over Certificate, Final Account...) |
+| BF Bid Security Type | Bank guarantee, insurance bond, Bid Securing Declaration... |
 
 ---
 
-# APIs and Server Methods
+## Bill of Quantities
 
-The application exposes whitelisted server-side methods supporting mapped-document and transactional workflows, including:
+The **BF Bill of Quantities** holds the work items. Each line has a bill, an item number, a description, a unit, a quantity and a rate.
 
-- BOQ → Material Request
-- BOQ → Tender
-- Tender → Contract
-- Contract → Works Execution
-- Contract → Variation Order
-- Contract → Progress Claim
-- Progress Claim measurement retrieval
-- Progress Claim → Sales Invoice
-- Progress Claim → Purchase Invoice
-- BOQ item search/filtering
+- **Import**: type the lines, or use **Import with AI** to read a PDF or Excel file.
+- **VAT-exempt bills**: use **Actions → VAT Exempt Bills** to mark bills with no VAT, for example Preliminaries. Certificates do not charge VAT on these lines.
+- **Tender Summary**: choose a **Summary Template**. The summary lines calculate the **Bid Price**, for example total of bills, contingency, variation of prices and VAT. Type amounts only on "Typed Amount" lines.
+- **Revisions**: approved Variation Orders change the quantities. The BOQ shows the original quantity, the variation and the revised quantity.
 
-These methods are designed to be called from Frappe client-side forms.
+Submit the BOQ before you make a contract from it.
+
+Print formats:
+
+- **BOQ Client Layout**: the bills, the bill totals, and the summary page with the bid price.
+- **Revised BOQ**: original quantity, variation and revised quantity for each line.
 
 ---
 
-# Hooks and Events
+## Tender
 
-Active application hooks currently include:
+The **BF Tender** records the bid.
 
-### Material Request client script
+- **Documents**: the papers the bid needs. The list shows only document types with "Applies To" = Tender or Both.
+- **Bid Securities**: one row for each guarantee or bond. Record the bank, the amount and the expiry date. "Total Bid Security" adds up the rows that are "Held by Client". A reminder goes out 14 days before a guarantee expires.
+- **Tender costs**: book costs such as bid fees with a Purchase Invoice, Journal Entry or Expense Claim on the tender's Project.
 
-```python
-doctype_js = {
-    "Material Request": "public/js/material_request.js"
-}
+The bid security rows are a register only. They do not post to the accounts. Record a cash deposit or a bank commission with a normal Journal Entry on the Project.
+
+One tender can have only one contract.
+
+---
+
+## Contract
+
+The **BF Contract** holds the agreement. Make it from the tender or from the BOQ with **Create → BF Contract**.
+
+**Contract Type**:
+
+- **Main Contract**: the agreement with the client (Customer).
+- **Subcontract**: the agreement with a subcontractor (Supplier). Link it to its main contract.
+
+**Contract value**:
+
+| Field | Meaning |
+| --- | --- |
+| Contract Amount | From the BOQ. The bid price without VAT when the BOQ has a tender summary. Otherwise the total of bills. |
+| Contingency (%) / Contingency Amount | Extra money added on the contract. |
+| Total Contract Value | Contract Amount + Contingency Amount. |
+| Contract Sum (incl. VAT) | The bid price on the Form of Tender, plus the contingency with its VAT. |
+| Revised Contract Value | Total Contract Value + approved variations. |
+
+**Payment Terms** (the certificates use these):
+
+| Field | Used for |
+| --- | --- |
+| Advance Payment (%) / Amount | The advance. Use **Create → Advance Payment Invoice** to bill it. Certificates recover it. |
+| Certificate Template | The client's rules for the certificates. See [Certificate Templates](#certificate-templates-how-to-configure-them). |
+| VAT Status | Standard Rated: VAT on every certificate. Exempt or Zero Rated: no VAT. |
+| VAT Basis | Gross Work: VAT on the work. Net after Deductions: VAT after retention and advance recovery. |
+| Liquidated Damages per Day | Suggests the delay penalty on certificates after the completion date. |
+| Payment Period (Days) | The client must pay this many days after the certified date. |
+| Late Payment Interest (% per Year) | Suggests interest on late payments on the next certificate. |
+| Measurement Tolerance (%) | How far a BOQ line can be measured above its quantity before a Variation Order is needed. |
+
+**Required Submittals**: the documents the contractor hands in, for example insurance and the work schedule. The list shows only document types with "Applies To" = Contract or Both. A reminder goes out 30 days before a submittal expires.
+
+**Balances to Date**: the system fills these from the submitted certificates: advance recovered, advance balance, retention held, retention released, liquidated damages.
+
+**Extension of Time**: use **Create → Extension of Time**. Send the request to the consultant by email from the form. The system then makes a follow-up ToDo for 28 days later. Approved days move the revised completion date.
+
+**Communication**: use the form's timeline (email, comments), attachments and ToDos.
+
+---
+
+## Budget and Rate Analysis
+
+The **BF Budget** shows the planned cost of each BOQ line. Make it from the contract.
+
+Each BOQ line has four amounts: materials, labour, plant and other. Fill them in one of two ways:
+
+- Type the four amounts.
+- Choose a **BF Rate Analysis** (a recipe for one unit, for example 1 m³ of concrete). The budget multiplies it by the BOQ quantity.
+
+The **Overheads Template** adds lines such as contingency and supervision fee to the direct cost.
+
+---
+
+## Buying against the budget
+
+Make purchases from the budget, so each row keeps its BOQ line.
+
+1. Open the submitted budget.
+2. Click **Create → Material Request**.
+3. Remove the rows you do not need now, change the quantities, then save.
+
+The Material Request rows carry the **BOQ Line** and the **Budget**. The Request for Quotation, Supplier Quotation, Purchase Order, Purchase Receipt and Purchase Invoice made from it keep the same links.
+
+On save, the system checks each row against the budget quantity. The setting **When a Purchase Is Over the Budget Quantity** decides what happens:
+
+- **Warn**: a message. The document can still be submitted.
+- **Stop**: the document cannot be submitted. Revise the budget first.
+- **Stop unless approved**: only the approver role can submit it.
+
+---
+
+## Site work and measurements
+
+- **BF Site Daily Report**: the work of the day, with the materials used on each task.
+- **BF Works Execution**: the work plan, linked to the project tasks.
+- **BF Site Measurement Log**: the quantities measured on site for each BOQ line. Attach the measurement sheet as proof.
+
+A measurement cannot go beyond the revised BOQ quantity (plus the contract's tolerance). When it does, the system stops the submit. Then:
+
+1. On the measurement, click **Actions → Create Variation Order**. The system makes a draft Variation Order with the extra quantity.
+2. Get the Variation Order approved and submit it. The BOQ quantity goes up.
+3. Go back to the measurement and submit it. The system does not submit it for you.
+
+---
+
+## Variation Orders
+
+The **BF Variation Order** changes the contract. Each line has one of three types:
+
+| Line type | Example | How it is paid |
+| --- | --- | --- |
+| Change to BOQ Line | Slab goes from 300 m² to 350 m² | By measurement, on the certificate's Claim Items |
+| New Item | New item: paving blocks, 200 m² | By measurement, on the certificate's Claim Items |
+| Lump Sum | Move the power line, 5,000,000 fixed | By amount, on the certificate's Claimed Variations |
+
+Record the client's instruction number, approval date and approval letter. On submit, the BOQ gets a new revision.
+
+---
+
+## Payment certificates (IPC)
+
+The **BF Progress Claim** is the payment certificate. It is called IPC (Interim Payment Certificate) on the print.
+
+### Kinds of certificate
+
+| Claim Type | Contract | Makes |
+| --- | --- | --- |
+| Client Claim | Main Contract | Sales Invoice |
+| Subcontractor Claim | Subcontract | Purchase Invoice |
+
+| Certificate Type | When |
+| --- | --- |
+| Interim | Every normal monthly certificate |
+| Substantial Completion | When the works are taken over |
+| Final | At the end of the defects liability period |
+
+The certificate type decides which template lines apply. For example, a retention release line can apply to the Final certificate only.
+
+### How to make a certificate
+
+1. Open the submitted contract.
+2. Click **Create → Progress Claim (IPC)**.
+3. Set **Period From** and **Period To**. Periods of one contract cannot overlap.
+4. Set **Certificate Type**.
+5. Save.
+6. Click **Actions → Fetch Measurements**.
+7. Check the **Claim Items**, the **Claimed Variations** and the **Certificate Lines**.
+8. Type the amounts on the "Typed Amount" lines, for example materials on site.
+9. Save. The system calculates the certificate again.
+10. In **Supporting Documents**, attach each document and set its status to "Ready".
+11. Submit.
+12. Click **Create → Sales Invoice** (or **Purchase Invoice** for a subcontractor).
+
+### What Fetch Measurements does
+
+- **Claim Items**: one row for each BOQ line. "This Period" is the total of the submitted measurements dated in the certificate period. "Previous" comes from the earlier certificates.
+- **Claimed Variations**: one row for each approved Variation Order with a lump sum. "Claimed This Period" starts at the amount not yet claimed. You can lower it when only part of the work is done.
+- **Liquidated Damages**: when the template has a typed Liquidated Damages line, it gets the suggested amount.
+- **Late Payment Interest**: when the template has a typed Late Payment Interest line, it gets the suggested interest.
+
+Claimed Variations stays empty when the contract has no lump-sum Variation Order. Extra quantities from a "Change to BOQ Line" variation are in the Claim Items, not in Claimed Variations.
+
+### How the amount is calculated
+
+1. **Work This Certificate** = value of Claim Items this period + Claimed Variations this period.
+2. The **Certificate Lines** run from top to bottom. Each line adds to or takes from a running total. The lines come from the Certificate Template.
+3. **Amount Due (Excl. VAT)** = the last running total.
+4. The system adds **VAT** from the contract's VAT Status and VAT Basis. VAT is not a template line.
+5. **Amount Due** = Amount Due (Excl. VAT) + VAT.
+
+Example with the "Ministry of Water (SEUWASA)" template. Work this certificate is 1,000,000. The advance not yet recovered is more than 200,000. VAT Status is Standard Rated, VAT Basis is Gross Work, and the VAT rate is 18%.
+
+| Line | Amount | Running total |
+| --- | --- | --- |
+| Completed execution of the works | 1,000,000 | 1,000,000 |
+| Less: Retention 5% | 50,000 | 950,000 |
+| Less: Advance recovery 20% | 200,000 | 750,000 |
+| Add: Value of materials on site | 0 | 750,000 |
+| Less: Liquidated damages | 0 | 750,000 |
+| **Amount Due (Excl. VAT)** | | **750,000** |
+| VAT 18% of the work | 180,000 | |
+| **Amount Due** | | **930,000** |
+
+### Print formats
+
+| Print format | Contents |
+| --- | --- |
+| IPC Payment Certificate | The certificate page with the lines and the amount due |
+| IPC Valuation Sheet | Each BOQ line: revised quantity, previous, this certificate, to date |
+| IPC Summary by Bill | Each bill: original, revised, previous, this certificate, to date |
+| IPC Full Set | All of the above together |
+
+Other print formats: **Variation Order Client** (for the client's approval) and **Extension of Time Request**.
+
+---
+
+## Certificate Templates: how to configure them
+
+A **BF Certificate Template** holds the client's payment rules. The rules are not in the code. You set them as lines in a template. Each client can have its own template.
+
+### Where templates are used
+
+The **Used For** field says where a template can be chosen:
+
+| Used For | Chosen on | Calculates |
+| --- | --- | --- |
+| Payment Certificate | Contract, Progress Claim, Settings (default) | The amount due on a certificate |
+| BOQ Summary | BOQ, Settings (default) | The bid price of a BOQ |
+| Budget Overheads | Budget | The overheads on top of the direct cost |
+
+Each dropdown lists only the templates for that form.
+
+### Which template a certificate uses
+
+1. The template on the certificate, when you choose one.
+2. Otherwise, the template on the contract.
+3. Otherwise, the **Default Certificate Template** in Settings.
+
+When you change the template or the certificate type, the system loads the lines again on the next save.
+
+### How a template works
+
+The lines run from top to bottom. A running total starts at 0. Each line:
+
+- **Add**: adds its amount to the running total.
+- **Less**: takes its amount from the running total.
+- **Subtotal**: shows the running total at this point. It does not change it.
+
+The last running total is the amount due before VAT.
+
+### The fields of a line
+
+| Field | What to put |
+| --- | --- |
+| **Line** | The text printed on the certificate, for example "Less: Retention 10%". |
+| **Add / Less** | Add, Less or Subtotal. Always type a positive amount. This field gives the sign. |
+| **Amount From** | Where the amount comes from. See the next table. |
+| **Rate (%)** | For "Percentage" lines: the percentage, for example 10. |
+| **% Of** | For "Percentage" lines: what the percentage is of. See the table below. |
+| **Line No.** | For "% Of" = "Total at Line": the number of a line above. The system uses the running total after that line. |
+| **Less Earlier Certificates** | Takes off what this line took on earlier certificates. Use it with "Work to Date". |
+| **Limit** | A ceiling over all certificates together. See [Limits](#limits). |
+| **Limit (%)** | For "Limit" = "% of Contract Value": the percentage. |
+| **Applies To** | Which certificate types use the line. See [Applies To](#applies-to). |
+| **Role** | What the line means for the rest of the system. See [Roles](#roles). |
+| **For Calculation Only** | The line changes the running total for the lines below, but is not in the final amount. |
+
+### Amount From
+
+| Amount From | The amount is | Templates |
+| --- | --- | --- |
+| Work This Certificate | The value of the work this certificate | Payment Certificate |
+| Percentage | Rate (%) of the "% Of" value | All |
+| Typed Amount | The amount the user types on the certificate | All |
+| Total of Bills | The total of the BOQ | BOQ Summary |
+| Provisional Sums | The total of the BOQ lines marked as provisional sums | BOQ Summary |
+| Direct Cost | The direct cost of the budget | Budget Overheads |
+
+### % Of
+
+| % Of | Means |
+| --- | --- |
+| Work This Certificate | The work this certificate, with variations |
+| Work This Certificate (excl. VAT-Exempt) | The same, without the VAT-exempt bills |
+| Work to Date | All work certified up to this certificate |
+| Running Total | The running total just above this line |
+| Total at Line | The running total after the line in "Line No." |
+| Retention Held | Retention taken so far, less retention released |
+| Advance Balance | The advance not yet recovered |
+| Contract Value | The contract's Total Contract Value |
+| Total of Bills | The BOQ total (BOQ Summary only) |
+| Direct Cost | The budget direct cost (Budget Overheads only) |
+
+### Roles
+
+The role tells the system what a line is. The contract balances, the invoice and the reports read the roles, not the line text. Give the role to each line that has one of these meanings:
+
+| Role | Use it on | The system uses it for |
+| --- | --- | --- |
+| Work | The work line | Reports |
+| Retention | The retention deduction | "Retention Held" on the contract and the certificate |
+| Retention Release | The line that pays retention back | Takes it off "Retention Held" |
+| Advance Payment | A line that pays an advance on the certificate | The advance balance |
+| Advance Recovery | The advance recovery | "Advance Recovered" and "Advance Balance" |
+| Materials on Site | Materials delivered but not used | The certificate total for materials |
+| Liquidated Damages | The delay penalty | Gets the suggested amount. "Liquidated Damages to Date" on the contract |
+| Late Payment Interest | Interest on late payments | Gets the suggested interest |
+| VAT | BOQ Summary templates only | Payment Certificate templates cannot have a VAT line |
+
+### Applies To
+
+| Applies To | The line is on |
+| --- | --- |
+| All Certificates | Every certificate |
+| Interim Only | Interim certificates only |
+| Substantial Completion | The Substantial Completion certificate only |
+| Final | The Final certificate only |
+| Substantial Completion and Final | Both of these |
+
+### Limits
+
+A limit stops a line from going too far over all certificates together. When the limit is reached, the line gives 0.
+
+| Limit | The line stops at |
+| --- | --- |
+| % of Contract Value | Limit (%) of the contract value. Example: retention up to 5% of the contract. |
+| Advance Payment | The advance not yet recovered. Use it on advance recovery. |
+| Retention Held | The retention held. Use it on a typed retention release. |
+
+When the line has a role, the limit counts all lines with the same role.
+
+### Common rules and how to set them
+
+**Retention of 10% on each certificate**
+
+| Line | Add / Less | Amount From | Rate | % Of | Role |
+| --- | --- | --- | --- | --- | --- |
+| Less: Retention 10% | Less | Percentage | 10 | Work This Certificate | Retention |
+
+**Retention of 5%, up to 5% of the contract**
+
+Use the line above with Rate 5. Then set **Limit** = "% of Contract Value" and **Limit (%)** = 5.
+
+**Half the retention back at completion, the rest at the final certificate**
+
+| Line | Add / Less | Amount From | Rate | % Of | Applies To | Role |
+| --- | --- | --- | --- | --- | --- | --- |
+| Add: Release of 50% retention | Add | Percentage | 50 | Retention Held | Substantial Completion | Retention Release |
+| Add: Release of the remaining retention | Add | Percentage | 100 | Retention Held | Final | Retention Release |
+
+**Advance recovered as 20% of each certificate**
+
+| Line | Add / Less | Amount From | Rate | % Of | Limit | Role |
+| --- | --- | --- | --- | --- | --- | --- |
+| Less: Advance recovery 20% | Less | Percentage | 20 | Work This Certificate | Advance Payment | Advance Recovery |
+
+The limit stops the recovery when the advance is fully back.
+
+**Advance recovered as 30% of the work to date**
+
+Use % Of = "Work to Date" and tick **Less Earlier Certificates**. Each certificate then takes 30% of all work so far, less what earlier certificates took.
+
+**The rest of the advance at completion**
+
+| Line | Add / Less | Amount From | Rate | % Of | Applies To | Role |
+| --- | --- | --- | --- | --- | --- | --- |
+| Less: Recovery of the remaining advance | Less | Percentage | 100 | Advance Balance | Substantial Completion and Final | Advance Recovery |
+
+**Amounts the user types**
+
+Use Amount From = "Typed Amount" for materials on site, price adjustment, liquidated damages and late payment interest. Give each line its role.
+
+**Retention on a subtotal (FIDIC style)**
+
+1. Add the work line and the typed lines, for example price adjustment.
+2. Add a **Subtotal** line.
+3. Add the retention line with % Of = "Running Total".
+
+### Make a template for a new client
+
+1. Open an existing template that is close to the client's rules.
+2. Click **... → Duplicate**.
+3. Give it a new **Template Name**, for example the client's name.
+4. Change the lines to match the client's certificate. Use a real certificate from the client as the guide.
+5. Save. The system checks the lines and shows what is wrong.
+6. Set the template on the client's contract.
+7. Make a test certificate. Compare the result with the client's certificate.
+
+### VAT on certificates
+
+VAT is not a template line. The system adds it from the contract:
+
+| Contract setting | VAT |
+| --- | --- |
+| VAT Status = Standard Rated, VAT Basis = Gross Work | VAT Rate × the taxable work this certificate |
+| VAT Status = Standard Rated, VAT Basis = Net after Deductions | VAT Rate × (taxable work − retention − advance recovery) |
+| VAT Status = Exempt or Zero Rated | No VAT. The certificate prints the exemption reference. |
+
+Taxable work does not include the bills marked as VAT exempt on the BOQ.
+
+### Supporting documents
+
+The **Supporting Documents** table fills itself from the BF Document Types with "Applies To" = Payment Certificate. The "Certificate Types" field of the document type decides on which certificates it shows.
+
+When a document type is **Mandatory**, the certificate cannot be submitted until that row has an attachment and its status is "Ready".
+
+### Due date and late payment interest
+
+- **Certified Date**: the date the engineer certified the certificate. It defaults to the posting date. You can set it after submit.
+- **Payment Due Date** = Certified Date + the contract's Payment Period.
+- The **Late Payment Interest** report shows each certificate against its due date, the payments from the books, the days late and the interest.
+- On the next certificate, Fetch Measurements puts the interest not yet claimed on the typed "Late Payment Interest" line.
+
+---
+
+## Invoices
+
+- **Client Claim → Sales Invoice**: one line with the Default Progress Claim Item and the Amount Due (Excl. VAT). The VAT row has the certificate's exact VAT. The due date is the certificate's due date.
+- **Subcontractor Claim → Purchase Invoice**: the same, for the subcontractor.
+- **Advance payment**: from the contract, **Create → Advance Payment Invoice**.
+
+The invoice total is always equal to the certificate to the cent. Rounding is off on these invoices.
+
+---
+
+## Tasks and costs
+
+**Task** is an accounting dimension. Put the task on purchase invoices, journals and stock issues. Then:
+
+- The Task form shows a **Costs** section: days on site, materials, other costs and total.
+- The **Task Activity** report shows the same for all tasks of a project.
+
+---
+
+## Reports
+
+| Report | Shows |
+| --- | --- |
+| BOQ Progress | Each BOQ line: original, variation and revised quantity, done to date, remaining |
+| Budget Materials Summary | Each resource over the budget: needed, requested, received |
+| Running Cost vs Budget | Each BOQ line: budget, actual cost, open purchase orders, variance |
+| Contract Profitability | Each main contract: expected profit and profit so far |
+| Contract Status Summary | Each contract: value, variations, certified, % complete, retention held, invoiced |
+| Contract Time Tracker | Each contract: start, completion, extensions, days remaining, % time used against % work done |
+| Late Payment Interest | Each certificate: due date, paid, days late, interest |
+| VAT on IPCs | Each certificate: certified, taxable, VAT, invoice |
+| Task Activity | Each task: % done, days on site, cost |
+
+---
+
+## Reminders
+
+A daily job sends reminders for:
+
+- Contract submittals that expire in 30 days.
+- Bid securities that expire in 14 days.
+- Advance payment guarantees that expire in 30 days.
+
+---
+
+## Troubleshooting
+
+**"Cumulative Claimed amount cannot exceed the Approved Amount" on a certificate**
+
+The Variation Order in the Claimed Variations row has no lump sum. It is a "Change to BOQ Line" or "New Item" variation. Delete the row. The extra quantity comes in the Claim Items through the measurement.
+
+**The certificate does not show the extra quantity of a Variation Order**
+
+The measurement is still a draft. Submit the measurement, then click **Fetch Measurements** again.
+
+**A measurement cannot be submitted: the quantity is beyond the BOQ**
+
+Click **Actions → Create Variation Order** on the measurement. Submit the Variation Order. Then submit the measurement.
+
+**"Attach these documents and mark them Ready before submitting the certificate"**
+
+A mandatory supporting document is missing. Attach it and set its status to "Ready".
+
+**"Set a default Sales Taxes and Charges Template with the VAT account"**
+
+The company has no default sales tax template. Make one with the VAT account and set it as default.
+
+**The Connections tab of a BOQ is empty**
+
+No document is linked to that BOQ yet. A contract, budget or certificate made from the BOQ shows there.
+
+**"Line X: VAT is added to every certificate by the system"**
+
+A Payment Certificate template has a line with role VAT. Remove the line. The contract's VAT settings add VAT.
+
+---
+
+## For developers
+
+### Code layout
+
+```text
+consms/
+├── hooks.py                          Events, daily job, dashboard overrides
+├── setup.py                          After-migrate setup (custom fields, starter records, Task dimension)
+├── budget_control.py                 Budget check on Material Request and Purchase Order
+├── construction_management/
+│   ├── ipc.py                        Certificate engine: template lines, VAT, balances, late interest
+│   ├── certificate_templates.py      Starter templates and certificate document types
+│   ├── variations.py                 Variation Orders and measurement limits
+│   ├── budget.py, progress.py        Budget amounts and progress against the BOQ
+│   ├── boq_ai_import.py              AI import of BOQ files
+│   ├── reminders.py                  Daily expiry reminders
+│   ├── doctype/                      All BF DocTypes
+│   ├── report/                       Script reports
+│   └── print_format/                 BOQ and IPC print formats
+├── templates/print/                  Shared IPC print parts
+└── patches/                          Data patches
 ```
 
-### Post-migration setup
+### Tests
 
-The effective current hook is:
+The tests are in `consms/tests/`.
 
-```python
-after_migrate = "consms.setup.after_migrate"
-```
+Run the tests only on a test site. ERPNext's test setup deletes data, for example all Item Prices. Do not run `bench run-tests` on a site with real data.
 
-### Material Request dashboard override
-
-```python
-override_doctype_dashboards = {
-    "Material Request": "consms.setup.get_material_request_dashboard"
-}
-```
-
-### Important implementation note
-
-`hooks.py` currently contains two `after_migrate` assignments.
-
-The later assignment overrides the earlier one.
-
-This should be reviewed before relying on automatic creation of every intended custom field.
-
----
-
-# Custom Fields
-
-The active setup routine creates BOQ references on standard ERPNext procurement documents.
-
-The repository also contains a separate `consms/custom_fields.py` definition for Sales Invoice fields:
-
-- Construction Contract
-- Progress Claim (IPC)
-
-Because of the duplicate `after_migrate` hook assignment described above, deployments should confirm whether these fields are present on the target site.
-
----
-
-# Background Jobs
-
-No active scheduler events are currently configured in `hooks.py`.
-
-The core application operates primarily through:
-
-- DocType validation
-- mapped document actions
-- whitelisted server calls
-- standard Frappe transactions
-- reports
-- workspace/dashboard resources
-
----
-
-# Migrations
-
-`consms/patches.txt` currently contains the standard pre-model-sync and post-model-sync sections but no active migration patches.
-
-Most current setup is performed through DocType synchronization and `after_migrate`.
-
----
-
-# Developer Setup
-
-Clone/install through Bench, then enable the repository's development tooling.
+### Code quality
 
 ```bash
 cd apps/consms
 pre-commit install
 ```
 
-Configured tooling includes:
+The hooks run Ruff, ESLint, Prettier and Pyupgrade.
 
-- Ruff
-- ESLint
-- Prettier
-- Pyupgrade
+### Contributing
 
-Run the relevant Frappe test suite against the target framework version before merging functional changes.
-
----
-
-# Repository Structure
-
-```text
-ConsMS/
-├── .github/
-│   └── workflows/
-├── README.md
-├── license.txt
-├── pyproject.toml
-├── consms/
-│   ├── hooks.py
-│   ├── setup.py
-│   ├── custom_fields.py
-│   ├── patches.txt
-│   ├── public/
-│   │   └── js/
-│   │       └── material_request.js
-│   └── construction_management/
-│       ├── doctype/
-│       │   ├── bf_bill_of_quantities/
-│       │   ├── bf_boq_item/
-│       │   ├── bf_tender/
-│       │   ├── bf_contract/
-│       │   ├── bf_contract_submittal/
-│       │   ├── bf_document_type/
-│       │   ├── bf_works_execution/
-│       │   ├── bf_works_execution_task/
-│       │   ├── bf_works_execution_resource/
-│       │   ├── bf_activity_type/
-│       │   ├── bf_site_measurement_log/
-│       │   ├── bf_measurement_item/
-│       │   ├── bf_progress_claim/
-│       │   ├── bf_progress_claim_item/
-│       │   ├── bf_progress_claim_variation/
-│       │   ├── bf_variation_order/
-│       │   ├── bf_variation_item/
-│       │   └── bf_construction_settings/
-│       ├── report/
-│       ├── dashboard_chart/
-│       ├── number_card/
-│       ├── print_format/
-│       └── workspace/
-└── ...
-```
+1. Make a branch from `master`.
+2. Use a conventional commit prefix: `feat:`, `fix:`, `docs:` or `chore:`.
+3. Add a test when you change a calculation.
+4. Open a pull request to `master`.
 
 ---
 
-# Before and After
+## License
 
-| Traditional process | With ConsMS |
-| --- | --- |
-| BOQ managed in spreadsheet | BOQ stored in Frappe |
-| Tender recreated manually | Tender mapped from BOQ |
-| Awarded contract entered separately | Contract mapped from Tender |
-| Mobilization checklist maintained externally | Mobilization tracked in dedicated DocType |
-| Site measurements kept in books/spreadsheets | Measurement Log linked to BOQ |
-| IPC prepared manually | Claim generated from measurements and prior claims |
-| Variations managed separately | Variations linked to Contract and IPC |
-| Procurement disconnected from BOQ | ERPNext procurement rows linked to BOQ items |
-| Budget control calculated manually | BOQ Budget vs Expenditure report |
-| Contract profitability assembled offline | Contract Profitability report |
+MIT. See `license.txt`.
 
----
-
-# Example End-to-End Business Workflow
-
-### Pre-Construction
-
-1. Create Project.
-2. Create BOQ.
-3. Add BOQ quantities and unit rates.
-4. Submit BOQ.
-5. Create Tender from BOQ.
-6. Award Tender and create Contract.
-
-### Mobilization
-
-7. Create Works Execution from Contract (Activity Type: Mobilization).
-8. Pick the Project Template; its tasks are created on save.
-9. Complete all tasks.
-10. Submit the Works Execution.
-
-### Procurement
-
-11. Create Material Request from BOQ.
-12. Carry BOQ references into purchasing transactions.
-13. Track commitments and expenditures against BOQ items.
-
-### Execution and Measurement
-
-14. Record Site Measurement Logs.
-15. Select BOQ lines.
-16. Enter measured quantities.
-17. Submit measurements.
-
-### Certification
-
-18. Create Progress Claim from Contract.
-19. Select certification period.
-20. Fetch measured quantities.
-21. Review previous quantities.
-22. Review approved variations.
-23. Apply materials on site, retention and recoveries.
-24. Submit the Progress Claim.
-
-### Finance
-
-25. Generate Sales Invoice for client claim or Purchase Invoice for subcontractor claim, subject to deployment validation of the required custom fields.
-26. Review contract profitability and BOQ budget-versus-expenditure reports.
-
----
-
-# Expected Business Outcomes
-
-With appropriate implementation and controls, ConsMS can help organizations improve:
-
-- contract traceability
-- BOQ control
-- procurement budget visibility
-- measurement discipline
-- progress certification consistency
-- variation control
-- retention calculation
-- commercial reporting
-- contract profitability visibility
-- integration between site, procurement and finance teams
-- auditability of construction commercial records
-
----
-
-# Implementation Effort
-
-Implementation effort will depend on:
-
-- complexity of BOQs
-- number of active contracts
-- subcontract structure
-- existing ERPNext configuration
-- procurement processes
-- tax rules
-- certification rules
-- retention practices
-- advance payment terms
-- role and approval structure
-- reporting requirements
-- historical migration needs
-
-A pilot project should be completed before migrating all live construction contracts.
-
----
-
-# Data Migration Considerations
-
-For existing construction projects, consider migration of:
-
-- Projects
-- BOQs
-- BOQ line identifiers
-- Tenders
-- Main Contracts
-- Subcontracts
-- Approved Variation Orders
-- Previous certified quantities
-- Previous certified amounts
-- retention balances
-- advance-payment recovery balances
-- procurement commitments
-- historic invoices
-
-Opening commercial balances must be designed carefully to avoid double-counting previous certification.
-
----
-
-# Risks and Considerations
-
-## 1. Explicit ERPNext dependency is not declared
-
-The application depends on multiple ERPNext DocTypes but `required_apps` is not currently configured.
-
-## 2. Duplicate after_migrate declaration
-
-`hooks.py` assigns `after_migrate` twice. Only the latter assignment is effective.
-
-## 3. Invoice linkage must be validated
-
-Progress Claim invoice creation expects construction linkage fields. Confirm these fields exist on Sales Invoice and Purchase Invoice in the target deployment.
-
-## 4. Permissions are currently development-oriented
-
-Many custom DocTypes primarily grant access to System Manager. Production role design is required.
-
-## 5. Tax and contractual formulas require localization
-
-Retention, VAT, advance recovery and certification formulas must be validated against:
-
-- contract conditions
-- jurisdiction
-- tax treatment
-- client requirements
-
-## 6. Frappe version constraints are not declared
-
-Test the app on the intended Frappe/ERPNext release before production use.
-
-## 7. Some report queries use direct SQL
-
-Review reporting code for:
-
-- permission behavior
-- SQL safety
-- multi-company behavior
-- currency handling
-- performance on large datasets
-
----
-
-# Security
-
-ConsMS inherits Frappe's authentication, roles and document permission model.
-
-Production deployment should additionally review:
-
-- who can amend BOQs
-- who can submit Contracts
-- who can approve Variations
-- who can submit Measurements
-- who can submit Progress Claims
-- who can generate invoices
-- who can edit rates
-- who can access profitability information
-- who can cancel commercial documents
-
-Commercial construction records should use strong segregation of duties.
-
----
-
-# Upgrade Guide
-
-Before upgrading:
-
-1. Take a database and file backup.
-2. Review the target ConsMS commit.
-3. Confirm Frappe and ERPNext compatibility.
-4. Review schema/custom-field changes.
-5. Run migration on a staging site.
-6. Validate BOQ mappings.
-7. Validate Material Request and procurement links.
-8. Test Progress Claim calculations.
-9. Test invoice generation.
-10. Review reports.
-11. Test dashboards/workspace.
-12. Run automated and manual regression tests.
-13. Upgrade production only after acceptance.
-
----
-
-# Troubleshooting
-
-## BOQ fields do not appear in procurement documents
-
-Run:
-
-```bash
-bench --site <site-name> migrate
-```
-
-Then verify the effective `after_migrate` hook and Custom Field records.
-
-## Progress Claim invoice creation fails on missing fields
-
-Confirm the target invoice DocType contains the custom linkage fields expected by the controller.
-
-## Progress Claim has no quantities
-
-Verify:
-
-- Contract has a BOQ
-- Site Measurement Logs are submitted
-- measurement dates fall within the claim period
-- measurement items reference the correct BOQ lines
-
-## Works Execution cannot submit
-
-Every task row must have status `Completed`.
-
-## Contract cannot be created from Tender
-
-Check whether another non-cancelled Contract already references the Tender.
-
----
-
-# Decision Guide
-
-ConsMS is a strong candidate for organizations that want construction commercial control directly inside ERPNext and need a connected flow between:
-
-- BOQ
-- Tender
-- Contract
-- Procurement
-- Measurement
-- Variation
-- Progress Claim
-- Invoice
-- Profitability
-
-It is especially relevant where ERPNext is already being used for accounting, buying, selling and project management.
-
-Before enterprise rollout, complete a functional and technical validation covering:
-
-- contract terms
-- tax rules
-- user permissions
-- workflows
-- approval levels
-- invoice mapping
-- BOQ procurement controls
-- performance
-- reporting
-- localization
-
----
-
-# Frequently Asked Business Questions
-
-## Can ConsMS manage a BOQ?
-
-Yes. The current `master` branch includes BOQ headers and BOQ items with automatic quantity × rate calculations.
-
-## Can a BOQ create a Tender?
-
-Yes.
-
-## Can a Tender create a Contract?
-
-Yes, and the backend prevents more than one active Contract per Tender.
-
-## Does it support subcontracts?
-
-Yes. `BF Contract` supports both Main Contract and Subcontract types.
-
-## Can we track contract variations?
-
-Yes. Variation Orders are linked to Contracts and are incorporated into Progress Claims.
-
-## Does it support site measurements?
-
-Yes. Site Measurement Logs reference BOQ items and feed claim quantities.
-
-## Does it support IPC / Progress Claims?
-
-Yes. The app includes cumulative measurement, retention, variations, advance recovery, previous certification, VAT and certification calculations.
-
-## Can a claim generate an ERPNext invoice?
-
-The controller includes mappings for Sales Invoice and Purchase Invoice. The required custom invoice fields should be verified during deployment.
-
-## Can procurement be tracked against BOQ lines?
-
-Yes. Custom fields are created on key ERPNext procurement documents and their child rows.
-
-## Can management see budget vs spend?
-
-Yes. The BOQ Budget vs Expenditure report compares BOQ budget, Purchase Orders and Purchase Invoices.
-
-## Can management see contract profitability?
-
-Yes. The Contract Profitability report compares revised contract value, client billing and subcontractor costs.
-
-## Does it include a construction workspace?
-
-Yes.
-
----
-
-# Repository Evidence Reviewed
-
-This README was prepared from the current `master` branch, including:
-
-- `README.md`
-- `pyproject.toml`
-- `license.txt`
-- `consms/hooks.py`
-- `consms/setup.py`
-- `consms/custom_fields.py`
-- `consms/patches.txt`
-- Construction Management workspace
-- BOQ DocTypes and controller
-- Tender DocType and controller
-- Contract DocType and controller
-- Contract Submittal structures
-- Mobilization DocTypes and controller
-- Site Measurement DocTypes and controller
-- Progress Claim DocTypes and controller
-- Variation Order DocTypes and controller
-- Contract Profitability report
-- BOQ Budget vs Expenditure report
-- dashboard charts
-- number cards
-- FIDIC IPC Certificate print format
-- Material Request integration
-- repository automation and developer tooling
-
----
-
-# Recommended Next Technical Improvements
-
-The following items should be considered before treating the app as production-hardened:
-
-1. Declare supported Frappe/ERPNext dependencies in `pyproject.toml`.
-2. Remove the duplicate `after_migrate` assignment and consolidate custom-field setup.
-3. Verify/create Contract and Progress Claim linkage fields on both Sales Invoice and Purchase Invoice.
-4. Add production business roles and permissions.
-5. Add workflow approvals for BOQ, Tender, Contract, Variation and IPC where required.
-6. Expand automated tests beyond basic generated DocType tests.
-7. Test cumulative IPC calculations using multi-period scenarios.
-8. Add negative tests for over-certification and overlapping periods.
-9. Review direct SQL reports for security and performance.
-10. Add multi-company and multi-currency test coverage.
-11. Document the intended supported Frappe/ERPNext release.
-12. Add screenshots and an implementation example.
-
----
-
-# Contributing
-
-This repository uses `pre-commit` for development quality controls.
-
-Install it with:
-
-```bash
-cd apps/consms
-pre-commit install
-```
-
-Configured tools include:
-
-- Ruff
-- ESLint
-- Prettier
-- Pyupgrade
-
-Submit changes through a feature/fix branch and Pull Request.
-
-Changes should include appropriate tests where business logic is modified.
-
----
-
-# License
-
-MIT License.
-
-See `license.txt`.
-
----
-
-# Maintainers
-
-ConsMS is maintained within the Aakvatech ecosystem.
-
-Repository:
-
-```text
-https://github.com/Aakvatech-Limited/ConsMS
-```
+Repository: https://github.com/Aakvatech-Limited/ConsMS
