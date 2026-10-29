@@ -2,6 +2,10 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("BF Contract", {
+	setup(frm) {
+		// only the document types meant for a contract
+		frm.set_query("submittal_type", "submittals", () => ({ filters: { applies_to: ["in", ["Contract", "Both"]] } }));
+	},
 	refresh(frm) {
 		// Frappe hides the naming field once saved; the contract number should stay in view (read only)
 		frm.toggle_display("contract_no", true);

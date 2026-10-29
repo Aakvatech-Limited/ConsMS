@@ -8,6 +8,20 @@ frappe.ui.form.on("BF Progress Claim", {
 		frm.set_df_property("certificate_lines", "cannot_delete_rows", true);
 	},
 	setup: function(frm) {
+		// only the certificate documents for this kind of certificate (the same scopes the server adds rows for)
+		frm.set_query("document_type", "documents", function() {
+			let scopes = {
+				"Interim": ["All Certificates"],
+				"Substantial Completion": ["All Certificates", "Substantial Completion and Final"],
+				"Final": ["All Certificates", "Substantial Completion and Final", "Final"]
+			}[frm.doc.certificate_type || "Interim"];
+			return {
+				filters: {
+					"applies_to": "Payment Certificate",
+					"certificate_types": ["in", scopes]
+				}
+			};
+		});
 		frm.set_query("variation_order", "variations", function() {
 			return {
 				filters: {

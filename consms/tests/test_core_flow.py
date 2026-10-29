@@ -514,6 +514,33 @@ class TestCoreFlow(FrappeTestCase):
 			self.assertEqual(row["billed"], 20_325_000)  # IPC 01 without VAT
 			self.assertEqual(round(row["profit_to_date"], 2), round(20_325_000 - cost, 2))
 
+	def test_9d_contingency_added_on_the_contract_is_in_the_contract_sum(self):
+		# a BOQ priced as bills + VAT 18%, with no contingency in its summary
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/CORE/004", "tender_name": "Contingency on contract", "project": self.project.name}
+		).insert()
+		boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": self.project.name, "tender": tender.name, "summary_template": "Bills + VAT 18%",
+			"items": [{"item_no": "1", "description": "Culvert", "uom": "Nos", "erp_uom": "Nos", "quantity": 1, "unit_rate": 100_000_000}],
+		}).insert()
+		boq.submit()
+		contract = make_bf_contract(tender.name)
+		contract.update({"customer": self.customer.name, "advance_payment_percentage": 20, "certificate_template": SEUWASA})
+		contract.insert()
+		self.assertEqual(flt(contract.contract_sum_incl_vat), 118_000_000)  # the bid price
+
+		# 10% contingency added on the contract: it is part of the contract sum, with its VAT
+		contract.contingency_percentage = 10
+		contract.save()
+		self.assertEqual(flt(contract.total_contract_amount), 110_000_000)
+		self.assertEqual(flt(contract.contract_sum_incl_vat), 118_000_000 + 11_800_000)
+		self.assertEqual(flt(contract.advance_payment_amount), 25_960_000)  # 20% of 129,800,000
+
+		# an exempt contract adds the contingency without VAT
+		contract.vat_status = "Exempt"
+		contract.save()
+		self.assertEqual(flt(contract.contract_sum_incl_vat), 128_000_000)
+
 	def test_5_subcontractor_ipc_becomes_a_purchase_invoice(self):
 		supplier = frappe.get_doc({
 			"doctype": "Supplier", "supplier_name": "ConsMS Test Subcontractor",

@@ -22,6 +22,10 @@ const TENDER_COST_DOCTYPES = {
 };
 
 frappe.ui.form.on("BF Tender", {
+	setup(frm) {
+		// only the document types meant for a tender
+		frm.set_query("document_type", "documents", () => ({ filters: { applies_to: ["in", ["Tender", "Both"]] } }));
+	},
 	refresh(frm) {
 		// Frappe hides the naming field once saved; the tender number should stay in view (read only)
 		frm.toggle_display("tender_no", true);
