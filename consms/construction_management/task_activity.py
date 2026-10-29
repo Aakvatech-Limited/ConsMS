@@ -1,6 +1,6 @@
-"""What happened on each task across days: from submitted Site Daily Reports, and its cost from the books.
+"""The cost of each task, from the books.
 
-Days on site come from the daily reports. Materials are the Stock Issues that carry the task, at the
+Materials are the Stock Issues that carry the task, at the
 value the books hold. Other costs are everything else booked to the task (Task is an accounting
 dimension): labour gangs and hired machines on supplier invoices, journals, services.
 Progress is the task's % done from measurements.
@@ -14,21 +14,12 @@ from frappe.utils import flt
 def get_activity(tasks, from_date=None, to_date=None):
 	"""{task: activity} for the given tasks, optionally between two dates."""
 	tasks = list(tasks)
-	activity = {t: frappe._dict(dates=set(), reports={}, materials={}, materials_cost=0.0, other_costs={}, other_cost=0.0)
+	activity = {t: frappe._dict(materials={}, materials_cost=0.0, other_costs={}, other_cost=0.0)
 		for t in tasks}
 	if not tasks:
 		return activity
 
 	period = {"tasks": tasks, "from_date": from_date or "1900-01-01", "to_date": to_date or "2999-12-31"}
-
-	for r in frappe.db.sql("""
-			select distinct row.task, report.name, report.date
-			from `tabBF Daily Material` row
-			join `tabBF Site Daily Report` report on report.name = row.parent
-			where row.task in %(tasks)s and report.docstatus = 1 and report.date between %(from_date)s and %(to_date)s""",
-			period, as_dict=True):
-		activity[r.task].dates.add(r.date)
-		activity[r.task].reports[r.name] = r.date
 
 	for r in frappe.db.sql("""
 			select sed.task, sed.item_code, sed.uom, sum(sed.qty) as qty, sum(sed.amount) as amount
@@ -51,27 +42,20 @@ def get_activity(tasks, from_date=None, to_date=None):
 		activity[r.task].other_cost += flt(r.amount)
 
 	for a in activity.values():
-		a.days_worked = len(a.dates)
-		a.first_day = min(a.dates) if a.dates else None
-		a.last_day = max(a.dates) if a.dates else None
 		a.total_cost = a.materials_cost + a.other_cost
 	return activity
 
 
 @frappe.whitelist()
 def get_task_site_activity(task):
-	"""The Site Activity section on a Task."""
+	"""The Costs section on a Task."""
 	frappe.get_doc("Task", task).check_permission("read")
 	a = get_activity([task])[task]
 	return {
 		"progress": flt(frappe.db.get_value("Task", task, "progress")),
-		"days_worked": a.days_worked,
-		"first_day": a.first_day,
-		"last_day": a.last_day,
 		"materials_cost": a.materials_cost,
 		"other_cost": a.other_cost,
 		"total_cost": a.total_cost,
 		"materials": [dict(item_code=k, **v) for k, v in sorted(a.materials.items())],
 		"other_costs": [{"account": k, "amount": v} for k, v in sorted(a.other_costs.items())],
-		"reports": [{"name": k, "date": v} for k, v in sorted(a.reports.items(), key=lambda x: x[1], reverse=True)],
 	}

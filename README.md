@@ -196,7 +196,6 @@ On save, the system checks each row against the budget quantity. The setting **W
 
 ## Site work and measurements
 
-- **BF Site Daily Report**: the work of the day, with the materials used on each task.
 - **BF Works Execution**: the work plan, linked to the project tasks.
 - **BF Site Measurement Log**: the quantities measured on site for each BOQ line. Attach the measurement sheet as proof.
 
@@ -510,9 +509,15 @@ The invoice total is always equal to the certificate to the cent. Rounding is of
 
 ## Tasks and costs
 
-**Task** is an accounting dimension. Put the task on purchase invoices, journals and stock issues. Then:
+**Task** is an accounting dimension. Record site costs on the task:
 
-- The Task form shows a **Costs** section: days on site, materials, other costs and total.
+- **Materials**: issue them from the site store with a Stock Entry (Material Issue). Set the Project and the Task.
+- **Labour gangs and hired machines**: they are Suppliers. Put the Project and the Task on their Purchase Invoice.
+- **Other costs**: put the Task on the Journal Entry.
+
+Then:
+
+- The Task form shows a **Costs** section: materials, other costs and total.
 - The **Task Activity** report shows the same for all tasks of a project.
 
 ---
@@ -529,7 +534,7 @@ The invoice total is always equal to the certificate to the cent. Rounding is of
 | Contract Time Tracker | Each contract: start, completion, extensions, days remaining, % time used against % work done |
 | Late Payment Interest | Each certificate: due date, paid, days late, interest |
 | VAT on IPCs | Each certificate: certified, taxable, VAT, invoice |
-| Task Activity | Each task: % done, days on site, cost |
+| Task Activity | Each task: % done, materials cost, other costs, total |
 
 ---
 

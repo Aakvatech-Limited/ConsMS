@@ -30,7 +30,7 @@ def after_migrate():
     create_custom_fields({
         **{dt: header_links for dt in buying},
         **{f"{dt} Item": row_links for dt in buying},
-        # Materials used on site (Site Daily Report -> Stock Issue): their cost in the books per BOQ line
+        # Materials issued to site with a BOQ line (older stock issues): their cost in the books per BOQ line
         "Stock Entry Detail": [budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "project")],
     })
     ensure_task_dimension()
@@ -92,11 +92,6 @@ def get_supplier_dashboard(data):
     return add_construction_links(data, {"BF Contract": "supplier", "BF Progress Claim": "supplier"})
 
 
-def get_stock_entry_dashboard(data):
-    # a Stock Issue made by a Site Daily Report links back to it
-    return add_construction_links(data, {"BF Site Daily Report": "stock_entry"})
-
-
 def ensure_task_dimension():
     """Task is an accounting dimension: every cost (stock issue, supplier invoice, journal) can carry it.
 
@@ -135,7 +130,7 @@ def get_project_dashboard(data):
     """Project Connections: the construction documents first, then ERPNext's own."""
     data["transactions"] = [
         {"label": "Construction", "items": ["BF Tender", "BF Bill of Quantities", "BF Contract"]},
-        {"label": "Site & Budget", "items": ["BF Budget", "BF Works Execution", "BF Site Daily Report", "BF Site Measurement Log"]},
+        {"label": "Site & Budget", "items": ["BF Budget", "BF Works Execution", "BF Site Measurement Log"]},
         {"label": "Commercial", "items": ["BF Variation Order", "BF Extension of Time", "BF Progress Claim"]},
     ] + data["transactions"]
     return data

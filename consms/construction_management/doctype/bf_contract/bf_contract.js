@@ -75,12 +75,6 @@ frappe.ui.form.on("BF Contract", {
 				contract: frm.doc.name,
 			}).then((mobilized) => {
 				if (!mobilized) return;
-				frm.add_custom_button(__("Site Daily Report"), function() {
-					frappe.model.open_mapped_doc({
-						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_daily_report",
-						frm: frm
-					});
-				}, __("Create"));
 				frm.add_custom_button(__("Site Measurement Log"), function() {
 					frappe.model.open_mapped_doc({
 						method: "consms.construction_management.doctype.bf_contract.bf_contract.make_site_measurement_log",

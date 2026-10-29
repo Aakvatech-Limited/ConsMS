@@ -1,15 +1,15 @@
 // Copyright (c) 2026, Sydney Kibanga and contributors
 // For license information, please see license.txt
 
-// Site Activity: what happened on this task across days (daily reports), and its cost from the books
+// Costs: what this task has cost so far, from the books
 frappe.ui.form.on("Task", {
 	refresh(frm) {
 		if (frm.is_new() || frm.doc.is_template) return;
 		frappe
 			.xcall("consms.construction_management.task_activity.get_task_site_activity", { task: frm.doc.name })
 			.then((a) => {
-				if (!a || (!a.days_worked && !a.materials.length && !a.other_costs.length)) return;
-				frm.dashboard.add_section(site_activity_html(a), __("Site Activity"));
+				if (!a || (!a.materials.length && !a.other_costs.length)) return;
+				frm.dashboard.add_section(site_activity_html(a), __("Costs"));
 			});
 	},
 });
@@ -17,11 +17,8 @@ frappe.ui.form.on("Task", {
 function site_activity_html(a) {
 	const esc = frappe.utils.escape_html;
 	const num = (v) => format_number(v, null, 1);
-	const date = (d) => (d ? frappe.datetime.str_to_user(d) : "");
 	const figures = [
 		[__("Done"), `${num(a.progress)}%`],
-		[__("Days on Site"), a.days_worked],
-		[__("Period"), a.first_day ? `${date(a.first_day)} – ${date(a.last_day)}` : "–"],
 		[__("Materials Cost"), format_currency(a.materials_cost)],
 		[__("Other Costs"), format_currency(a.other_cost)],
 		[__("Total Cost"), format_currency(a.total_cost)],
@@ -44,10 +41,5 @@ function site_activity_html(a) {
 		<div class="row mb-2">
 			${list(__("Materials Issued"), a.materials.map((r) => line(esc(r.item_code), `${num(r.qty)} ${esc(r.uom || "")} · ${format_currency(r.amount)}`)))}
 			${list(__("Other Costs (labour, hire, services)"), a.other_costs.map((r) => line(esc(r.account), format_currency(r.amount))))}
-		</div>
-		<div class="small text-muted">
-			${__("Daily reports")}:
-			${a.reports.slice(0, 15).map((r) => `<a href="/app/bf-site-daily-report/${encodeURIComponent(r.name)}">${date(r.date)}</a>`).join(" · ")}
-			${a.reports.length > 15 ? ` · ${__("and {0} more", [a.reports.length - 15])}` : ""}
 		</div>`;
 }

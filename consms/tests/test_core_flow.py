@@ -272,7 +272,7 @@ class TestCoreFlow(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			self.measure({"2.1": 600})
 
-	def test_6_site_daily_report_puts_materials_in_the_books_per_task(self):
+	def test_6_materials_and_labour_are_in_the_books_per_task(self):
 		from consms.construction_management.progress import get_actual_cost
 
 		task = frappe.get_doc({"doctype": "Task", "subject": "Concrete lining", "project": self.project.name}).insert()
@@ -284,27 +284,15 @@ class TestCoreFlow(FrappeTestCase):
 		}).insert()
 		receipt.submit()
 
-		def report(with_task):
-			return frappe.get_doc({
-				"doctype": "BF Site Daily Report",
-				"contract": self.contract.name,
-				"project": self.project.name,
-				"boq": self.boq.name,
-				"date": today(),
-				"source_warehouse": store,
-				"materials": [{"task": task.name if with_task else None, "item_code": cement, "qty": 10, "boq_item": self.items["2.2"]}],
-			})
-
-		# the project has tasks, so every row must say which task it belongs to
-		with self.assertRaises(frappe.ValidationError):
-			report(with_task=False).insert()
-
-		daily = report(with_task=True).insert()
-		daily.submit()
-
-		issue = frappe.get_doc("Stock Entry", daily.reload().stock_entry)
+		# materials used on the task leave the site store through a Stock Issue with the project and task
+		issue = frappe.get_doc({
+			"doctype": "Stock Entry", "stock_entry_type": "Material Issue", "company": self.company,
+			"project": self.project.name, "task": task.name, "from_warehouse": store,
+			"items": [{"item_code": cement, "qty": 10, "s_warehouse": store, "project": self.project.name,
+				"task": task.name, "bf_boq_item": self.items["2.2"]}],
+		}).insert()
+		issue.submit()
 		self.assertEqual((issue.task, issue.items[0].task), (task.name, task.name))  # Task is an accounting dimension
-		self.assertEqual(issue.items[0].bf_boq_item, self.items["2.2"])
 		self.assertEqual(flt(issue.items[0].amount), 200_000)  # 10 bags at stock value 20,000
 
 		# a labour gang is a Supplier: its invoice carries the project and the task
@@ -334,21 +322,19 @@ class TestCoreFlow(FrappeTestCase):
 		)[0][0]
 		self.assertEqual(round(sum(cost.values()), 2), round(flt(booked), 2))
 
-	def test_7_task_shows_its_site_activity(self):
+	def test_7_task_shows_its_costs(self):
 		from frappe.desk.notifications import _get_linked_document_counts
 
 		from consms.construction_management.report.task_activity.task_activity import execute
 		from consms.construction_management.task_activity import get_task_site_activity
 
-		# test 6: 10 bags of cement at 20,000 on one daily report, and the masons gang's invoice of 150,000
+		# test 6: 10 bags of cement at 20,000 issued to the task, and the masons gang's invoice of 150,000
 		task = frappe.db.get_value("Task", {"project": self.project.name, "subject": "Concrete lining"})
 		activity = get_task_site_activity(task)
-		self.assertEqual((activity["days_worked"], activity["materials_cost"], activity["other_cost"]), (1, 200_000, 150_000))
-		self.assertEqual(activity["total_cost"], 350_000)
-		self.assertEqual(len(activity["reports"]), 1)
+		self.assertEqual((activity["materials_cost"], activity["other_cost"], activity["total_cost"]), (200_000, 150_000, 350_000))
 
 		row = next(r for r in execute({"project": self.project.name})[1] if r["task"] == task)
-		self.assertEqual((row["days_worked"], row["materials_cost"], row["other_cost"], row["total_cost"]), (1, 200_000, 150_000, 350_000))
+		self.assertEqual((row["materials_cost"], row["other_cost"], row["total_cost"]), (200_000, 150_000, 350_000))
 
 		# the Task's Connections list the Stock Issue and the supplier invoice charged to it
 		counts = {c["doctype"]: c["count"] for c in _get_linked_document_counts("Task", task)["count"]["external_links_found"]}
