@@ -27,9 +27,17 @@ def after_migrate():
         budget_link("bf_budget_item", "Budget Line", "BF Budget Item", "bf_budget", hidden=1),
     ]
     buying = ["Material Request", "Request for Quotation", "Supplier Quotation", "Purchase Order", "Purchase Receipt", "Purchase Invoice"]
+    # On a Purchase Order row the BOQ Line can also be picked by hand, so every order is checked
+    # against the line's budget amount (consms.budget_control), not only orders made from the budget.
+    po_row_links = [dict(link, read_only=0, depends_on=None) if link["fieldname"] == "bf_boq_item" else link
+                    for link in row_links]
+    po_row_links.append({"fieldname": "bf_boq_item_no", "label": "BOQ Item No.", "fieldtype": "Data",
+                         "fetch_from": "bf_boq_item.item_no", "read_only": 1, "insert_after": "bf_boq_item",
+                         "depends_on": "eval:doc.bf_boq_item"})
     create_custom_fields({
         **{dt: header_links for dt in buying},
         **{f"{dt} Item": row_links for dt in buying},
+        "Purchase Order Item": po_row_links,
         # Materials issued to site with a BOQ line (older stock issues): their cost in the books per BOQ line
         "Stock Entry Detail": [budget_link("bf_boq_item", "BOQ Line", "BF BOQ Item", "project")],
     })

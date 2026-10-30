@@ -688,6 +688,33 @@ class TestBudgetControl(FrappeTestCase):
 		self.assertEqual(row["committed"], 400 * 22_000)
 		self.assertEqual(row["remaining"], 300 * 22_000)
 
+	def test_7_purchase_orders_are_checked_against_the_line_budget_amount(self):
+		from consms.budget_control import boq_line_query, enforce, over_budget_messages
+
+		self.setting("Stop")
+		boq_line = self.budget.items[0].boq_item
+
+		def order_by_hand(rate):
+			"""A row with only the BOQ Line picked (no recipe material): only the money check applies."""
+			return frappe.get_doc({
+				"doctype": "Purchase Order", "supplier": self.supplier, "company": frappe.db.get_value("Project", self.project.name, "company"),
+				"project": self.project.name, "schedule_date": today(),
+				"items": [{"item_code": self.cement, "qty": 100, "rate": rate, "schedule_date": today(), "project": self.project.name,
+					"warehouse": self.contract.site_warehouse, "bf_boq_item": boq_line}],
+			}).insert()
+
+		# budget 15,400,000 (700 bags x 22,000); test 5 ordered 8,800,000
+		over = order_by_hand(70_000)  # + 7,000,000 = 15,800,000
+		self.assertIn("15,800,000", over_budget_messages(over))
+		with self.assertRaises(frappe.ValidationError):
+			enforce(over)
+
+		order_by_hand(60_000).submit()  # + 6,000,000 = 14,800,000, within the budget
+
+		# the BOQ Line picker shows the project's lines by Item No. and description
+		rows = boq_line_query("BF BOQ Item", "Concrete", "name", 0, 20, {"project": self.project.name})
+		self.assertEqual([(r[0], r[1]) for r in rows], [(boq_line, "1 - Concrete C25")])
+
 
 class TestBudgetAmounts(FrappeTestCase):
 	"""A budget typed as amounts per BOQ line, like a costing sheet, with a recipe made from one line."""
