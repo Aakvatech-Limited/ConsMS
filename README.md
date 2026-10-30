@@ -222,11 +222,26 @@ Make purchases from the budget, so each row keeps its BOQ line.
 
 The Material Request rows carry the **BOQ Line** and the **Budget**. The Request for Quotation, Supplier Quotation, Purchase Order, Purchase Receipt and Purchase Invoice made from it keep the same links.
 
-On save, the system checks each row against the budget quantity. The setting **When a Purchase Is Over the Budget Quantity** decides what happens:
+A Purchase Order row that does not come from the budget can still carry its BOQ line. Pick it in the row's **BOQ Line** field. The list shows the project's BOQ lines by Item No. and description.
 
-- **Warn**: a message. The document can still be submitted.
+### What the system checks
+
+| Check | On | Rule |
+| --- | --- | --- |
+| **Money** | Purchase Order | For each BOQ line: this order + the other submitted orders of the line, before taxes, must not be more than the line's budget (Materials + Labour + Machines + Other). |
+| **Quantity** | Material Request, Purchase Order | For each recipe material: the quantity must not be more than what is left on its budget line. |
+
+Example of the money message:
+
+> 1.1.1 Slab concrete: this order 12,000,000 + earlier orders 85,000,000 = 97,000,000, but the line budget is 90,000,000 (7,000,000 over).
+
+On save, the system only shows the message, so a draft can always be kept. On submit, the setting **When a Purchase Is Over the Budget Quantity** decides what happens:
+
+- **Warn**: the document can still be submitted.
 - **Stop**: the document cannot be submitted. Revise the budget first.
-- **Stop unless approved**: only the approver role can submit it.
+- **Stop unless approved**: only the role in **Who Can Approve Over-Budget Purchases** can submit it. The approval is recorded as a comment on the document.
+
+Rows with no BOQ line are not checked.
 
 ---
 
