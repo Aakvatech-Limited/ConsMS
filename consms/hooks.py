@@ -8,18 +8,17 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext"]
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "consms",
-# 		"logo": "/assets/consms/logo.png",
-# 		"title": "Construction Management",
-# 		"route": "/consms",
-# 		"has_permission": "consms.api.permission.has_app_permission"
-# 	}
-# ]
+# The Construction MS tile on the apps screen
+add_to_apps_screen = [
+	{
+		"name": "consms",
+		"logo": "/assets/consms/images/consms-logo.svg",
+		"title": "Construction MS",
+		"route": "/app/construction-ms",
+	}
+]
 
 # Includes in <head>
 # ------------------
