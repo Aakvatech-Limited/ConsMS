@@ -1,11 +1,11 @@
 """The money path of ConsMS, end to end: Tender -> BOQ -> Contract -> Measurement -> IPC -> Sales Invoice.
 
-Everything a test creates is rolled back when the test class ends (FrappeTestCase).
+Everything a test creates is rolled back when the test class ends (IntegrationTestCase).
 Run with: bench --site <site> run-tests --module consms.tests.test_core_flow --skip-test-records
 """
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, flt, today
 
 from consms.construction_management.certificate_templates import ensure_certificate_templates
@@ -29,7 +29,7 @@ def make_item(item_code, stock):
 	return item_code
 
 
-class TestCertificateEngine(FrappeTestCase):
+class TestCertificateEngine(IntegrationTestCase):
 	"""The certificate template reproduces the client's own Excel certificate."""
 
 	@classmethod
@@ -88,7 +88,7 @@ class TestCertificateEngine(FrappeTestCase):
 		self.assertEqual(roles["Advance Recovery"], 0)  # no advance paid, nothing to recover
 
 
-class TestTenderStage(FrappeTestCase):
+class TestTenderStage(IntegrationTestCase):
 	"""Before the award the BOQ can still be corrected: the tender must not hold it."""
 
 	def test_boq_of_a_submitted_tender_can_be_cancelled(self):
@@ -117,7 +117,7 @@ class TestTenderStage(FrappeTestCase):
 		self.assertIsNone(get_tender_boq(tender.name))
 
 
-class TestCoreFlow(FrappeTestCase):
+class TestCoreFlow(IntegrationTestCase):
 	"""Real documents through the whole flow, with figures small enough to check by hand.
 
 	BOQ 89,200,000: P&G 10,000,000 (no VAT), excavation 1,000 m3 x 9,200, concrete 200 m3 x 350,000.
@@ -583,7 +583,7 @@ class TestCoreFlow(FrappeTestCase):
 			self.assertEqual(next(c["count"] for c in counts if c["doctype"] == "Purchase Invoice"), 1, doctype)
 
 
-class TestBudgetControl(FrappeTestCase):
+class TestBudgetControl(IntegrationTestCase):
 	"""Budget of 700 bags of cement (100 m3 x 7 bags); Material Requests and Purchase Orders against it."""
 
 	@classmethod
@@ -731,7 +731,7 @@ class TestBudgetControl(FrappeTestCase):
 		self.assertEqual([(r[0], r[1]) for r in rows], [(boq_line, "1 - Concrete C25")])
 
 
-class TestBudgetAmounts(FrappeTestCase):
+class TestBudgetAmounts(IntegrationTestCase):
 	"""A budget typed as amounts per BOQ line, like a costing sheet, with a recipe made from one line."""
 
 	@classmethod
@@ -834,7 +834,7 @@ class TestBudgetAmounts(FrappeTestCase):
 		self.assertEqual(row["status"], "Within the unplanned budget")
 
 
-class TestCancellations(FrappeTestCase):
+class TestCancellations(IntegrationTestCase):
 	"""Cancelling undoes what submitting did, and is refused when later documents still depend on it.
 
 	BOQ: one line, excavation 1,000 m3 x 10,000. Contract with no advance, template SEUWASA.

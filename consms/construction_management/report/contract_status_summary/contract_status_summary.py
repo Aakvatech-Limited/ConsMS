@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.query_builder.functions import Sum
 from frappe.utils import flt
 
 
@@ -77,24 +78,24 @@ def get_data(filters):
 	return data
 
 
+def sum_by(doctype, key, field, contracts):
+	"""{contract: total of `field`} over the submitted documents of the contracts."""
+	table = frappe.qb.DocType(doctype)
+	rows = (
+		frappe.qb.from_(table)
+		.select(table[key], Sum(table[field]))
+		.where(table[key].isin(contracts) & (table.docstatus == 1))
+		.groupby(table[key])
+	).run()
+	return {contract: flt(total) for contract, total in rows}
+
+
 def get_sum_by_contract(doctype, field, contracts):
-	rows = frappe.get_all(
-		doctype,
-		filters={"contract": ["in", contracts], "docstatus": 1},
-		fields=["contract", f"sum({field}) as total"],
-		group_by="contract",
-	)
-	return {r.contract: flt(r.total) for r in rows}
+	return sum_by(doctype, "contract", field, contracts)
 
 
 def get_invoiced(contracts):
-	rows = frappe.get_all(
-		"Sales Invoice",
-		filters={"bf_contract": ["in", contracts], "docstatus": 1},
-		fields=["bf_contract", "sum(net_total) as total"],
-		group_by="bf_contract",
-	)
-	return {r.bf_contract: flt(r.total) for r in rows}
+	return sum_by("Sales Invoice", "bf_contract", "net_total", contracts)
 
 
 def get_measured(contracts):

@@ -1,9 +1,10 @@
 # Copyright (c) 2026, Sydney Kibanga and Contributors
 # See license.txt
 
-# import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import UnitTestCase
 
 
-class TestBFBillofQuantities(FrappeTestCase):
+class TestBFBillofQuantities(UnitTestCase):
+	"""Placeholder: the flow through this doctype is tested in consms/tests/test_core_flow.py."""
+
 	pass
