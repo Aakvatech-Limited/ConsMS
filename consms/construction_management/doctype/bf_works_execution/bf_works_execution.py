@@ -26,6 +26,22 @@ class BFWorksExecution(Document):
 		if self.status != "Completed":
 			frappe.throw(_("{0} can only be submitted when all tasks are 'Completed'.").format(self.activity_type))
 
+	def before_cancel(self):
+		"""Measurements need the contract to be mobilized: keep the last Mobilization while any are submitted."""
+		if not frappe.db.get_value("BF Activity Type", self.activity_type, "is_mobilization"):
+			return
+		other = frappe.db.exists("BF Works Execution", {
+			"contract": self.contract, "docstatus": 1, "name": ["!=", self.name],
+			"activity_type": ["in", frappe.get_all("BF Activity Type", {"is_mobilization": 1}, pluck="name")],
+		})
+		measured = frappe.db.exists("BF Site Measurement Log", {"contract": self.contract, "docstatus": 1})
+		if measured and not other:
+			frappe.throw(
+				_("Contract {0} has submitted measurements (for example {1}), which need it to be mobilized. Cancel the measurements first.").format(
+					self.contract, frappe.bold(measured)),
+				title=_("Contract has measurements"),
+			)
+
 	def create_tasks_from_template(self):
 		"""First save with a template and no tasks: create the project's Tasks."""
 		if not self.project_template or self.tasks:

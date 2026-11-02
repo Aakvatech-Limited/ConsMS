@@ -4,6 +4,23 @@ import frappe
 from frappe.utils import flt
 
 
+def get_certificates_paying(log):
+	"""Submitted certificates of the log's contract whose period takes in the log's date and that pay its BOQ lines."""
+	boq_items = [row.boq_item for row in log.measurements if row.boq_item]
+	if not boq_items:
+		return []
+	return frappe.db.sql_list(
+		"""select distinct claim.name from `tabBF Progress Claim` claim
+		join `tabBF Progress Claim Item` item on item.parent = claim.name
+		where claim.contract = %(contract)s and claim.docstatus = 1
+			and (claim.period_from is null or claim.period_from <= %(date)s)
+			and (claim.period_to is null or claim.period_to >= %(date)s)
+			and item.boq_item in %(boq_items)s and item.this_period_qty != 0
+		order by claim.name""",
+		{"contract": log.contract, "date": log.date, "boq_items": boq_items},
+	)
+
+
 def update_task_progress(tasks):
 	"""Task progress % = value measured so far / value of its BOQ lines (quantity x rate)."""
 	for task in {t for t in tasks if t}:

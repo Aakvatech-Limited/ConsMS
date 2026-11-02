@@ -102,7 +102,7 @@ def update_works_execution_from_task(doc, method=None):
 	row_status = FROM_TASK_STATUS.get(doc.status, "Pending")
 	rows = frappe.get_all(
 		"BF Works Execution Task",
-		filters={"task": doc.name, "parenttype": "BF Works Execution"},
+		filters={"task": doc.name, "parenttype": "BF Works Execution", "docstatus": ["<", 2]},
 		fields=["name", "parent", "status"],
 	)
 	for row in rows:

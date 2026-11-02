@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-from consms.construction_management.measurement import update_task_progress
+from consms.construction_management.measurement import get_certificates_paying, update_task_progress
 from consms.construction_management.tasks import validate_task_projects
 from consms.construction_management.variations import get_over_limit, over_limit_message
 
@@ -78,6 +78,15 @@ class BFSiteMeasurementLog(Document):
 
 	def on_submit(self):
 		update_task_progress(row.task for row in self.measurements)
+
+	def before_cancel(self):
+		paid = get_certificates_paying(self)
+		if paid:
+			frappe.throw(
+				_("These quantities are paid on certificate {0}. Cancel the certificate first, then this measurement.").format(
+					", ".join(frappe.bold(name) for name in paid)),
+				title=_("Measurement already certified"),
+			)
 
 	def on_cancel(self):
 		update_task_progress(row.task for row in self.measurements)

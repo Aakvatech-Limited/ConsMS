@@ -204,6 +204,20 @@ def earlier_claims(claim, alias="claim"):
 	return condition, values
 
 
+def later_claims(claim):
+	"""Submitted certificates of the same contract and type that come after this one, newest first."""
+	_condition, values = earlier_claims(claim)
+	end = "coalesce(claim.period_to, claim.posting_date, date(claim.creation))"
+	return frappe.db.sql_list(
+		f"""select claim.name from `tabBF Progress Claim` claim
+		where claim.contract = %(contract)s and claim.claim_type = %(claim_type)s and claim.docstatus = 1
+			and claim.name != %(name)s
+			and ({end} > %(period_end)s or ({end} = %(period_end)s and claim.creation > %(creation)s))
+		order by {end} desc, claim.creation desc""",
+		values,
+	)
+
+
 def get_previous_totals(claim):
 	"""Totals of the submitted certificates of the same contract before this one."""
 	condition, values = earlier_claims(claim)
