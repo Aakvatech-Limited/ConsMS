@@ -340,6 +340,21 @@ class TestCoreFlow(FrappeTestCase):
 		counts = {c["doctype"]: c["count"] for c in _get_linked_document_counts("Task", task)["count"]["external_links_found"]}
 		self.assertEqual((counts.get("Stock Entry"), counts.get("Purchase Invoice")), (1, 1))
 
+	def test_7b_a_task_from_another_project_is_refused(self):
+		from consms.construction_management.tasks import validate_task_projects
+
+		own = frappe.get_doc({"doctype": "Task", "subject": "Own task", "project": self.project.name}).insert()
+		other_project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS other project test",
+			"company": self.company}).insert()
+		other = frappe.get_doc({"doctype": "Task", "subject": "Other project task", "project": other_project.name}).insert()
+
+		for doctype, table in (("BF Bill of Quantities", "items"), ("BF Site Measurement Log", "measurements")):
+			doc = frappe.get_doc({"doctype": doctype, "project": self.project.name, table: [{"task": own.name}]})
+			validate_task_projects(doc, table)  # a task of the same project passes
+			doc.get(table)[0].task = other.name
+			with self.assertRaises(frappe.ValidationError):
+				validate_task_projects(doc, table)
+
 	def test_8_recipe_must_be_in_the_boq_line_unit(self):
 		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
 
@@ -817,3 +832,144 @@ class TestBudgetAmounts(FrappeTestCase):
 		row = next(r for r in data if r.get("bill") == "Unplanned")
 		self.assertEqual((row["budget"], row["actual"], row["variance"]), (5_250_000, 2_000_000, 0))  # 10% of 52,500,000
 		self.assertEqual(row["status"], "Within the unplanned budget")
+
+
+class TestCancellations(FrappeTestCase):
+	"""Cancelling undoes what submitting did, and is refused when later documents still depend on it.
+
+	BOQ: one line, excavation 1,000 m3 x 10,000. Contract with no advance, template SEUWASA.
+	"""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		ensure_certificate_templates()
+		company = frappe.db.get_value("Company", {}, "name")
+		cls.project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS cancellation test", "company": company}).insert()
+		customer = frappe.get_doc({
+			"doctype": "Customer", "customer_name": "ConsMS Cancel Test Client",
+			"customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}),
+			"territory": frappe.db.get_value("Territory", {"is_group": 0}),
+		}).insert()
+		tender = frappe.get_doc(
+			{"doctype": "BF Tender", "tender_no": "TEST/CANCEL/001", "tender_name": "Cancellation test", "project": cls.project.name}
+		).insert()
+		cls.boq = frappe.get_doc({
+			"doctype": "BF Bill of Quantities", "project": cls.project.name, "tender": tender.name, "summary_template": None,
+			"items": [{"item_no": "1", "description": "Excavation", "uom": "Cubic Meter", "erp_uom": "Cubic Meter",
+				"quantity": 1000, "unit_rate": 10_000}],
+		}).insert()
+		cls.boq.submit()
+		cls.line = cls.boq.items[0].name
+		contract = make_bf_contract(tender.name)
+		contract.update({
+			"customer": customer.name, "boq": cls.boq.name, "contingency_percentage": 0, "certificate_template": SEUWASA,
+			"start_date": add_days(today(), -60), "original_completion_date": add_days(today(), 300),
+		})
+		contract.insert()
+		contract.submit()
+		cls.contract = contract
+		cls.mobilization = frappe.db.get_value("BF Activity Type", {"is_mobilization": 1})
+
+	def measure(self, qty, date):
+		log = frappe.get_doc({
+			"doctype": "BF Site Measurement Log", "contract": self.contract.name, "project": self.project.name,
+			"boq": self.boq.name, "date": date, "location_grid": "Test site",
+			"measurements": [{"boq_item": self.line, "total_quantity": qty, "drawing": "/files/test-proof.pdf"}],
+		}).insert()
+		log.submit()
+		return log
+
+	def certificate(self, title, period_from, period_to):
+		claim = frappe.get_doc({
+			"doctype": "BF Progress Claim", "contract": self.contract.name, "claim_type": "Client Claim",
+			"project": self.project.name, "claim_title": title, "period_from": period_from, "period_to": period_to,
+		}).insert()
+		fetch_measurements(claim.name, self.contract.name, period_from, period_to)
+		claim = frappe.get_doc("BF Progress Claim", claim.name)
+		claim.submit()
+		return claim
+
+	def mobilize(self, subject):
+		task = frappe.get_doc({"doctype": "Task", "subject": subject, "project": self.project.name}).insert()
+		execution = frappe.get_doc({
+			"doctype": "BF Works Execution", "activity_type": self.mobilization, "project": self.project.name,
+			"contract": self.contract.name, "tasks": [{"task": task.name, "status": "Completed"}],
+		}).insert()
+		execution.submit()
+		return execution, task
+
+	def test_1_variation_order_cancel_restores_the_boq(self):
+		vo = frappe.get_doc({
+			"doctype": "BF Variation Order", "contract": self.contract.name, "project": self.project.name,
+			"reason": "More excavation", "client_instruction_no": "CI/01", "approval_date": today(),
+			"approval_letter": "/files/test-approval.pdf",
+			"items": [{"change_type": "Change to BOQ Line", "boq_item": self.line, "quantity": 100}],
+		}).insert()
+		vo.submit()
+		self.assertEqual(flt(frappe.db.get_value("BF BOQ Item", self.line, "revised_qty")), 1100)
+		self.assertEqual(flt(frappe.db.get_value("BF Contract", self.contract.name, "approved_variations")), 1_000_000)
+
+		vo.cancel()
+		self.assertEqual(flt(frappe.db.get_value("BF BOQ Item", self.line, "revised_qty")), 1000)
+		self.assertEqual(flt(frappe.db.get_value("BF Contract", self.contract.name, "approved_variations")), 0)
+		self.assertEqual(frappe.db.get_value("BF BOQ Revision", {"variation_order": vo.name}, "status"), "Cancelled")
+
+	def test_2_extension_of_time_cancel_restores_the_completion_date(self):
+		from consms.construction_management.doctype.bf_extension_of_time.bf_extension_of_time import set_decision
+
+		original = frappe.db.get_value("BF Contract", self.contract.name, "revised_completion_date")
+		eot = frappe.get_doc({
+			"doctype": "BF Extension of Time", "contract": self.contract.name, "request_date": today(),
+			"days_requested": 30, "reason": "Rain",
+		}).insert()
+		eot.submit()
+		set_decision(eot.name, "Approved", days_approved=30, letter="/files/test-approval.pdf")
+		self.assertEqual(frappe.db.get_value("BF Contract", self.contract.name, "revised_completion_date"), add_days(original, 30))
+
+		frappe.get_doc("BF Extension of Time", eot.name).cancel()
+		self.assertEqual(frappe.db.get_value("BF Contract", self.contract.name, "revised_completion_date"), original)
+
+	def test_3_last_mobilization_stays_while_measurements_exist(self):
+		first, task = self.mobilize("Site camp")
+		log = self.measure(100, add_days(today(), -50))
+
+		with self.assertRaisesRegex(frappe.ValidationError, "has submitted measurements"):
+			frappe.get_doc("BF Works Execution", first.name).cancel()  # the only mobilization, with a measurement
+
+		second, _task = self.mobilize("Second site camp")
+		frappe.get_doc("BF Works Execution", first.name).cancel()  # another mobilization is still submitted
+
+		# a Task changed later no longer touches the cancelled Works Execution
+		frappe.get_doc("Task", task.name).update({"status": "Open"}).save()
+		self.assertEqual(frappe.db.get_value("BF Works Execution Task", {"parent": first.name}, "status"), "Completed")
+
+		log.cancel()  # not certified, so it can go
+		frappe.get_doc("BF Works Execution", second.name).cancel()  # no measurements left
+
+	def test_4_certificates_are_cancelled_newest_first(self):
+		self.measure(200, add_days(today(), -40))
+		first = self.certificate("IPC 01", add_days(today(), -45), add_days(today(), -35))
+		self.measure(300, add_days(today(), -20))
+		second = self.certificate("IPC 02", add_days(today(), -34), add_days(today(), -15))
+		self.assertEqual(flt(frappe.db.get_value("BF Contract", self.contract.name, "retention_held")), 250_000)  # 5% of 5,000,000
+
+		with self.assertRaisesRegex(frappe.ValidationError, f"newest first: .*{second.name}"):
+			frappe.get_doc("BF Progress Claim", first.name).cancel()  # IPC 02 counts IPC 01 as previous
+
+		frappe.get_doc("BF Progress Claim", second.name).cancel()
+		self.assertEqual(flt(frappe.db.get_value("BF Contract", self.contract.name, "retention_held")), 100_000)
+		frappe.get_doc("BF Progress Claim", first.name).cancel()
+		self.assertEqual(flt(frappe.db.get_value("BF Contract", self.contract.name, "retention_held")), 0)
+
+	def test_5_a_certified_measurement_cannot_be_cancelled(self):
+		paid = self.measure(150, add_days(today(), -10))
+		claim = self.certificate("IPC 03", add_days(today(), -12), add_days(today(), -5))
+		unpaid = self.measure(50, add_days(today(), -2))  # after the certificate's period
+
+		with self.assertRaisesRegex(frappe.ValidationError, f"paid on certificate .*{claim.name}"):
+			frappe.get_doc("BF Site Measurement Log", paid.name).cancel()
+		frappe.get_doc("BF Site Measurement Log", unpaid.name).cancel()
+
+		frappe.get_doc("BF Progress Claim", claim.name).cancel()
+		frappe.get_doc("BF Site Measurement Log", paid.name).cancel()  # once the certificate is gone

@@ -20,6 +20,22 @@ FROM_TASK_STATUS = {
 }
 
 
+def validate_task_projects(doc, table):
+	"""Every Task picked on the rows of `table` belongs to the document's Project."""
+	tasks = {row.task for row in doc.get(table) if row.task}
+	if not tasks:
+		return
+	projects = dict(frappe.get_all("Task", filters={"name": ["in", list(tasks)]}, fields=["name", "project"], as_list=True))
+	for row in doc.get(table):
+		if row.task and projects.get(row.task) != doc.project:
+			frappe.throw(
+				frappe._("Row {0}: Task {1} belongs to project {2}, not {3}.").format(
+					row.idx, frappe.bold(row.task), projects.get(row.task) or frappe._("(none)"), doc.project
+				),
+				title=frappe._("Task from another project"),
+			)
+
+
 def get_execution_status(row_statuses):
 	if not row_statuses:
 		return "Not Started"
@@ -86,7 +102,7 @@ def update_works_execution_from_task(doc, method=None):
 	row_status = FROM_TASK_STATUS.get(doc.status, "Pending")
 	rows = frappe.get_all(
 		"BF Works Execution Task",
-		filters={"task": doc.name, "parenttype": "BF Works Execution"},
+		filters={"task": doc.name, "parenttype": "BF Works Execution", "docstatus": ["<", 2]},
 		fields=["name", "parent", "status"],
 	)
 	for row in rows:

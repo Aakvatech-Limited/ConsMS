@@ -9,6 +9,7 @@ from consms.construction_management.tasks import (
 	create_task_from_template,
 	get_execution_status,
 	set_task_status,
+	validate_task_projects,
 )
 
 
@@ -17,13 +18,29 @@ class BFWorksExecution(Document):
 		if self.planned_start_date and self.planned_end_date and self.planned_end_date < self.planned_start_date:
 			frappe.throw(_("Planned Finish cannot be before Planned Start."))
 		self.create_tasks_from_template()
-		self.validate_task_projects()
+		validate_task_projects(self, "tasks")
 		self.sync_task_statuses()
 		self.status = get_execution_status([row.status for row in self.tasks])
 
 	def before_submit(self):
 		if self.status != "Completed":
 			frappe.throw(_("{0} can only be submitted when all tasks are 'Completed'.").format(self.activity_type))
+
+	def before_cancel(self):
+		"""Measurements need the contract to be mobilized: keep the last Mobilization while any are submitted."""
+		if not frappe.db.get_value("BF Activity Type", self.activity_type, "is_mobilization"):
+			return
+		other = frappe.db.exists("BF Works Execution", {
+			"contract": self.contract, "docstatus": 1, "name": ["!=", self.name],
+			"activity_type": ["in", frappe.get_all("BF Activity Type", {"is_mobilization": 1}, pluck="name")],
+		})
+		measured = frappe.db.exists("BF Site Measurement Log", {"contract": self.contract, "docstatus": 1})
+		if measured and not other:
+			frappe.throw(
+				_("Contract {0} has submitted measurements (for example {1}), which need it to be mobilized. Cancel the measurements first.").format(
+					self.contract, frappe.bold(measured)),
+				title=_("Contract has measurements"),
+			)
 
 	def create_tasks_from_template(self):
 		"""First save with a template and no tasks: create the project's Tasks."""
@@ -38,16 +55,6 @@ class BFWorksExecution(Document):
 				"subject": frappe.db.get_value("Task", task, "subject"),
 				"status": "Pending",
 			})
-
-	def validate_task_projects(self):
-		for row in self.tasks:
-			task_project = frappe.db.get_value("Task", row.task, "project")
-			if task_project != self.project:
-				frappe.throw(
-					_("Row {0}: Task {1} belongs to project {2}, not {3}.").format(
-						row.idx, row.task, task_project or _("(none)"), self.project
-					)
-				)
 
 	def sync_task_statuses(self):
 		for row in self.tasks:

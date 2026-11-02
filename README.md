@@ -22,11 +22,12 @@ It follows a contract from the Bill of Quantities to the payment certificate and
 12. [Variation Orders](#variation-orders)
 13. [Payment certificates (IPC)](#payment-certificates-ipc)
 14. [Certificate Templates: full guide](#certificate-templates-full-guide)
-15. [Invoices](#invoices)
-16. [Reports](#reports)
-17. [Reminders](#reminders)
-18. [Troubleshooting](#troubleshooting)
-19. [For developers](#for-developers)
+15. [Cancelling documents](#cancelling-documents)
+16. [Invoices](#invoices)
+17. [Reports](#reports)
+18. [Reminders](#reminders)
+19. [Troubleshooting](#troubleshooting)
+20. [For developers](#for-developers)
 
 ---
 
@@ -723,6 +724,33 @@ The starter template "Budget Overheads (Sengerema)":
 | Total + contingency | Subtotal | | | |
 | Add: Supervision fee 14.13% | Add | Percentage | 14.13 | Direct Cost |
 | Add: Equipment wear and tear | Add | Typed Amount | | |
+
+---
+
+## Cancelling documents
+
+Cancelling undoes what submitting did:
+
+| Cancel | What changes back |
+| --- | --- |
+| Variation Order | The BOQ quantity, the BOQ revision (marked Cancelled) and the contract's approved variations |
+| Extension of Time | The contract's approved days and revised completion date |
+| Progress Claim (IPC) | The contract's retention, advance and liquidated damages balances |
+| Site Measurement Log | The task's % done |
+| Material Request | The requested quantity on the budget lines |
+
+Some cancellations are stopped, because later documents depend on them:
+
+| You cancel | It is stopped when | Do this first |
+| --- | --- | --- |
+| A Progress Claim | A later certificate of the same contract is submitted | Cancel the certificates newest first |
+| A Progress Claim | Its Sales or Purchase Invoice is submitted | Cancel the invoice |
+| A Site Measurement Log | A submitted certificate pays its quantities | Cancel the certificate |
+| A Site Measurement Log | A submitted Variation Order was made from it | Cancel the Variation Order |
+| A Variation Order | The extra quantity is already measured | Cancel the measurements |
+| The last Mobilization Works Execution | The contract has submitted measurements | Cancel the measurements |
+
+The Tasks that a Works Execution made stay when it is cancelled.
 
 ---
 

@@ -10,6 +10,7 @@ from frappe.utils import flt, getdate
 from consms.construction_management.ipc import (
 	calculate,
 	earlier_claims,
+	later_claims,
 	set_due_date,
 	set_late_payment_interest,
 	set_liquidated_damages,
@@ -81,6 +82,16 @@ class BFProgressClaim(Document):
 
 	def on_submit(self):
 		update_contract_balances(self.contract)
+
+	def before_cancel(self):
+		# a later certificate keeps the previous figures it was saved with, which include this one
+		later = later_claims(self)
+		if later:
+			frappe.throw(
+				_("Cancel the later certificates of this contract first, newest first: {0}. Their 'previous' figures include this certificate.").format(
+					", ".join(frappe.bold(name) for name in later)),
+				title=_("Later certificates exist"),
+			)
 
 	def on_cancel(self):
 		update_contract_balances(self.contract)
