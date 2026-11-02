@@ -7,11 +7,13 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from consms.construction_management.measurement import update_task_progress
+from consms.construction_management.tasks import validate_task_projects
 from consms.construction_management.variations import get_over_limit, over_limit_message
 
 
 class BFSiteMeasurementLog(Document):
 	def validate(self):
+		validate_task_projects(self, "measurements")
 		over = get_over_limit(self)
 		if over:
 			frappe.msgprint(over_limit_message(over) + "<br><br>" + _("Submitting will be blocked: create a Variation Order for the extra quantity."),

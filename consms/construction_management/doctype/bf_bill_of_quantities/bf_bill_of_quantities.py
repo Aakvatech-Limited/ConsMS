@@ -10,6 +10,7 @@ from frappe.utils import add_days, flt, nowdate
 
 from consms.construction_management.ipc import calculate_boq_summary
 from consms.construction_management.variations import set_revised_quantities
+from consms.construction_management.tasks import validate_task_projects
 from consms.construction_management.uom import get_uom_map, normalize, resolve_uom
 
 PROVISIONAL_SUM_UNITS = {"ps", "p.s", "p.s.", "provisional sum"}
@@ -18,6 +19,7 @@ class BFBillofQuantities(Document):
 	def validate(self):
 		self.validate_one_boq_per_tender()
 		self.set_erp_uoms()
+		validate_task_projects(self, "items")
 		total = 0
 		for item in self.get("items"):
 			item.amount = flt(item.quantity) * flt(item.unit_rate)

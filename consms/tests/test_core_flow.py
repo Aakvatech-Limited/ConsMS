@@ -340,6 +340,21 @@ class TestCoreFlow(FrappeTestCase):
 		counts = {c["doctype"]: c["count"] for c in _get_linked_document_counts("Task", task)["count"]["external_links_found"]}
 		self.assertEqual((counts.get("Stock Entry"), counts.get("Purchase Invoice")), (1, 1))
 
+	def test_7b_a_task_from_another_project_is_refused(self):
+		from consms.construction_management.tasks import validate_task_projects
+
+		own = frappe.get_doc({"doctype": "Task", "subject": "Own task", "project": self.project.name}).insert()
+		other_project = frappe.get_doc({"doctype": "Project", "project_name": "ConsMS other project test",
+			"company": self.company}).insert()
+		other = frappe.get_doc({"doctype": "Task", "subject": "Other project task", "project": other_project.name}).insert()
+
+		for doctype, table in (("BF Bill of Quantities", "items"), ("BF Site Measurement Log", "measurements")):
+			doc = frappe.get_doc({"doctype": doctype, "project": self.project.name, table: [{"task": own.name}]})
+			validate_task_projects(doc, table)  # a task of the same project passes
+			doc.get(table)[0].task = other.name
+			with self.assertRaises(frappe.ValidationError):
+				validate_task_projects(doc, table)
+
 	def test_8_recipe_must_be_in_the_boq_line_unit(self):
 		from consms.construction_management.doctype.bf_budget.bf_budget import make_bf_budget
 
