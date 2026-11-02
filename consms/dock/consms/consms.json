@@ -1,0 +1,55 @@
+{
+ "app": "consms",
+ "creation": "2026-11-02 18:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Dock",
+ "idx": 0,
+ "items": [
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "hard-hat",
+   "link_to": "Construction MS",
+   "link_type": "Sidebar",
+   "title": "Construction MS"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "gantt-chart-soft",
+   "link_to": "Projects",
+   "link_type": "Sidebar",
+   "title": "Projects"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "shopping-cart-soft",
+   "link_to": "Buying",
+   "link_type": "Sidebar",
+   "title": "Buying"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "shelf-rack-soft",
+   "link_to": "Stock",
+   "link_type": "Sidebar",
+   "title": "Stock"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "calculator-soft",
+   "link_to": "Accounts",
+   "link_type": "Sidebar",
+   "title": "Accounts"
+  }
+ ],
+ "modified": "2026-11-02 18:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "consms",
+ "owner": "Administrator",
+ "standard": 1,
+ "user": ""
+}
